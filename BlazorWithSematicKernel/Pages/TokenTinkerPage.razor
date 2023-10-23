@@ -1,0 +1,90 @@
+﻿@page "/tokens"
+
+<RadzenRow>
+    <RadzenColumn Size="12">
+        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.DisplayH5" Text="LogitBias"></RadzenText>
+        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle1" Text="Increase or decrease the odds for specific tokens to be generated"></RadzenText>
+        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle2" Text=" -100 essentially bans, +100 all but guarantees"></RadzenText>
+    </RadzenColumn>
+    <RadzenColumn Size="8" Offset="2">
+        <RadzenTemplateForm Data="_logitBiasForm" TItem="LogitBiasForm" Submit="Submit">
+            <RadzenRow>
+                <RadzenColumn Size="6">
+                    <RadzenFormField Text="Type to create token selection options to set logitbias" Style="width: 100%">
+                        <ChildContent>
+                            <textarea style="width: 100%; height:4rem" @bind="@_input" @bind:event="oninput"></textarea>
+                        </ChildContent>
+                        <Helper>
+                            <RadzenText TextStyle="TextStyle.Caption" Text="Tokenization can be somewhat context specific. It's best to enter a word or phrase and select tokens from the result"></RadzenText>
+                        </Helper>
+                    </RadzenFormField>
+                </RadzenColumn>
+                <RadzenColumn Size="6">
+                    @if (string.IsNullOrWhiteSpace(_input))
+                    {
+                        <RadzenRow Gap="0">
+                            <RadzenColumn Size="2">
+                                <RadzenImage Path="blue-arrow-left.png" Style="width:40px; height:30px;"></RadzenImage>
+                            </RadzenColumn>
+                            <RadzenColumn Size="8">
+                                <RadzenText Text="Start typing to begin"></RadzenText>
+                            </RadzenColumn>
+                        </RadzenRow>
+                    }
+                    else
+                    {
+                        <RadzenFieldset AllowCollapse="false" Style="padding-top:0">
+                            <HeaderTemplate>
+                                <span class="d-inline-flex align-items-center align-middle">
+                                    <RadzenIcon Icon="edit_attributes" class="me-1" /><b>Click to select tokens</b>
+                                </span>
+                            </HeaderTemplate>
+                            <ChildContent>
+                                <TextAsTokens TokenStrings="@AsTokens(_input)" FontSize="1.2rem" SelectedTokenStringChanged="HandleTokenStringSelected"></TextAsTokens>
+                            </ChildContent>
+                        </RadzenFieldset>
+                    }
+
+                </RadzenColumn>
+
+                <RadzenColumn Size="6">
+                    <RadzenCard Style="max-height:15rem; overflow:auto">
+                        <RadzenText Text="Selected Token Settings" TextStyle="TextStyle.Body1" TextAlign="TextAlign.Center"></RadzenText>
+                        @foreach (var item in _logitBiasForm.LogitBiasItems)
+                        {
+                            <div style="display: grid; grid-template-columns: 50% 50%">
+                                <div style="display: flex; flex-direction: column">
+                                    <RadzenText TextStyle="TextStyle.Body2" Text="@item.TokenString.StringValue"></RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Caption" Text="@item.TokenString.Token.ToString()"></RadzenText>
+                                </div>
+                                <RadzenFormField Text="@($"LogitBias for {item.TokenString.StringValue}")">
+                                    <RadzenNumeric @bind-Value="item.LogitBias" Min="-100" Max="100" Step="5"></RadzenNumeric>
+                                </RadzenFormField>
+                            </div>
+                        }
+                    </RadzenCard>
+                </RadzenColumn>
+                <RadzenColumn Size="6">
+                    <RadzenFormField Text="Chat input" Style="width: 100%">
+                        <ChildContent>
+                            <RadzenTextArea Name="Bias" @bind-Value="_logitBiasForm.TestInput" Style="width: 100%"></RadzenTextArea>
+                        </ChildContent>
+                        <Helper>
+                            <RadzenRequiredValidator Component="Bias"></RadzenRequiredValidator>
+                            <RadzenText TextStyle="TextStyle.Caption" Text="Test your logitbias settings with this request input"></RadzenText>
+                        </Helper>
+                    </RadzenFormField><br />
+                    <RadzenButton ButtonType="ButtonType.Submit" Text="Submit" IsBusy="_isBusy" BusyText="Submitting..."></RadzenButton>
+                </RadzenColumn>
+            </RadzenRow>
+
+        </RadzenTemplateForm>
+    </RadzenColumn>
+    <RadzenColumn Size="8" Offset="2">
+
+        <RadzenCard>
+            <RadzenText TextAlign="TextAlign.Center" Text="Chat Output with Token Biases"></RadzenText>
+            <TextAsTokens TokenStrings="_outputTokens" SpecifiedTokens="_specifiedTokens" FontSize="1rem" SelectedTokenStringChanged="HandleTokenStringSelected"></TextAsTokens>
+        </RadzenCard>
+    </RadzenColumn>
+</RadzenRow>

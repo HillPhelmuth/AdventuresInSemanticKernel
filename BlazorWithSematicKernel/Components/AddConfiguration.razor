@@ -1,0 +1,29 @@
+﻿@using ConfigurationSection = SkPluginLibrary.Models.Helpers.ConfigurationSection;
+<RadzenRow>
+    <RadzenColumn Size="10" Offset="1">
+        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle2"><span style="background-color:red; color:white">Red</span> sections are missing required values</RadzenText>
+        <RadzenAccordion>
+            <Items>
+                @foreach (var configSection in ConfigurationDisplays)
+                {
+
+                    <RadzenAccordionItem Text="@configSection.ConfigurationSection.Name" class="@configSection.CssClass">
+                        <RadzenCard>
+                            <RadzenTemplateForm TItem="ConfigurationSection" Data="configSection.ConfigurationSection" Submit="SetConfigSection">
+                                @foreach (var item in configSection.ConfigurationSection.ConfigurationProperties)
+                                {
+                                    <RadzenFormField Text="@item.Name">
+                                        <RadzenPassword @bind-Value="@item.Value" AutoComplete="false"></RadzenPassword>
+                                    </RadzenFormField>
+                                }
+                                <br/>
+                                <RadzenButton ButtonType="ButtonType.Submit" Icon="save" Text="Save"></RadzenButton>
+                            </RadzenTemplateForm>
+                        </RadzenCard>
+
+                    </RadzenAccordionItem>
+                }
+            </Items>
+        </RadzenAccordion>
+    </RadzenColumn>
+</RadzenRow>

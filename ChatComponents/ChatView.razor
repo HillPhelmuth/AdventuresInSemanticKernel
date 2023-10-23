@@ -1,0 +1,10 @@
+﻿<RadzenRow>
+    <RadzenColumn Size="0" SizeLG="0"></RadzenColumn>
+    <RadzenColumn @ref=_column Size="12" SizeLG="12" Style="@($"height:{Height}; overflow:auto")">
+        @foreach (var message in ChatState.ChatMessages)
+        {
+            <MessageView Message="message"></MessageView>
+        }
+    </RadzenColumn>
+    <RadzenColumn Size="0" SizeLG="0"></RadzenColumn>
+</RadzenRow>

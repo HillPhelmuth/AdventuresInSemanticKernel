@@ -1,0 +1,99 @@
+public static class Example34_CustomChatModel
+{
+    public static async Task RunAsync()
+    {
+        await CustomChatStreamSampleAsync();
+        await CustomChatSampleAsync();
+
+        /* Output:
+
+        Chat content:
+        ------------------------
+        System: You are a my SK Custom Assistant
+        ------------------------
+        User: Hi, who are you?
+        ------------------------
+        Assistant: Hi I'm your SK Custom Assistant and I'm here to help you to create custom chats like this. :)
+        ------------------------
+        */
+    }
+
+    private static async Task CustomChatSampleAsync()
+    {
+        Console.WriteLine("======== Custom LLM - Chat Completion ========");
+
+        IChatCompletion customChat = new MyChatCompletionService();
+
+        await StartChatAsync(customChat);
+    }
+
+    private static async Task StartChatAsync(IChatCompletion customChat)
+    {
+        Console.WriteLine("Chat content:");
+        Console.WriteLine("------------------------");
+
+        var chatHistory = (MyChatHistory)customChat.CreateNewChat("You are a my SK Custom Assistant");
+
+        // First user message
+        chatHistory.AddMessage(MyRoles.User, "Hi, who are you?");
+        await MessageOutputAsync(chatHistory);
+
+        // First bot assistant message
+        string reply = await customChat.GenerateMessageAsync(chatHistory);
+        chatHistory.AddMessage(MyRoles.Bot, reply);
+        await MessageOutputAsync(chatHistory);
+    }
+
+    private static async Task CustomChatStreamSampleAsync()
+    {
+        Console.WriteLine("======== Custom LLM - Chat Completion Streaming ========");
+
+        IChatCompletion customChat = new MyChatCompletionService();
+
+        await StartStreamingChatAsync(customChat);
+    }
+
+    private static async Task StartStreamingChatAsync(IChatCompletion customChat)
+    {
+        Console.WriteLine("Chat content:");
+        Console.WriteLine("------------------------");
+
+        var chatHistory = (MyChatHistory)customChat.CreateNewChat("You are a my SK Custom Assistant");
+        await MessageOutputAsync(chatHistory);
+
+        // First user message
+        chatHistory.AddMessage(MyRoles.User, "Hi, who are you?");
+        await MessageOutputAsync(chatHistory);
+
+        // Bot assistant message
+        await StreamMessageOutputAsync(customChat, chatHistory);
+    }
+
+    /// <summary>
+    /// Outputs the last message of the chat history
+    /// </summary>
+    private static Task MessageOutputAsync(MyChatHistory chatHistory)
+    {
+        var message = chatHistory.Messages.Last();
+
+        Console.WriteLine($"{message.Role}: {message.Content}");
+        Console.WriteLine("------------------------");
+
+        return Task.CompletedTask;
+    }
+
+    private static async Task StreamMessageOutputAsync(IChatCompletion customChat, MyChatHistory chatHistory, MyRoles myModelRole = MyRoles.Bot)
+    {
+        Console.Write($"{myModelRole}: ");
+        string fullMessage = string.Empty;
+
+        await foreach (string message in customChat.GenerateMessageStreamAsync(chatHistory))
+        {
+            fullMessage += message;
+            Console.Write(message);
+        }
+
+        Console.WriteLine("\n------------------------");
+        chatHistory.AddMessage(myModelRole, fullMessage);
+    }
+}

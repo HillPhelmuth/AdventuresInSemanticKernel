@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "type": "completion",
+  "description": "Write a complete short story",
+  "completion": {
+    "max_tokens": 4096,
+    "temperature": 1.2,
+    "top_p": 1.0,
+    "presence_penalty": 0.0,
+    "frequency_penalty": 0.0
+  },
+  "input": {
+    "parameters": [
+      {
+        "name": "input",
+        "description": "A synopsis of what the short story should be about.",
+        "defaultValue": ""
+      },
+      {
+        "name": "theme",
+        "description": "The theme or topic of this short story.",
+        "defaultValue": ""
+      },
+      {
+        "name": "character",
+        "description": "The main character and primary protagonist",
+        "defaultValue": ""
+      },
+      {
+        "name": "monster",
+        "description": "The monster or primary antagonist",
+        "defaultValue": ""
+      },
+      {
+        "name": "alignment",
+        "description": "The alignment of the main character",
+        "defaultValue": ""
+      }
+    ]
+  }
+}

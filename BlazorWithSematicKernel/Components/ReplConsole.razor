@@ -1,0 +1,31 @@
+﻿<RadzenRow>
+    <RadzenColumn Size="1"></RadzenColumn>
+    <RadzenColumn Size="10">
+        <RadzenTemplateForm Data="_codeRequestForm" TItem="CodeRequestForm" Submit="Submit" Style="display:grid; grid-template-columns: 90% 10%;justify-content: center; align-items: center;justify-items: center;">
+            <RadzenFormField Text="Instructions" Style="width:100%;">
+                <ChildContent>
+                    <RadzenTextArea Name="Description" Style="width:100%;height:8rem;" @bind-Value="@_codeRequestForm.Description"></RadzenTextArea>
+                </ChildContent>
+                <Helper>
+                    <RadzenRequiredValidator Component="Description" Text="Description is required"></RadzenRequiredValidator>
+                    <RadzenText TextStyle="TextStyle.Caption" Text="Describe the code you want generated"></RadzenText>
+                </Helper>
+            </RadzenFormField>
+            
+            <RadzenButton ButtonType="ButtonType.Submit" Size="ButtonSize.Small" Text="Generate" IsBusy="_isBusy" BusyText="Generating..."></RadzenButton>
+        </RadzenTemplateForm>
+    </RadzenColumn>
+    <RadzenColumn Size="1"></RadzenColumn>
+</RadzenRow>
+<RadzenRow>
+    <RadzenColumn Size="6">
+        <RadzenText TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Center" Text="Code"></RadzenText>
+        <AceEditor @ref="_editor" Options="_aceEditorOptions" Style="height: 20rem" OnEditorInit="HandleInit"></AceEditor>
+    </RadzenColumn>
+    
+    <RadzenColumn Size="6">
+        <RadzenText TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Center" Text="Output"></RadzenText>
+        <RadzenTextArea Value="@output" ReadOnly="true" Style="color: white; background-color: black; width: 100%; height: 20rem; font-family: monaco, monospace;"></RadzenTextArea>
+    </RadzenColumn>
+    
+</RadzenRow>

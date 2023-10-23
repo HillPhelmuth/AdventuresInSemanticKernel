@@ -1,0 +1,33 @@
+﻿@page "/dnd"
+<RadzenRow>
+    <RadzenColumn Size="4">
+        <RadzenTemplateForm TItem="DndPlanForm" Data="_dndPlanForm" Submit="Submit">
+            <RadzenFormField Text="Select Class">
+                <RadzenDropDown Data="_classes" @bind-Value="_dndPlanForm.Class"></RadzenDropDown>
+            </RadzenFormField>
+            <RadzenFormField Text="Select Race">
+                <RadzenDropDown Data="_races" @bind-Value="_dndPlanForm.Race"></RadzenDropDown>
+            </RadzenFormField>
+            <RadzenFormField Text="Select Alignment">
+                <RadzenDropDown Data="_alignments" @bind-Value="_dndPlanForm.Alignment"></RadzenDropDown>
+            </RadzenFormField>
+            <RadzenFormField Text="Additional details" Style="width: 100%;">
+                <ChildContent>
+                    <RadzenTextArea Style="width: 100%; height: 8rem;" Name="Ask" @bind-Value="@_dndPlanForm.Input"></RadzenTextArea>
+                </ChildContent>
+                <Helper>
+                    <RadzenRequiredValidator Component="Ask" Popup="true" Text="Just ask for SOMETHING dumbass! This shit isn't hard..."></RadzenRequiredValidator>
+                </Helper>
+            </RadzenFormField>
+            <RadzenButton ButtonType="ButtonType.Submit" Text="Run" IsBusy="_isBusy" BusyText="Running..."></RadzenButton>
+        </RadzenTemplateForm>
+    </RadzenColumn>
+    <RadzenColumn Size="8">
+        <RadzenCard>
+            <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.DisplayH6" Text="Short Story Generated using Semantic Kernel"></RadzenText>
+            <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle1" Text="Uses Seqential Planner with access to DnD api and a variety of writing prompts to generate the story"></RadzenText><br />
+            <RadzenTextArea Style="height:25rem;width:100%" ReadOnly="true" @bind-Value="@_sequentialOutput"></RadzenTextArea>
+        </RadzenCard>
+        <RadzenButton Text="Download" Click="DownloadToFile" Icon="file"></RadzenButton>
+    </RadzenColumn>
+</RadzenRow>

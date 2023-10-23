@@ -1,0 +1,6 @@
+===OBJECT ARRAY
+{{$input}}
+===END OBJECT ARRAY
+
+
+Given the above list of objects, find the first {{$topN}} objects in the array. respond with a new json array containing only those object. No prose.

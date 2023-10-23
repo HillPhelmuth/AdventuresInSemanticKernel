@@ -1,0 +1,26 @@
+﻿<RadzenRow Style="position:absolute; bottom:2px; height:max-content; width:95%">
+    <RadzenColumn Size="12" SizeLG="12">
+        <RadzenCard Style="padding-top:2px;padding-bottom:6px">
+            <RadzenTemplateForm Data="_requestForm" TItem="RequestForm" Submit="SubmitRequest">
+                <RadzenRow>
+                    <RadzenColumn Size="10" SizeLG="10">
+                        <RadzenFormField Text="@HelperText" Style="width:100%">
+                            <ChildContent>
+                                <RadzenTextBox ReadOnly="_isDisabled" Name="Input" Style="width:100%" @bind-Value="@_requestForm.Content"></RadzenTextBox>
+                            </ChildContent>
+                            <Helper>
+                                <RadzenRequiredValidator Component="Input" Text="@($"{HelperText} required")"></RadzenRequiredValidator>
+                            </Helper>
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn Size="2" SizeLG="2" Style="display: flex; align-items:center">
+                        <RadzenCard Style="display: flex; align-items: center; justify-items: center; justify-content:center; justify-items:center; padding:0">
+                            <RadzenButton Disabled="_isDisabled" ButtonType="ButtonType.Submit" Size=ButtonSize.Small Icon="send" IsBusy="IsBusy" BusyText="Sending..." Text="@ButtonLabel"></RadzenButton>
+                        </RadzenCard>
+                    </RadzenColumn>
+                </RadzenRow>
+            </RadzenTemplateForm>
+        </RadzenCard>
+
+    </RadzenColumn>
+</RadzenRow>

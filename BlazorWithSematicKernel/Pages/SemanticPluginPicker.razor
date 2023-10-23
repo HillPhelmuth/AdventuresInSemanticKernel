@@ -1,0 +1,105 @@
+﻿@page "/executeFunction"
+<PageTitle>SK Function Execution</PageTitle>
+<RadzenSteps @bind-SelectedIndex="_stepIndex">
+    <Steps>
+        <RadzenStepsItem Text="Introduction">
+            <RadzenRow>
+                <RadzenColumn Size="8" Offset="2">
+                    <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.H6" Text="Semantic Kernel starts with it's plugins. "></RadzenText>
+                    <RadzenText TextStyle="TextStyle.Subtitle1" Text="Think of a plugin as a bunch of functions that can be used in AI apps and services. These functions can do different things, and you can combine them in an AI app to make it do what you want."></RadzenText>
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Text="Functions can come from several sources, depending on what type of plugin they are apart of."></RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1">
+                        <ul>
+                            <li>
+                                Semantic - These are functions that use a prompt and an AI model to generate a response.
+                            </li>
+                            <li>
+                                Native - These are functions that execute native C# or Python code
+                            </li>
+                            <li>
+                                External - These are functions that come from external sources, such as REST apis or ChatGPT Plugins.
+                            </li>
+                        </ul>
+                    </RadzenText>
+                    <RadzenText>In this module, you'll select a plugin and then a function from that plugin. After that you may need to add some context variables (inputs for the function) if necssary, and finally execute the function.</RadzenText>
+                    <RadzenCard Style="margin-left: auto; margin-right: auto; width: max-content">
+                        <RadzenButton Size=ButtonSize.Large Text="Get Started!" Click="@(() => _stepIndex = 1)"></RadzenButton>
+                    </RadzenCard>
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenStepsItem>
+        <RadzenStepsItem Text="Select Plugin">
+            <RadzenText TextStyle="TextStyle.Subtitle1" Text="Use the table below to view each available plugin and the associated functions, and select which plugin has a function you want to execute"></RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2" Text="Note: You can try one of the plugins from the ChatGPT plugins tab, but be warned, some of these are no longer in operation or cannot be used outside of ChatGPT itself"></RadzenText>
+            <RadzenTabs>
+                <Tabs>
+                    <RadzenTabsItem Text="Standard Plugins">
+                        <RadzenDataGrid Data="_allPlugins" TItem="PluginFunctions" Density="Density.Compact" AllowSorting="true" AllowFiltering="true" AllowPaging="true" PageSize="15" ShowPagingSummary=true FilterMode="FilterMode.Advanced" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+                            <Template Context="plugin">
+                                <RadzenDataGrid Data="plugin.Functions" TItem="Function" Density="Density.Compact" AllowSorting="true" AllowFiltering="true" AllowPaging="true" PageSize="5" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+                                    <Columns>
+                                        <RadzenDataGridColumn TItem="Function" Property="@nameof(Function.Name)" Title="Name" Width="25%"></RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="Function" Property="SkFunction.Description" Title="Description" Width="75%"></RadzenDataGridColumn>
+                                    </Columns>
+                                </RadzenDataGrid>
+                            </Template>
+                            <Columns>
+                                <RadzenDataGridColumn TItem="PluginFunctions" Title="">
+                                    <HeaderTemplate>
+                                        <RadzenIcon Icon="arrow_downward" IconStyle="IconStyle.Success"></RadzenIcon>
+                                    </HeaderTemplate>
+                                    <Template Context="pluginFunc">
+                                        <RadzenButton Size=ButtonSize.ExtraSmall Text="Pick" Click="@(() => SelectPlugin(pluginFunc))"></RadzenButton>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="PluginFunctions" Property="@(nameof(PluginFunctions.PluginName))" Title="Name" Width="45%"></RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="PluginFunctions" Property="@(nameof(PluginFunctions.PluginType))" Title="Type" Width="45%"></RadzenDataGridColumn>
+                            </Columns>
+                        </RadzenDataGrid>
+                    </RadzenTabsItem>
+                    <RadzenTabsItem Text="ChatGPT Plugins">
+                        <RadzenRow>
+                            <RadzenColumn Size="12">
+                                <RadzenDataGrid Data="ChatGptPlugins" TItem="ChatGptPlugin" AllowFiltering="true" AllowSorting="true" AllowPaging="true" PageSize="20" Density="Density.Compact">
+                                    <Columns>
+                                        <RadzenDataGridColumn TItem="ChatGptPlugin" Property="Logo" Title="Logo" Width="5%">
+                                            <Template Context="plugin">
+                                                <RadzenImage Style="width: 20px; height: 20px; border-radius: 8px; margin-right: auto; margin-left:auto;" Path="@plugin.Logo"></RadzenImage>
+                                                @* <RadzenText TextStyle="TextStyle.Subtitle1">@plugin.Title</RadzenText>
+                                                <RadzenText>@plugin.Category</RadzenText> *@
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="ChatGptPlugin" Property="Title" Title="Title" Width="15%"></RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="ChatGptPlugin" Property="Category" Title="Category" Width="15%"></RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="ChatGptPlugin" Property="Description" Title="Description" Width="50%"></RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="ChatGptPlugin" Width="8%">
+                                            <Template Context="plugin">
+                                                <RadzenButton Size=ButtonSize.ExtraSmall Text="Manifest" Icon="search" Click="@(() => ShowManifest(plugin))"></RadzenButton>
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="ChatGptPlugin" Width="7%">
+                                            <Template Context="plugin">
+                                                <RadzenButton Size=ButtonSize.ExtraSmall Text="Pick" Click="@(() => SelectChatGptPlugin(plugin))"></RadzenButton>
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                    </Columns>
+                                </RadzenDataGrid>
+                            </RadzenColumn>
+                            @* <RadzenColumn Size="6">
+                                <ManifestDisplay ChatGptPluginManifest="_selectedManifest"></ManifestDisplay>
+                            </RadzenColumn> *@
+                        </RadzenRow>
+                    </RadzenTabsItem>
+                </Tabs>
+            </RadzenTabs>
+
+        </RadzenStepsItem>
+        <RadzenStepsItem Text="Select Function" Disabled="@(!_selectedFunctions.Any())">
+            <SkFunctionViewer ExecutionType="ExecutionType.SingleFunction" FunctionSelected="HandleSelectFunction" Functions="_selectedFunctions"></SkFunctionViewer>
+        </RadzenStepsItem>
+        <RadzenStepsItem Text="Execute Function" Disabled="@(string.IsNullOrEmpty(_selectedFunction?.Name))">
+            <Execute Function="_selectedFunction"></Execute>
+        </RadzenStepsItem>
+    </Steps>
+</RadzenSteps>
+

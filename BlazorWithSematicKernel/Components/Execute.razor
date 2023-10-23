@@ -1,0 +1,119 @@
+﻿<RadzenRow>
+    <RadzenColumn Size="6">
+        @if (!string.IsNullOrEmpty(_promptText))
+        {
+            <RadzenCard>
+                <RadzenText TextStyle="TextStyle.Caption" Text="Prompt"></RadzenText>
+                <RadzenTextArea ReadOnly="true" Style="width:100%;height:10rem" Value="@_promptText"></RadzenTextArea>
+            </RadzenCard>
+        }
+        <RadzenCard>
+            <RadzenText Text="Function Inputs"></RadzenText>
+            <RadzenTemplateForm Data="_functionInputsForm" TItem="FunctionInputsForm" Submit="Submit">
+                <RadzenRow>
+                    @foreach (var input in _functionInputsForm.FunctionParameterFields)
+                    {
+                        if (input.Type.Equals("string", StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            <RadzenColumn Size="6">
+                                <RadzenFormField Text="@input.Name">
+                                    <ChildContent>
+                                        <RadzenTextBox @bind-Value="input.Value"></RadzenTextBox>
+                                    </ChildContent>
+                                    <Helper>
+                                        @input.Description
+                                    </Helper>
+                                </RadzenFormField>
+                            </RadzenColumn>
+                        }
+                        else if (input.Type.Equals("array", StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            <RadzenColumn Size="6">
+                                <RadzenFormField Text="@input.Name">
+                                    <ChildContent>
+                                        <RadzenTextBox @bind-Value="input.Value"></RadzenTextBox>
+                                    </ChildContent>
+                                    <Helper>
+                                        @input.Description
+                                    </Helper>
+                                </RadzenFormField>
+                            </RadzenColumn>
+                        }
+                        else if (input.Type.Equals("number", StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            <RadzenColumn Size="6">
+                                <RadzenFormField Text="@input.Name">
+                                    <ChildContent>
+                                        <RadzenNumeric @bind-Value="input.NumValue"></RadzenNumeric>
+                                    </ChildContent>
+                                    <Helper>
+                                        @input.Description
+                                    </Helper>
+                                </RadzenFormField>
+                            </RadzenColumn>
+                        }
+                        else if (input.Type.Equals("boolean", StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            <RadzenColumn Size="6">
+                                <RadzenFormField Text="@input.Name">
+                                    <ChildContent>
+                                        <RadzenSwitch @bind-Value="input.BoolValue"></RadzenSwitch>
+                                    </ChildContent>
+                                    <Helper>
+                                        @input.Description
+                                    </Helper>
+                                </RadzenFormField>
+                            </RadzenColumn>
+                        }
+                        else
+                        {
+                            <RadzenColumn Size="6">
+                                <RadzenFormField Text="@input.Name">
+                                    <ChildContent>
+                                        <RadzenTextBox @bind-Value="input.Value"></RadzenTextBox>
+                                    </ChildContent>
+                                    <Helper>
+                                        @input.Description
+                                    </Helper>
+                                </RadzenFormField>
+                            </RadzenColumn>
+                        }
+
+                        
+
+                    }
+
+                </RadzenRow>
+                <RadzenButton ButtonType="ButtonType.Submit" Text="Execute"></RadzenButton>
+            </RadzenTemplateForm>
+        </RadzenCard>
+    </RadzenColumn>
+    <RadzenColumn Size="6">
+        <RadzenCard Style="height:30rem; overflow:auto">
+            <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle1" Text="Output"></RadzenText>
+            @* <RadzenLabel @onclick="ShowAsJson">@SwitchLabel <RadzenSwitch @bind-Value="_asJson"></RadzenSwitch></RadzenLabel> *@
+            <RadzenSelectBar TValue="DisplayType" ValueChanged="HandleSelectChanged" Multiple="false" Size="ButtonSize.ExtraSmall">
+                <Items>
+                    <RadzenSelectBarItem Value="DisplayType.PlainText" Text="Plain Text"></RadzenSelectBarItem>
+                    <RadzenSelectBarItem Value="DisplayType.Json" Text="Json Viewer"></RadzenSelectBarItem>
+                    <RadzenSelectBarItem Value="DisplayType.Markdown" Text="Markdown"></RadzenSelectBarItem>
+                </Items>
+            </RadzenSelectBar>
+            @switch (_selectedDisplay)
+            {
+                case DisplayType.Json:
+                    <div style="height:100%">
+                        <json-viewer id="json"></json-viewer>
+                    </div>
+                    break;
+                case DisplayType.PlainText:
+                    <RadzenText>@_output</RadzenText>
+                    break;
+                case DisplayType.Markdown:
+                    <div>@((MarkupString)AsHtml(_output))</div>
+                    break;
+            }
+
+        </RadzenCard>
+    </RadzenColumn>
+</RadzenRow>

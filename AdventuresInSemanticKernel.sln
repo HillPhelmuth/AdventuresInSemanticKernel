@@ -1,0 +1,49 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.7.34202.233
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorWithSematicKernel", "BlazorWithSematicKernel\BlazorWithSematicKernel.csproj", "{9A26D552-9BD1-4E1A-BB2B-32D8E74D0CF3}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SkPluginLibrary", "SkPluginLibrary\SkPluginLibrary.csproj", "{3E4D28B5-C1A6-4D43-AA4C-27D58C0E31C5}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ChatComponents", "ChatComponents\ChatComponents.csproj", "{6D13C02E-3ACA-457C-8256-5AD3D116EA2B}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NCalcPlugins", "NCalcPlugins\NCalcPlugins.csproj", "{9D049734-CDAA-455D-973B-1B7E22BEA662}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorAceEditor", "BlazorAceEditor\BlazorAceEditor.csproj", "{8CEEA2AC-B0FE-49F0-AAC2-E934DCCE15A9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9A26D552-9BD1-4E1A-BB2B-32D8E74D0CF3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9A26D552-9BD1-4E1A-BB2B-32D8E74D0CF3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9A26D552-9BD1-4E1A-BB2B-32D8E74D0CF3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9A26D552-9BD1-4E1A-BB2B-32D8E74D0CF3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3E4D28B5-C1A6-4D43-AA4C-27D58C0E31C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3E4D28B5-C1A6-4D43-AA4C-27D58C0E31C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3E4D28B5-C1A6-4D43-AA4C-27D58C0E31C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3E4D28B5-C1A6-4D43-AA4C-27D58C0E31C5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6D13C02E-3ACA-457C-8256-5AD3D116EA2B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6D13C02E-3ACA-457C-8256-5AD3D116EA2B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6D13C02E-3ACA-457C-8256-5AD3D116EA2B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6D13C02E-3ACA-457C-8256-5AD3D116EA2B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9D049734-CDAA-455D-973B-1B7E22BEA662}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9D049734-CDAA-455D-973B-1B7E22BEA662}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9D049734-CDAA-455D-973B-1B7E22BEA662}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9D049734-CDAA-455D-973B-1B7E22BEA662}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8CEEA2AC-B0FE-49F0-AAC2-E934DCCE15A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8CEEA2AC-B0FE-49F0-AAC2-E934DCCE15A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8CEEA2AC-B0FE-49F0-AAC2-E934DCCE15A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8CEEA2AC-B0FE-49F0-AAC2-E934DCCE15A9}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {78242448-6FD7-4A9A-B202-417C122269E2}
+	EndGlobalSection
+EndGlobal

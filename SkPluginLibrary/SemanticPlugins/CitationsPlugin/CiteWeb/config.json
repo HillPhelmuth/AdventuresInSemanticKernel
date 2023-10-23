@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "description": "Ask the AI for answers contextually relevant to web content and citing the relevant sources. Depenency on Time and WebCrawl skills",
+  "type": "completion",
+  "completion": {
+    "max_tokens": 456,
+    "temperature": 0.0,
+    "top_p": 0.0,
+    "presence_penalty": 0.0,
+    "frequency_penalty": 0.0,
+    "stop_sequences": [
+      "[done]"
+    ]
+  },
+  "input": {
+    "parameters": [
+      {
+        "name": "topic",
+        "description": "The topic of the content in the context_memory_json articles/websites",
+        "defaultValue": ""
+      },
+      {
+        "name": "context_memory_json",
+        "description": "One or more articles in well-formed json with title, content, and url properties",
+        "defaultValue": ""
+      }
+      
+    ]
+  }
+}

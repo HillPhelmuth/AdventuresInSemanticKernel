@@ -1,0 +1,16 @@
+﻿@page "/web"
+<RadzenRow>
+    @* <RadzenColumn Size="2"></RadzenColumn> *@
+    <RadzenColumn Size="12">
+        <RadzenText Text="Web Chat" TextStyle="TextStyle.DisplayH6" TextAlign="TextAlign.Center"></RadzenText>
+        <RadzenCard>
+            <ChatView @ref=_chatView></ChatView>
+        </RadzenCard>
+        <RadzenCard Style="width: 100%">
+            <UserInput ButtonLabel="Send" HelperText="Who are the current candidates for president in the republican primary?" MessageSubmit="Submit" IsBusy="_isBusy"></UserInput>
+        </RadzenCard>
+
+    </RadzenColumn>
+    <RadzenColumn Size="2"></RadzenColumn>
+</RadzenRow>
+

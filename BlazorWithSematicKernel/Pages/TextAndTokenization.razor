@@ -1,0 +1,84 @@
+﻿@page "/textchunking"
+
+<RadzenRow>
+    <RadzenColumn Size="6">
+        <RadzenCard>
+            <RadzenTemplateForm TItem="ChunkForm" Data="_chunkForm" Submit="Submit">
+                <RadzenRow>
+                    <RadzenColumn>
+                        <RadzenFormField Text="Line Max Tokens">
+                            <ChildContent>
+                                <RadzenNumeric Name="LineMax" @bind-Value="_chunkForm.LineMax" Min="10" Max="125" Step="5"></RadzenNumeric>
+                            </ChildContent>
+                            <Helper>
+                                <RadzenCompareValidator Component="LineMax" Operator="CompareOperator.LessThanEqual" Value="@_chunkForm.ChunkMax" Text="Max line tokens can't exceed Chunk size"></RadzenCompareValidator>
+                                <RadzenText TextStyle="TextStyle.Caption" Text="The max tokens per line of each chunk"></RadzenText>
+                            </Helper>
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn>
+                        <RadzenFormField Text="Max Tokens per Chunk">
+                            <ChildContent>
+                                <RadzenNumeric Name="ChunkMax" @bind-Value="_chunkForm.ChunkMax" Min="50" Step="10"></RadzenNumeric>
+                            </ChildContent>
+                            <Helper>
+                                <RadzenCompareValidator Component="ChunkMax" Operator="CompareOperator.GreaterThan" Value="50" Text="Input a non-insane chunk size"></RadzenCompareValidator>
+                                <RadzenText TextStyle="TextStyle.Caption" Text="The max total size of each chunk of input text"></RadzenText>
+                            </Helper>
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn>
+                        <RadzenFormField Text="Overlap">
+                            <ChildContent>
+                                <RadzenNumeric Name="Overlap" @bind-Value="_chunkForm.Overlap" Min="0" Step="2"></RadzenNumeric>
+                            </ChildContent>
+                            <Helper>
+                                <RadzenText TextStyle="TextStyle.Caption" Text="The overlap between chunks"></RadzenText>
+                            </Helper>
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow>
+                <RadzenRow>
+                    <RadzenColumn Size="9">
+                        <RadzenTextBox Style="font-size:90%; width:70%" @bind-Value=_input></RadzenTextBox>
+                        <RadzenButton Size="ButtonSize.ExtraSmall" Text="Generate" Icon="generating_tokens" Click="GenerateText"></RadzenButton>
+                        <RadzenFormField Text="Full Text" Style="width: 100%;">
+                            <ChildContent>
+                                <RadzenTextArea Name="Text" Style="width: 100%; height: 30rem" @bind-Value="_chunkForm.Text"></RadzenTextArea>
+                            </ChildContent>
+                            <Helper>
+                                <RadzenRequiredValidator Component="Text" Text="Enter or generate text to chunk, dummy"></RadzenRequiredValidator>
+                            </Helper>
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn Size="3">
+                        <RadzenCard Style="width: 100%; display: flex; justify-content: center; justify-items: center">
+                            <RadzenButton ButtonType="ButtonType.Submit" Text="Chunk it!"></RadzenButton>
+                        </RadzenCard>
+                    </RadzenColumn>
+                </RadzenRow>
+            </RadzenTemplateForm>
+        </RadzenCard>
+      
+    </RadzenColumn>
+    <RadzenColumn Size="6" Style="max-height:41rem; overflow:auto">
+       @foreach (var chunk in _tokenizedChunks)
+       {
+           <RadzenCard>
+               <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle1">Chunk @(chunk.ChunkNumber+1)</RadzenText>
+               <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Caption">@chunk.TokenCount Tokens</RadzenText>
+               <RadzenButton Size=ButtonSize.ExtraSmall Click="@(() => HandleToggle(chunk))" Text="@(chunk.IsTokenized ? "Text" : "Tokenize")"></RadzenButton>
+               @{ var isToken = chunk.IsTokenized;}
+               @if (isToken)
+               {
+                    <TextAsTokens TokenStrings="@chunk.TokenStrings" FontSize=".8rem"></TextAsTokens>
+               }
+               else
+               {
+                   <RadzenText Style="font-size:.8rem">@chunk.Text</RadzenText>
+               }
+           </RadzenCard>
+       }
+       
+    </RadzenColumn>
+</RadzenRow>

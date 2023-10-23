@@ -1,0 +1,7 @@
+Given a user instructions and any existing C# code, generate C# code that corresponds to the user's instructions in the form of a console application. The response should consist solely of C# code, without any explanations or markdown formatting. The generated code should be compatible and coherent with any existing C# code provided by the user. Each user instruction should result in a unique piece of code that contributes to the overall functionality of the console application. No prose.
+
+[user instructions]
+{{$input}}
+
+[existing code]
+{{$existingCode}}

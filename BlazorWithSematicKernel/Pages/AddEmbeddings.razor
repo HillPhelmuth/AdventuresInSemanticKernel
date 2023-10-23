@@ -1,0 +1,93 @@
+﻿@page "/testEmbed"
+
+<RadzenSteps @bind-SelectedIndex="_currentStep">
+    <Steps>
+        <RadzenStepsItem Text="Select Vector Store">
+            <RadzenRow>
+                <RadzenColumn Size="3"></RadzenColumn>
+                <RadzenColumn Size="6">
+                    <RadzenCard>
+                        <RadzenFormField Text="Memory Source">
+                            <ChildContent>
+                                <RadzenDropDown Name="MemoryStoreType" Data="_memoryStoreTypes" ValueProperty="Key" TextProperty="Value" TValue="MemoryStoreType" @bind-Value="_memoryStoreType"></RadzenDropDown>
+                            </ChildContent>
+                            <Helper>
+                                <RadzenText Text="Get the source to use as the vector database"></RadzenText>
+                                <RadzenCompareValidator Text="Please select a source" Component="MemoryStoreType" Operator="CompareOperator.NotEqual" Value="MemoryStoreType.None" Popup="true" Style="position:absolute"></RadzenCompareValidator>
+                            </Helper>
+                        </RadzenFormField><br/>
+                        <RadzenButton Text="Next" Click="@(() => _currentStep++)"></RadzenButton>
+                    </RadzenCard>
+                </RadzenColumn>
+                <RadzenColumn Size="3"></RadzenColumn>
+            </RadzenRow>
+        </RadzenStepsItem>
+        <RadzenStepsItem Disabled="@(_memoryStoreType == MemoryStoreType.None)" Text="Create or generate text chunks">
+            <RadzenTemplateForm Data="_testForm" TItem="TestForm" Submit="Submit">
+                <RadzenRow>
+                    <RadzenColumn Size="8">
+                        <RadzenFormField Style="width: 100%" Text="Input to compare from">
+                            <RadzenTextArea @bind-Value="@_testForm.Input" Style="width: 100%; height: 3rem;"></RadzenTextArea>
+                        </RadzenFormField>
+
+                        @foreach (var input in _testForm.TestInputs)
+                        {
+                            <RadzenFormField Style="width:100%;" Text="Compare to">
+                                <RadzenTextArea @bind-Value="@input.Input" Style="width: 100%; height:3rem;"></RadzenTextArea>
+
+                            </RadzenFormField>
+                        }
+                        <br />
+                        <RadzenButton ButtonType="ButtonType.Button" Size="ButtonSize.Small" Style="" Text="Add" Click="Add" Icon="add"></RadzenButton>
+                    </RadzenColumn>
+                    <RadzenColumn Size="4">
+                        <RadzenButton ButtonType="ButtonType.Button" Click=GetVectors IsBusy="_isBusy" Icon="dvr" BusyText="Generating Items..." Text="Generate Random Items"></RadzenButton><br />
+                        <RadzenFormField Text="Output Visualization Type">
+                            <RadzenRadioButtonList @bind-Value="_testForm.VisualType" Orientation="Radzen.Orientation.Vertical">
+                                <Items>
+                                    <RadzenRadioButtonListItem Value="VisualType.OneToManyGrid" Text="@VisualType.OneToManyGrid.GetDisplayDescription()"></RadzenRadioButtonListItem>
+                                    <RadzenRadioButtonListItem Value="VisualType.ManyToManyHeatMap" Text="@VisualType.ManyToManyHeatMap.GetDisplayDescription()"></RadzenRadioButtonListItem>
+                                </Items>
+                            </RadzenRadioButtonList>
+                        </RadzenFormField>
+                        <br />
+
+                        <RadzenButton ButtonType="ButtonType.Submit" Text="Submit" IsBusy="_isBusy" BusyText="Running..."></RadzenButton>
+                        <br />
+                        @if (_scores.Any())
+                        {
+                            <RadzenButton Text="Next" Click="@(() => _currentStep++)"></RadzenButton>
+                        }
+                        
+                    </RadzenColumn>
+                </RadzenRow>
+            </RadzenTemplateForm>
+        </RadzenStepsItem>
+        <RadzenStepsItem Text="Results" Disabled="!_scores.Any()">
+            @if (_testForm.VisualType == VisualType.OneToManyGrid)
+            {
+                <RadzenCard>
+                    <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.DisplayH5">Similarty to <span style="font-weight: bold; font-size:120%"> @_testForm.Input</span></RadzenText>
+                    <RadzenDataGrid Data="_scores" TItem="SimScore" AllowSorting="true" Density="Density.Compact">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="SimScore" Property="Prompt" Title="Prompt"></RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="SimScore" Property="Score" Title="Score">
+                                <Template Context="score">
+                                    @score.Score.ToString("P2");
+                                </Template>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                </RadzenCard>
+            }
+            else if (_testForm.VisualType == VisualType.ManyToManyHeatMap)
+            {
+                <RadzenCard>
+                    <SimilarityMap HasRendered="HasRendered" SimilarityScores="_scores"></SimilarityMap>
+                </RadzenCard>
+            }
+        </RadzenStepsItem>
+    </Steps>
+</RadzenSteps>
+<RadzenButton Size="ButtonSize.Small" Style="position:absolute; top:3px; right:3px" Text="Reset All" Click="ResetAll" Icon="restart_alt"></RadzenButton>
+

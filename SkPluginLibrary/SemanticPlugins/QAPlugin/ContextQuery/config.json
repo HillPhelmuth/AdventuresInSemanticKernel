@@ -1,0 +1,64 @@
+{
+  "schema": 1,
+  "description": "Ask the AI for answers contextually relevant to you based on your name, address and pertinent information retrieved from your personal secondary memory",
+  "type": "completion",
+  "completion": {
+    "max_tokens": 456,
+    "temperature": 0.0,
+    "top_p": 0.0,
+    "presence_penalty": 0.0,
+    "frequency_penalty": 0.0,
+    "stop_sequences": [
+      "[done]"
+    ]
+  },
+  "input": {
+    "parameters": [
+      {
+        "name": "input",
+        "description": "current input",
+        "defaultValue": ""
+      },
+      {
+        "name": "history",
+        "description": "The total chat history",
+        "defaultValue": ""
+      },
+      {
+        "name": "firstName",
+        "description": "user's first name",
+        "defaultValue": ""
+      },
+      {
+        "name": "botName",
+        "description": "bot name",
+        "defaultValue": ""
+      },
+      {
+        "name": "lastName",
+        "description": "user's last name",
+        "defaultValue": ""
+      },
+      {
+        "name": "attitude",
+        "description": "the bot persona",
+        "defaultValue": ""
+      },
+      {
+        "name": "city",
+        "description": "user location: city",
+        "defaultValue": ""
+      },
+      {
+        "name": "state",
+        "description": "user location: state",
+        "defaultValue": ""
+      },
+      {
+        "name": "country",
+        "description": "user location: country",
+        "defaultValue": ""
+      }
+    ]
+  }
+}

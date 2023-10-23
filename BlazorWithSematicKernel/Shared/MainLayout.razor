@@ -1,0 +1,57 @@
+﻿@inherits LayoutComponentBase
+
+
+<PageTitle>Adventures in Semantic Kernel</PageTitle>
+<RadzenLayout style="height: 99vh">
+    <RadzenHeader>
+        <RadzenRow AlignItems="AlignItems.Center">
+            <RadzenColumn Size="1"><RadzenSidebarToggle Click="@(() => _sidebar1Expanded = !_sidebar1Expanded)" /></RadzenColumn>
+            <RadzenColumn Size="9"><RadzenText TextStyle="TextStyle.DisplayH6" TextAlign="TextAlign.Center" Text="@PageTitle" /></RadzenColumn>
+            <RadzenColumn Size="1">
+                <RadzenButton Click="ShowChat" Text="Chat With SK Docs" Size="ButtonSize.ExtraSmall" Icon="chat"></RadzenButton>
+            </RadzenColumn>
+            <RadzenColumn Size="1">
+                <RadzenLink Style="width:32px; height:32px; margin-left:auto; margin-right:auto; display:block" Path="https://github.com/HillPhelmuth/BlazorWithSematicKernel" Target="_blank">
+                    <RadzenImage Style="width:32px; height:32px" Path="github-mark.svg"></RadzenImage>
+                </RadzenLink>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenHeader>
+    <RadzenSidebar @bind-Expanded="@_sidebar1Expanded">
+        <RadzenPanelMenu>
+            <RadzenPanelMenuItem Text="Home" Icon="home" Path="" />
+            <RadzenPanelMenuItem Text="Samples" MouseEnter="@((args) => ShowTooltip(args, "View, modify, and execute dotnet examples from the Semantic Kernel Repo"))" Icon="shopping_cart" Path="samples" />
+            <RadzenPanelMenuItem Text="Execute Function" MouseEnter="@((args) => ShowTooltip(args, "Select a single plugin function to execute"))" Icon="playlist_add_check" Path="executeFunction"></RadzenPanelMenuItem>
+            <RadzenPanelMenuItem Text="Build Planner" MouseEnter="@((args) => ShowTooltip(args, "Select plugins and functions to build and execute your own:<br/>Action planner,<br/>Sequential planner,<br/>or Kernel execution chain"))" Icon="foundation" Path="planBuilder"></RadzenPanelMenuItem>
+            <RadzenPanelMenuItem Text="Custom Examples">
+                <RadzenPanelMenuItem Text="Web Chat" MouseEnter="@((args) => ShowTooltip(args, "Chat with the web using <em>Bing</em>"))" Icon="public" Path="web"></RadzenPanelMenuItem>
+                <RadzenPanelMenuItem Text="Wikipedia Chat" MouseEnter="@((args) => ShowTooltip(args, "Chat with the web using <em>Wikipedia</em>"))" Icon="html" Path="wikiChat"></RadzenPanelMenuItem>
+                <RadzenPanelMenuItem Text="C# REPL Plugin" MouseEnter="@((args) => ShowTooltip(args, "Use natural language prompts to generate and execute c# code"))" Icon="code" Path="repl"></RadzenPanelMenuItem>
+                <RadzenPanelMenuItem Text="Dnd Story Gen" MouseEnter="@((args) => ShowTooltip(args, "Example of a Sequential Planner at work. Planner has access to the D&D5e Api plugin and multiple semantic plugins.<br/> It uses these to create and execute a plan to generate a short story."))" Icon="casino" Path="dnd"></RadzenPanelMenuItem>
+            </RadzenPanelMenuItem>
+            <RadzenPanelMenuItem Text="SK Memory">
+                <RadzenPanelMenuItem Text="Vector Playground" MouseEnter="@((args) => ShowTooltip(args, "Play around with embeddings and similarities using your own or generated text snippets"))" Icon="polyline" Path="testEmbed"></RadzenPanelMenuItem>
+                <RadzenPanelMenuItem Text="SK + Custom Hdbscan Clustering" MouseEnter="@((args) => ShowTooltip(args, "See how embeddings can be used to cluster text items, and then generate a title and topic list for each cluster using semantic plugins"))" Icon="diversity_2" Path="cluster"></RadzenPanelMenuItem>
+            </RadzenPanelMenuItem>
+            <RadzenPanelMenuItem Text="Tokens">
+                <RadzenPanelMenuItem Text="Chunking and Tokenization" MouseEnter="@((args) => ShowTooltip(args, "Generate or add text, set the text chuncking paramters, and then see the Semantic Kernel TextChunker work"))" Icon="short_text" Path="textchunking"></RadzenPanelMenuItem>
+                <RadzenPanelMenuItem Text="Tinker with Tokens" MouseEnter="@((args) => ShowTooltip(args, "See how input text translates into tokens. Select specific tokens to set the LogitBias for a chat completion request."))" Icon="construction" Path="tokens"></RadzenPanelMenuItem>
+            </RadzenPanelMenuItem>
+
+        </RadzenPanelMenu>
+        <hr />
+        <RadzenButton Icon="settings_input_component" Variant="Variant.Text" Text="Configuration" Click="ShowConfig"></RadzenButton>
+       
+    </RadzenSidebar>
+    <RadzenBody Style="padding:.75rem .5rem">
+        <div>
+            @Body
+        </div>
+     
+    </RadzenBody>
+   
+   
+</RadzenLayout>
+
+
+

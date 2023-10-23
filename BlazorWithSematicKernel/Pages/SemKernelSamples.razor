@@ -1,0 +1,29 @@
+﻿@page "/samples"
+<PageTitle>Samples</PageTitle>
+<RadzenRow Style="max-height: 80vh;">
+    <RadzenColumn Size="6">
+        <RadzenTemplateForm Data="_selectServiceForm" TItem="SelectServiceForm" Submit="Submit">
+            <RadzenFormField Style="width:100%" Text="Example Name">
+                <RadzenDropDown Style="width:100%" Data="_exampleCodeFiles" TValue="CodeFile" TextProperty="Name" @bind-Value="@_selectServiceForm.SelectedCodeFile">
+                   
+                </RadzenDropDown>
+            </RadzenFormField>
+            <br />
+           
+            <RadzenButton ButtonType="ButtonType.Submit" Text="Select"></RadzenButton>
+        </RadzenTemplateForm>
+        <RadzenCard>
+            <RadzenText TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Center" Text="Sample Code"></RadzenText>
+            
+                <RadzenLabel> <RadzenCheckBox @bind-Value="_compileAndRun" /> Compile and Run (check if you modified code below)</RadzenLabel>
+                <RadzenButton Style="float:right" Disabled="@(_selectServiceForm.SelectedCodeFile is null)" Size="ButtonSize.ExtraSmall" Text="Execute" Click="@(() => Execute(_compileAndRun))" IsBusy="_isBusy" BusyText="Executing..."></RadzenButton>
+            
+            <AceEditor @ref="_editor" Options="_aceEditorOptions" Style="height: 25rem" OnEditorInit="HandleInit"></AceEditor>
+        </RadzenCard>
+    </RadzenColumn>
+    <RadzenColumn Size="6">
+        <RadzenButton Style="position:absolute;right:1rem;top:.5rem" Icon="close" Size="ButtonSize.ExtraSmall" Click="@(() => _output = "")"></RadzenButton>
+        <RadzenTextArea Style="background-color: black; color: white; font-size: 12px; line-height: 14px; height: 40rem; width: 100%" @bind-Value=_output></RadzenTextArea>
+
+    </RadzenColumn>
+</RadzenRow>

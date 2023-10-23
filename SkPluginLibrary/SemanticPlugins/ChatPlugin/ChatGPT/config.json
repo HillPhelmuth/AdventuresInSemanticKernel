@@ -1,0 +1,64 @@
+{
+  "schema": 1,
+  "description": "A complex chat using SemanticTextMemory and Time plugins and user details",
+  "type": "completion",
+  "completion": {
+    "max_tokens": 450,
+    "temperature": 0.9,
+    "top_p": 1.0,
+    "presence_penalty": 0.6,
+    "frequency_penalty": 0.0,
+    "stop_sequences": [
+      "[Done]"
+    ]
+  },
+  "input": {
+    "parameters": [
+      {
+        "name": "input",
+        "description": "current input",
+        "defaultValue": ""
+      },
+      {
+        "name": "history",
+        "description": "The total chat history",
+        "defaultValue": ""
+      },
+      {
+        "name": "firstName",
+        "description": "user's first name",
+        "defaultValue": ""
+      },
+      {
+        "name": "botName",
+        "description": "bot name",
+        "defaultValue": ""
+      },
+      {
+        "name": "lastName",
+        "description": "user's last name",
+        "defaultValue": ""
+      },
+      {
+        "name": "attitude",
+        "description": "the bot persona",
+        "defaultValue": ""
+      },
+      {
+        "name": "city",
+        "description": "user location: city",
+        "defaultValue": ""
+      },
+      {
+        "name": "state",
+        "description": "user location: state",
+        "defaultValue": ""
+      },
+      {
+        "name": "country",
+        "description": "user location: country",
+        "defaultValue": ""
+      }
+    ]
+  }
+}

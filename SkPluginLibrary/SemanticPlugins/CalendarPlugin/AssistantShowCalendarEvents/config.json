@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "description": "",
+  "type": "completion",
+  "completion": {
+    "max_tokens": 100,
+    "temperature": 0.2,
+    "top_p": 0.0,
+    "presence_penalty": 0.0,
+    "frequency_penalty": 0.0,
+    "stop_sequences": [
+      "\n"
+    ]
+  },
+  "input": {
+    "parameters": [
+      {
+        "name": "input",
+        "description": "The user instructions",
+        "defaultValue": ""
+      },
+      {
+        "name": "context",
+        "description": "The calender events context",
+        "defaultValue": ""
+      }
+    ]
+  }
+}

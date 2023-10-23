@@ -1,0 +1,10 @@
+{
+  "version": "1.0",
+  "defaultProvider": "cdnjs",
+  "libraries": [
+    {
+      "library": "prism@1.29.0",
+      "destination": "wwwroot/js/lib/prism/"
+    }
+  ]
+}

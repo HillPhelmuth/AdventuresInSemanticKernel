@@ -1,0 +1,15 @@
+﻿<RadzenRow>
+    <RadzenColumn>
+        <RadzenCard>
+            <RadzenText TextStyle="TextStyle.H6" TextAlign="TextAlign.Center" Text="Chat with Semantic Kernel Documentation"></RadzenText>
+            @* <RadzenText TextStyle="TextStyle.Body2" TextAlign="TextAlign.Right">
+                <RadzenLink Style="position:absolute; right:2rem; top: 2rem" Path="https://learn.microsoft.com/en-us/semantic-kernel/overview/" Text="Docs" Target="_blank"></RadzenLink>
+            </RadzenText> *@
+            <RadzenLink Style="position:absolute; right:2rem; top: 2rem" Path="https://learn.microsoft.com/en-us/semantic-kernel/overview/" Text="Docs" Target="_blank"></RadzenLink>
+            <RadzenButton Style="position:absolute; left:2rem; top: 2rem" Variant="Variant.Text" Size="ButtonSize.ExtraSmall" Icon="close" Text="clear" Click="ClearChat"></RadzenButton>
+
+            <ChatView ResetOnClose="false" Height="75vh" @ref=_chatView></ChatView>
+        </RadzenCard>
+        <UserInput ButtonLabel="Send" HelperText="User Input" MessageSubmit="HandleInput" IsBusy="_isBusy"></UserInput>
+    </RadzenColumn>
+</RadzenRow>

@@ -1,0 +1,21 @@
+﻿.user {
+    background: radial-gradient(circle, #C19A6B, #9F6C3F, #b45918);
+    background-size: 50% 50%;
+    color: black;
+    font-weight: bold;
+    width: 93%;
+    margin-right: auto;
+    border-radius: 30px 30px 30px 0;
+}
+
+.assistant {
+    background: radial-gradient(circle, #704214, #3c2206, #181000, #000000);
+    background-size: 50% 50%;
+    color: white;
+    width: 93%;
+    margin-left: auto;
+    border-radius: 30px 30px 0 30px;
+}
+h1, h2, h3 {
+    color: white !important;
+}

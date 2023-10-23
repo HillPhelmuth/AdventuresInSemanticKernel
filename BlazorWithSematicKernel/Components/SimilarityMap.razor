@@ -1,0 +1,18 @@
+﻿@using BlazorWithSematicKernel.Model
+@if (_isReady)
+{
+    <ApexChart @ref=_apexChart TItem="SimScore" Title="Cosine Similarity Heatmap" Options="_options" OnRendered="HandleRender" >
+        @foreach (var score in SimilarityScores.GroupBy(x => x.Prompt))
+        {
+            <ApexPointSeries SeriesType="SeriesType.Heatmap"
+                             Items="score.OrderBy(x => x.Prompt).ThenByDescending(x => x.ComparedTo)"
+                             TItem="SimScore"
+                             Name="@score.Key"
+                             XValue="@(e => e.ComparedTo!)"
+                             YValue="@(e => (decimal) Math.Round(e.Score, 3))" ShowDataLabels="true"></ApexPointSeries>
+        }
+
+
+
+    </ApexChart>
+}

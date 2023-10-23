@@ -1,0 +1,252 @@
+{
+  "openapi": "3.0.2",
+  "info": {
+    "title": "getit.ai API",
+    "description": "\ngetit.ai API helps you find chat-gpt-plugins and autonomous agents. 🚀\n\n## Open GPT Plugins Store API\n\nYou can **search plugins** and **categories**.\n\nManifests are cached (24h) and plugin logos are optimized for 125x125 webp format and also cached (24h). (We saw some multi MB logo files)\n\nCORS is disabled for this domain.\n\nIf you use this API please let your users know about it. You can use the following text:\n\nPlugins provided by [getit.ai](https://getit.ai) - [Open GPT Plugins Store](https://getit.ai/gpt-plugins)\n\nIn Markdown:\n```markdown\nPlugins provided by [getit.ai](https://getit.ai) - [Open GPT Plugins Store](https://getit.ai/gpt-plugins)\n```\n\n",
+    "contact": {
+      "name": "getit.ai",
+      "url": "https://getit.ai",
+      "email": "info@getit.ai"
+    },
+    "version": "0.0.2"
+  },
+  "paths": {
+    "/plugins": {
+      "get": {
+        "tags": [
+          "gpt-plugins"
+        ],
+        "summary": "Get Plugins",
+        "description": "Returns a list of GPT Plugins. Search and category filter is possible.\n:param search:\n:param category:\n:return:",
+        "operationId": "get_plugins_plugins_get",
+        "parameters": [
+          {
+            "required": false,
+            "schema": {
+              "title": "Search",
+              "type": "string"
+            },
+            "name": "search",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "title": "Category",
+              "type": "string"
+            },
+            "name": "category",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Get Plugins Plugins Get",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Plugin"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/plugins/{plugin_id}": {
+      "get": {
+        "tags": [
+          "gpt-plugins"
+        ],
+        "summary": "Get Plugin Manifest",
+        "description": "Returns an optimized plugin manifest json with optimized logo images\n:param plugin_id:\n:return:",
+        "operationId": "get_plugin_manifest_plugins__plugin_id__get",
+        "parameters": [
+          {
+            "required": true,
+            "schema": {
+              "title": "Plugin Id",
+              "type": "integer"
+            },
+            "name": "plugin_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/categories": {
+      "get": {
+        "tags": [
+          "gpt-plugins"
+        ],
+        "summary": "Get Categories",
+        "operationId": "get_categories_categories_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Get Categories Categories Get",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Category"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Category": {
+        "title": "Category",
+        "required": [
+          "category"
+        ],
+        "type": "object",
+        "properties": {
+          "category": {
+            "title": "Category",
+            "type": "string"
+          }
+        }
+      },
+      "HTTPValidationError": {
+        "title": "HTTPValidationError",
+        "type": "object",
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            }
+          }
+        }
+      },
+      "Plugin": {
+        "title": "Plugin",
+        "required": [
+          "id",
+          "title",
+          "description",
+          "category"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "logo": {
+            "title": "Logo",
+            "type": "string"
+          },
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "agent_manifest_url": {
+            "title": "Agent Manifest Url",
+            "type": "string"
+          },
+          "is_local": {
+            "title": "Is Local",
+            "type": "boolean",
+            "default": false
+          },
+          "auth_needed": {
+            "title": "Auth Needed",
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "ValidationError": {
+        "title": "ValidationError",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "type": "object",
+        "properties": {
+          "loc": {
+            "title": "Location",
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            }
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "gpt-plugins",
+      "description": "Search for gpt and ai plugins."
+    }
+  ]
+}

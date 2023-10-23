@@ -1,0 +1,52 @@
+﻿<CascadingValue Name="PageTitle" Value="@_pageTitle">
+    <CascadingAuthenticationState>
+        <Router AppAssembly="@typeof(App).Assembly" OnNavigateAsync="HandleNavigation">
+            <Found Context="routeData">
+                <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                    <NotAuthorized>
+                        <h1>Sorry</h1>
+                        <p>You're not authorized to access this page. You may need to log in.</p>
+                        <a href="MicrosoftIdentity/Account/SignIn">Log in</a>
+                    </NotAuthorized>
+                </AuthorizeRouteView>
+                <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+            </Found>
+            <NotFound>
+                <PageTitle>Not found</PageTitle>
+                <LayoutView Layout="@typeof(MainLayout)">
+                    <p role="alert">Sorry, there's nothing at this address.</p>
+                </LayoutView>
+            </NotFound>
+        </Router>
+    </CascadingAuthenticationState>
+</CascadingValue>
+<RadzenTooltip />
+<RadzenDialog />
+<RadzenNotification />
+@code {
+
+    private string _pageTitle = "Adventures in Semantic Kernel";
+
+    private void HandleNavigation(NavigationContext navigationContext)
+    {
+        var path = navigationContext.Path;
+        Console.WriteLine($"Path: {path}");
+        _pageTitle = path switch
+        {
+            "samples" => "Samples and Code",
+            "executeFunction" => "Execute Plugin Function",
+            "planBuilder" => "Build and Execute a Plan",
+            "web" => "Web Chat",
+            "wikiChat" => "Wikipedia Chat",
+            "repl" => "C# Code Gen REPL Plugin",
+            "dnd" => "Dnd Story Generator with Sequential Planner",
+            "testEmbed" => "SK Memory & Vector Playground",
+            "cluster" => "SK Memory & Custom Hdbscan Clustering",
+            "textchunking" => "Chunking and Tokenization",
+            "tokens" => "Tinker with Tokens and LogitBias",
+            _ => "Adventures in Semantic Kernel"
+        };
+        StateHasChanged();
+    }
+
+}

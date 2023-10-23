@@ -1,0 +1,282 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "MediumGPTPlugin API",
+    "description": "A simple API for fetching stories from Medium",
+    "version": "0.0.1"
+  },
+  "servers": [
+    {
+      "url": "https://medium.com"
+    }
+  ],
+  "paths": {
+    "/_/gpt/v1/trending": {
+      "get": {
+        "summary": "Get trending stories",
+        "description": "Returns a list of stories that are currently trending on Medium",
+        "operationId": "getTrendingStories",
+        "responses": {
+          "200": {
+            "description": "A list of trending stories",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Story"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/_/gpt/v1/search": {
+      "get": {
+        "summary": "Search stories by keyword",
+        "description": "Returns a list of stories that match the given search query",
+        "operationId": "getSearch",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "description": "The keyword to search for in story titles and subtitles",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of searched stories that match the given query",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Story"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/_/gpt/v1/story/{id}": {
+      "get": {
+        "summary": "Get story by ID",
+        "description": "Returns the full details of the story with the given ID",
+        "operationId": "getStory",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the story to retrieve",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The story queried by ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Story"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/_/gpt/v1/topic/{id}": {
+      "get": {
+        "summary": "Get stories by topic ID",
+        "description": "Returns a list of popular, latest stories by the given topic ID",
+        "operationId": "getTopic",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the topic to retrieve stories for",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of stories that are tagged with the given topic ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Topic"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Topic": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "popularPosts": {
+            "type": "object",
+            "properties": {
+              "postPreviews": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "post": {
+                      "$ref": "#/components/schemas/Story"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "latestPosts": {
+            "type": "object",
+            "properties": {
+              "postPreviews": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "post": {
+                      "$ref": "#/components/schemas/Story"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "relatedTopics": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "topic": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Story": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique ID of the story"
+          },
+          "title": {
+            "type": "string",
+            "description": "The title of the story"
+          },
+          "mediumUrl": {
+            "type": "string",
+            "description": "The URL of the story on Medium"
+          },
+          "firstPublishedAt": {
+            "type": "integer",
+            "description": "The timestamp (in seconds) of when the story was first published"
+          },
+          "isLocked": {
+            "type": "boolean",
+            "description": "Whether the story is locked behind the paywall"
+          },
+          "previewContent": {
+            "type": "object",
+            "description": "The preview content of the story",
+            "properties": {
+              "subtitle": {
+                "type": "string",
+                "description": "The subtitle of the story"
+              }
+            }
+          },
+          "creator": {
+            "type": "object",
+            "description": "The creator of the story",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "The name of the creator"
+              }
+            }
+          },
+          "topics": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "description": "A topic of the story",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The name of the topic"
+                }
+              }
+            }
+          },
+          "content": {
+            "type": "object",
+            "description": "The content of the story",
+            "properties": {
+              "bodyModel": {
+                "type": "object",
+                "description": "The body of the story",
+                "properties": {
+                  "paragraphs": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "A paragraph of the story",
+                      "properties": {
+                        "text": {
+                          "type": "string",
+                          "description": "The text of the paragraph"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,32 @@
+﻿@page "/"
+
+<PageTitle>Home</PageTitle>
+
+<RadzenRow>
+    <RadzenColumn Size="2"></RadzenColumn>
+    <RadzenColumn Size="8">
+        <RadzenText TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Center">
+            Welcome to <em>Adventures in Semantic Kernel</em>!
+        </RadzenText>
+        <RadzenText>
+            If you're looking for a fun and interactive way to learn about Microsoft's AI Orchestration library, Semantic Kernel, look no further than "Adventures in Semantic Kernel". This app will take you through the cool features of Semantic Kernel, from creating and managing memories and plans, to executing actions and chaining functions, to building a lively chat experience. You won't just watch and read, you'll also get to play and experiment with these features, and see how they work together in harmony.
+        </RadzenText>
+        <RadzenText>
+            Though it's open source with <em>many</em> great contributions from the community, Semantic Kernel is Microsoft's baby, born out of the desire to make AI services more accessible and easy to use for app developers. It offers a smart set of connectors that let you plug in memories and models to your app, giving it a virtual "brain" that can store and process information. But that's not all; it also gives you access to AI plugins, which act as the "body" of your AI app. These plugins are versatile, with prompts and native functions that can interact with the real world by responding to triggers and performing actions.
+        </RadzenText>
+        <RadzenText>
+            Semantic Kernel is not picky about where it gets its plugins from. It can work with AI plugins from various providers, such as OpenAI or Microsoft. Whether you want to use plugins for ChatGPT, Bing, or Microsoft 365 Copilot, Semantic Kernel can handle models from leaders like OpenAI, Azure, and Hugging Face. As a developer, you have the freedom to either use individual components or combine them to unleash the full potential of Semantic Kernel. Join "Adventures in Semantic Kernel" and discover the magic of AI orchestration.
+        </RadzenText>
+    </RadzenColumn>
+    <RadzenColumn Size="2"></RadzenColumn>
+</RadzenRow>
+<RadzenRow>
+    <RadzenColumn Style="justify-items:center; justify-content:center; display:flex; flex-direction:column">
+        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.DisplayH6" Text="Add Configuration Values"></RadzenText>
+        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle1">Current configuration will work for most plugins, but several <span style="font-weight:800">Samples</span> will require specific resources not available by default.</RadzenText>
+        <RadzenButton Style="width:max-content; margin-left:auto; margin-right:auto" Variant="Variant.Text" Click="ShowConfig" Text="Click Here To Add Configuration Values"></RadzenButton>
+
+    </RadzenColumn>
+</RadzenRow>
+
+

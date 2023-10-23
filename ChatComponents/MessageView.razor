@@ -1,0 +1,4 @@
+﻿<RadzenCard class="@Message.CssClass">
+    <div @ref=_ref style="@(Message.Role == Role.User ? "width:100%" : "width:100%; color:white")">@((MarkupString)AsHtml(Message.Content))</div>
+    <RadzenText Style="color:white" TextStyle="TextStyle.Overline">@Message.TimeStamp.ToString("g")</RadzenText>
+</RadzenCard>

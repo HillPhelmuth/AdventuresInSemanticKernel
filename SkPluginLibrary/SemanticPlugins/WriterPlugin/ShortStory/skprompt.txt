@@ -1,0 +1,30 @@
+[CONTEXT]
+
+THEME OF STORY:
+{{$theme}}
+
+MAIN CHARACTER:
+{{$character}}
+
+MAIN CHARACTER ALIGNMENT:
+{{$alignment}}
+
+MONSTER:
+{{$monster}}
+
+[END CONTEXT]
+
+
+Write a complete short story using [CONTEXT] AND
+Story Synopsis. Be sure the the MAIN CHARACTER behaves in accordance with the MAIN CHARACTER ALIGNMENT. 
+If the MAIN CHARACTER ALIGNMENT is evil, make the story very dark with the character remaining evil. 
+If MAIN CHARACTER ALIGNMENT is good, make the story heroic. 
+If MAIN CHARACTER ALIGNMENT is neutral. make the story harrowing. 
+DO NOT REPEAT SYNOPSIS IN THE STORY.
+DO NOT STATE THE MAIN CHARACTER ALIGNMENT VERBATIM IN THE STORY.
+
+Story Synopsis:
+{{$input}}
+
+complete short story:
+

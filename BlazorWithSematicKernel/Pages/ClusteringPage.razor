@@ -1,0 +1,74 @@
+﻿@page "/cluster"
+@using SkPluginLibrary.Services
+<RadzenText TextStyle="TextStyle.DisplayH6" TextAlign="TextAlign.Center" Text="Use Embeddings to Cluster Content"></RadzenText>
+<RadzenText TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Center" Text="Select settings for clustering algorithm and then use LLM to assign a title and topics"></RadzenText>
+<RadzenRow>
+    <RadzenColumn Size="5">
+        <RadzenCard>
+            <RadzenText TextStyle="TextStyle.H5" TextAlign="TextAlign.Center" Text="Set Paramters for HDBSCAN"></RadzenText>
+            <RadzenCard>
+                <RadzenText TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Center" Text="Example content is Semantic Kernel Documentation"></RadzenText>
+                <RadzenText TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Center" Text="Supplement example content with uploaded Text or Pdf Files"></RadzenText>
+                <RadzenLink Path="https://learn.microsoft.com/en-us/semantic-kernel/overview/" Target="_blank" Text="See Source Content"></RadzenLink>
+                <RadzenTemplateForm TItem="FileUploadForm" Data="_fileUploadForm" Submit="HandleFile">
+                    <RadzenFileInput Error="HandleError" MaxFileSize="FileUploadForm.MaxFileSize" Name="File" ChooseText="Upload pdf, txt or docx file" @bind-FileName="@_fileUploadForm.FileName" TValue="string" @bind-Value="@_fileUploadForm.FileBase64" @bind-FileSize="_fileUploadForm.FileSize" Accept="text/plain,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"></RadzenFileInput>
+                    <RadzenRequiredValidator Component="File" Text="Upload a file" Popup=true Style="position:absolute"></RadzenRequiredValidator>
+                    <RadzenButton Size="ButtonSize.Small" ButtonType="ButtonType.Submit" Text="Save" Icon="save"></RadzenButton>
+                </RadzenTemplateForm>
+            </RadzenCard>
+
+            <RadzenTemplateForm Data="_clusterForm" TItem="ClusterForm" Submit="Submit">
+                <RadzenFormField Text="Item Count">
+                    <RadzenNumeric @bind-Value="@_clusterForm.ItemCount" Min="50" Max="2000" Step="10"></RadzenNumeric>
+                </RadzenFormField><br />
+                <RadzenFormField Text="Min Points">
+                    <RadzenNumeric @bind-Value="@_clusterForm.MinPoints" Min="2" Max="100" Step="1"></RadzenNumeric>
+                </RadzenFormField><br />
+                <RadzenFormField Text="Min Cluster Size">
+                    <RadzenNumeric @bind-Value="@_clusterForm.MinCluster" Min="2" Max="100" Step="1"></RadzenNumeric>
+                </RadzenFormField><br />
+                <RadzenFormField Text="Distance Calculation Function">
+                    <RadzenDropDown Data="_distanceFunctionDescriptions" TValue="DistanceFunction" ValueProperty="Key" TextProperty="Value" @bind-Value="_clusterForm.DistanceFunction">
+                        <Template Context="ctx">
+                            <RadzenText TextStyle="TextStyle.Subtitle2" Text="@((ctx as KeyValuePair<DistanceFunction, string>?).Value.Key.ToString())"></RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2" Text="@((ctx as KeyValuePair<DistanceFunction, string>?).Value.Value)"></RadzenText>
+                        </Template>
+                    </RadzenDropDown>
+                </RadzenFormField><br />
+                <RadzenButton ButtonType="ButtonType.Submit" IsBusy="_isBusy" BusyText="Clustering..." Text="Cluster & Title"></RadzenButton>
+            </RadzenTemplateForm>
+
+
+        </RadzenCard>
+
+        <RadzenCard>
+            <RadzenTextArea Style="width:100%; height:20rem" Value="@_outputText"></RadzenTextArea>
+        </RadzenCard>
+    </RadzenColumn>
+    <RadzenColumn Size="7">
+
+        <RadzenCard>
+            <RadzenDataGrid Data="_clusters" TItem="ClusterDisplay" AllowSorting="true" AllowPaging="true" AllowFiltering="true" PageSize="5" Density="Density.Compact" ShowPagingSummary="true" Style="width: 100%">
+                <Template Context="cluster">
+                    <RadzenDataGrid Data="@cluster.MemoryResults" TItem="MemoryResult" AllowSorting="true" AllowPaging="true" AllowFiltering="true" PageSize="5" Density="Density.Compact" ShowPagingSummary="true" Style="width: 100%">
+                        <Columns>
+                            @* <RadzenDataGridColumn TItem="MemoryResult" Title="Cluster" Property="@nameof(MemoryResult.Cluster)" Width="20%"></RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="MemoryResult" Title="Cluster Title" Property="@nameof(MemoryResult.ClusterTitle)" Width="35%"></RadzenDataGridColumn> *@
+                            <RadzenDataGridColumn TItem="MemoryResult" Title="Title" Property="@nameof(MemoryResult.Title)" Width="85%"></RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="MemoryResult" Width="15%">
+                                <Template Context="mem">
+                                    <RadzenButton Click="@(() => ShowText(mem))" Icon="search" Text="View" Size="ButtonSize.ExtraSmall"></RadzenButton>
+                                </Template>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                </Template>
+                <Columns>
+                    <RadzenDataGridColumn TItem="ClusterDisplay" Title="Label" Property="CluserLabel" Width="10%"></RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="ClusterDisplay" Title="Cluster Name" Property="Title" Width="45%"></RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="ClusterDisplay" Title="Topics" Property="Tags" Width="45%"></RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </RadzenCard>
+    </RadzenColumn>
+</RadzenRow>
