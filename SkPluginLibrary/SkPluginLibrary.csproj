@@ -29,13 +29,13 @@
     <None Remove="ApiPlugins\DndApiPlugin\openapi.json" />
     <None Remove="ApiPlugins\MathApiPlugin\openapi.json" />
     <None Remove="ApiPlugins\VideoPlugin\openapi.json" />
+    <None Remove="ChatGptPluginManifests.json" />
     <None Remove="SemanticPlugins\CitationsPlugin\config.json" />
     <None Remove="SemanticPlugins\CodingPlugin\CSharpSemanticKernel\config.json" />
     <None Remove="SemanticPlugins\CodingPlugin\CSharpSemanticKernel\skprompt.txt" />
     <None Remove="SemanticPlugins\IntentDetectionPlugin\GenericIntent\config.json" />
     <None Remove="SemanticPlugins\IntentDetectionPlugin\GenericIntent\skprompt.txt" />
     <None Remove="SemanticPlugins\MathApiPlugin\ExtractExpression\skprompt.txt" />
-    <None Remove="SemanticPlugins\MathApiPlugin\openapi.json" />
     <None Remove="SemanticPlugins\MiscPlugin\ElementAtIndex\config.json" />
     <None Remove="SemanticPlugins\MiscPlugin\TopItems\config.json" />
     <None Remove="SemanticPlugins\SummarizePlugin\QueryNoteGen\config.json" />
@@ -44,39 +44,45 @@
   </ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Azure.Storage.Blobs" Version="12.13.1" />
+		<PackageReference Include="Azure.Storage.Files.Shares" Version="12.1.0" />
+		<PackageReference Include="Azure.Storage.Queues" Version="12.11.1" />
 		<PackageReference Include="AI.Dev.OpenAI.GPT" Version="1.0.2" />
 		<PackageReference Include="Azure.Identity" Version="1.10.2" />
+		<PackageReference Include="Google.Apis.YouTube.v3" Version="1.63.0.3205" />
 		<PackageReference Include="HdbscanSharp" Version="2.0.0" />
 		<PackageReference Include="Html2Markdown" Version="5.1.0.703" />
 		<PackageReference Include="Microsoft.DeepDev.TokenizerLib" Version="1.3.2" />
+		<PackageReference Include="Microsoft.Extensions.Azure" Version="1.5.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="7.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="7.0.0" />
 		<PackageReference Include="Microsoft.ML.Tokenizers" Version="0.20.1" />
-		<PackageReference Include="Microsoft.SemanticKernel.Core" Version="1.0.0-beta2" />
-		<PackageReference Include="Microsoft.SemanticKernel.Functions.OpenAPI" Version="1.0.0-beta2" />
-		<PackageReference Include="Microsoft.SemanticKernel.Planners.Core" Version="1.0.0-beta2" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Core" Version="1.0.0-beta2" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Document" Version="1.0.0-beta2" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Memory" Version="1.0.0-beta2" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Web" Version="1.0.0-beta2" />
-		<PackageReference Include="Microsoft.SemanticKernel.Reliability.Polly" Version="1.0.0-beta2" />
+		<PackageReference Include="Microsoft.SemanticKernel.Core" Version="1.0.0-beta5" />
+		<PackageReference Include="Microsoft.SemanticKernel.Experimental.Orchestration.Flow" Version="1.0.0-beta5" />
+		<PackageReference Include="Microsoft.SemanticKernel.Functions.OpenAPI" Version="1.0.0-beta5" />
+		<PackageReference Include="Microsoft.SemanticKernel.Planners.Core" Version="1.0.0-beta5" />
+		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Core" Version="1.0.0-beta5" />
+		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Document" Version="1.0.0-beta5" />
+		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Memory" Version="1.0.0-beta5" />
+		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Web" Version="1.0.0-beta5" />
+		<PackageReference Include="Microsoft.SemanticKernel.Reliability.Polly" Version="1.0.0-beta5" />
 		<PackageReference Include="PdfPig" Version="0.1.9-alpha-20230930-06ac8" />
 		<PackageReference Include="ReverseMarkdown" Version="3.25.0" />
 		<PackageReference Include="SharpToken" Version="1.2.12" />
 		<PackageReference Include="System.Linq.Async" Version="6.0.1" />
 		<PackageReference Include="Microsoft.Extensions.Configuration" Version="7.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0" />
-		<PackageReference Include="Microsoft.SemanticKernel" Version="1.0.0-beta2" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.AI.HuggingFace" Version="1.0.0-beta2" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.AzureCognitiveSearch" Version="1.0.0-beta2" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.Chroma" Version="1.0.0-beta2" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.Kusto" Version="1.0.0-beta2" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.Pinecone" Version="1.0.0-beta2" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.Postgres" Version="1.0.0-beta2" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.Qdrant" Version="1.0.0-beta2" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.Redis" Version="1.0.0-beta2" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.Sqlite" Version="1.0.0-beta2" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.Weaviate" Version="1.0.0-beta2" />
+		<PackageReference Include="Microsoft.SemanticKernel" Version="1.0.0-beta5" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.AI.HuggingFace" Version="1.0.0-beta5" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.AzureCognitiveSearch" Version="1.0.0-beta5" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.Chroma" Version="1.0.0-beta5" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.Kusto" Version="1.0.0-beta5" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.Pinecone" Version="1.0.0-beta5" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.Postgres" Version="1.0.0-beta5" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.Qdrant" Version="1.0.0-beta5" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.Redis" Version="1.0.0-beta5" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.Sqlite" Version="1.0.0-beta5" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.Weaviate" Version="1.0.0-beta5" />
 		<PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.7.0" />
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.7.0" />
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="4.7.0" />
@@ -102,6 +108,11 @@
     <Content Include="ApiPlugins\VideoPlugin\openapi.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <EmbeddedResource Include="ChatGptPluginManifests.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </EmbeddedResource>
     <Content Include="SemanticPlugins\CalendarPlugin\AssistantShowCalendarEvents\config.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
@@ -304,10 +315,6 @@
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
     <Content Include="SemanticPlugins\IntentDetectionPlugin\GenericIntent\skprompt.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="SemanticPlugins\MathApiPlugin\openapi.json">
-      <Generator></Generator>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="SemanticPlugins\MiscPlugin\Continue\config.json">

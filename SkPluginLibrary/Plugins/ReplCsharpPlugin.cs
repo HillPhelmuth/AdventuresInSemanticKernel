@@ -4,6 +4,8 @@ using Microsoft.SemanticKernel.Plugins.Memory;
 using SkPluginLibrary.Services;
 using System.ComponentModel;
 using System.Text.Json;
+using Microsoft.SemanticKernel.Connectors.AI.OpenAI;
+using Microsoft.SemanticKernel.TemplateEngine.Basic;
 
 namespace SkPluginLibrary.Plugins
 {
@@ -50,7 +52,7 @@ namespace SkPluginLibrary.Plugins
             _kernel = kernel;
         }
         [SKFunction, SKName("ReplConsole"), Description("Describe c# code to generate and execute")]
-        public async Task<string> ReplConsoleAsync(string input, [SKName("existingCode"), Description("Previously written or generated code")] string? existingCode, SKContext context)
+        public async Task<CodeOutputModel> ReplConsoleAsync(string input, [SKName("existingCode"), Description("Previously written or generated code")] string? existingCode, SKContext context)
         {
 
             context.Variables.Update(input);
@@ -62,10 +64,10 @@ namespace SkPluginLibrary.Plugins
             var refs = CompileResources.PortableExecutableReferences;
             var result = await _compilerService.SubmitCode(codeResult, refs);
             //context.Variables["existingCode"] = existingCode;
-            return JsonSerializer.Serialize(new CodeOutputModel { Output = result, Code = codeResult });
+            return new CodeOutputModel { Output = result, Code = codeResult };
         }
         [SKFunction, SKName("ReplScript"), Description("Describe c# code to generate and execute as a script")]
-        public async Task<string> ReplScriptAsync(string input, [SKName("existingCode"), Description("Previously written or generated code")] string? existingCode, SKContext context)
+        public async Task<CodeOutputModel> ReplScriptAsync(string input, [SKName("existingCode"), Description("Previously written or generated code")] string? existingCode, SKContext context)
 
         {
             context.Variables.Update(input);
@@ -78,47 +80,47 @@ namespace SkPluginLibrary.Plugins
             var sessionId = context.Variables["sessionId"];
             var result = await _scriptService.EvaluateAsync(codeResult);
             //context.Variables["existingCode"] = existingCode;
-            return JsonSerializer.Serialize(new CodeOutputModel { Output = result, Code = codeResult });
+            return new CodeOutputModel { Output = result, Code = codeResult };
+            //return JsonSerializer.Serialize(new CodeOutputModel { Output = result, Code = codeResult });
         }
-        [SKFunction, SKName("SemanticKernelCode"), Description("Describe c# code related to Semantic Kernel to generate and execute")]
-        public async Task<string> SemanticKernelCodeAsync(string input, [SKName("existingCode"), Description("Previously written or generated code")] string? existingCode, SKContext context)
+
+        [SKFunction, Description("Execute provided c# code. Returns the console output")]
+        public async Task<string> ExecuteCode([Description("C# code to execute")]string input)
         {
-            Console.WriteLine("Executing SemanticKernelCode function");
+            input = input.Replace("```csharp", "").Replace("```", "").TrimStart('\n');
+            var result = await _compilerService.SubmitCode(input, CompileResources.PortableExecutableReferences);
+            return result;
+        }
+        
 
-            var mem = new TextMemoryPlugin(_kernel.Memory);
-            _kernel.ImportFunctions(mem, "textmemory");
-            var templateEng = _kernel.PromptTemplateEngine;
-            context.Variables["skcollection"] = "skDocsCollection";
-            var template = "{{textmemory.recall input='What is Semantic Kernel' collection=$skcollection}}";
-            var content = await templateEng.RenderAsync(template, context);
-            Console.WriteLine($"Proof of text memory skill fuctioning:\n\n{content}");
-            var codeResult = "";
-            try
+        [SKFunction,
+         Description(
+             "Seperates c# code into it's distinct syntax elements and describes each element in plain language")]
+        public async Task<string> SummarizeCodeSyntaxElements([Description("The c# code to analyze")] string input)
+        {
+            var summaryFunc = _kernel.CreateSemanticFunction("Generate a summary of the c# code snippet. Be as detailed and specific as possible.", requestSettings: new OpenAIRequestSettings {ChatSystemPrompt = "You are a c# code documentation expert", MaxTokens = 512, Temperature = 0.5});
+            var elementsCollections = CodeElementsDescriptionsModel.ExtractCodeElements(input);
+            var elements = elementsCollections.GetAllSyntaxDescriptions();
+            var tasks = new List<Task<CodeElementDescription>>();
+            foreach (var element in elements)
             {
-                var code = await _kernel.RunAsync(context.Variables, _generateKernelCodeFunction);
-                codeResult = code.Result().Replace("```csharp", "").Replace("```", "").TrimStart('\n');
+                var task = GenerateSnippitDoc(element);
+                tasks.Add(task);
             }
-            catch (Exception ex)
-            {
-                codeResult = $"//Error generating code: {ex.Message}";
-            }
-            context.Variables.Set("existingCode", codeResult);
-            var currentCode = "";
+            var elementsWithDescriptions = await Task.WhenAll(tasks);
+            return JsonSerializer.Serialize(elementsWithDescriptions, new JsonSerializerOptions {WriteIndented = true});
 
-            var newExistingCode = $"{currentCode}\n{codeResult}";
-            var refs = CompileResources.PortableExecutableReferences;
-            try
-            {
-                var result = await _compilerService.SubmitCode(codeResult, refs);
-                return JsonSerializer.Serialize(new CodeOutputModel { Output = result, Code = codeResult });
-            }
-            catch (Exception ex)
-            {
-                var exStr = ex.ToString();
-                return JsonSerializer.Serialize(new CodeOutputModel { Output = exStr, Code = codeResult });
-            }
         }
 
+        private async Task<CodeElementDescription> GenerateSnippitDoc(CodeElementDescription codeElementDescription)
+        {
+            var kernel = CoreKernelService.ChatCompletionKernel("gpt-3.5-turbo-1106");
+            var function = kernel.CreateSemanticFunction("Generate a summary of the c# code snippet. Be as detailed and specific as possible.[Snippet]\n```csharp\n{{$input}}\n````", requestSettings: new OpenAIRequestSettings { ChatSystemPrompt = "You are a c# code documentation expert", MaxTokens = 512, Temperature = 0.5 });
+            var codeSnippet = codeElementDescription.Code;
+            var kernelResult = await kernel.RunAsync(codeElementDescription.Code, function);
+            codeElementDescription.GeneratedDescription = kernelResult.Result();
+            return codeElementDescription;
+        }
     }
 }
 

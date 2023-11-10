@@ -18,6 +18,7 @@ using Microsoft.SemanticKernel.Plugins.Memory;
 using Microsoft.SemanticKernel.Plugins.Web;
 using Microsoft.SemanticKernel.Plugins.Web.Bing;
 using Microsoft.SemanticKernel.Text;
+using Microsoft.SemanticKernel.Reliability.Basic;
 using NCalcPlugins;
 using SkPluginLibrary.Abstractions;
 using SkPluginLibrary.Plugins;
@@ -42,11 +43,10 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
     private readonly ISemanticTextMemory _semanticTextMemory;
     public class CollectionName
     {
-        public const string WikiCollection = "wikiCollection";
-        public const string TestCollection = "testCollection";
         public const string ClusterCollection = "clusterCollection";
         public const string ChatCollection = "chatCollection";
         public const string SkDocsCollection = "skDocsCollection";
+        public const string SkCodeCollection = "skCodeCollection";
     }
     public CoreKernelService(IConfiguration configuration, ScriptService scriptService, CompilerService compilerService, HdbscanService hdbscanService,  ILoggerFactory loggerFactory, BingWebSearchService bingSearchService)
     {
@@ -66,19 +66,21 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
             .Build();
     }
 
-    public static IKernel ChatCompletionOnlyKernel()
+    public static IKernel ChatCompletionKernel(string chatModel = "gpt-3.5-turbo-1106")
     {
-        return Kernel.Builder.WithOpenAIChatCompletionService("gpt-3.5-turbo-16k", TestConfiguration.OpenAI!.ApiKey, alsoAsTextCompletion: true)
+        return new KernelBuilder().WithOpenAIChatCompletionService(chatModel, TestConfiguration.OpenAI!.ApiKey, alsoAsTextCompletion: true)
             .Build();
     }
-    private IKernel CreateKernel(string chatModel = "gpt-3.5-turbo-16k")
+    private IKernel CreateKernel(string chatModel = "gpt-3.5-turbo-1106")
     {
-
-        return Kernel.Builder
+        var kernel = new KernelBuilder()
             .WithLoggerFactory(_loggerFactory)
             .WithOpenAIChatCompletionService(chatModel, TestConfiguration.OpenAI!.ApiKey, alsoAsTextCompletion: true)
             .WithOpenAITextEmbeddingGenerationService("text-embedding-ada-002", TestConfiguration.OpenAI.ApiKey)
+            .WithRetryBasic(new BasicRetryConfig { MaxRetryCount = 3, MinRetryDelay = TimeSpan.FromSeconds(1), UseExponentialBackoff = true })
             .Build();
+        kernel.FunctionInvoked += FunctionInvokedHandler;
+        return kernel;
     }
     private IMemoryStore _playgroundStore = new VolatileMemoryStore();
     private IMemoryStore CreateMemoryStore(MemoryStoreType memoryStoreType)
@@ -93,7 +95,7 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
         };
     }
 
-    private ISemanticTextMemory? CreateSemanticMemoryStore(MemoryStoreType memoryStoreType)
+    private ISemanticTextMemory? CreateSemanticMemory(MemoryStoreType memoryStoreType)
     {
         return new MemoryBuilder()
             .WithMemoryStore(CreateMemoryStore(memoryStoreType))
@@ -101,17 +103,18 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
             .WithLoggerFactory(_loggerFactory)
             .Build();
     }
-    private async Task<IKernel> CreateSqliteKernel(string chatModel = "gpt-3.5-turbo-16k")
+    private async Task<IKernel> CreateSqliteKernel(string chatModel = "gpt-3.5-turbo-1106")
     {
         var sqliteMemoryStore = await SqliteMemoryStore.ConnectAsync(TestConfiguration.Sqlite!.ConnectionString!);
 
         _sqliteStore = sqliteMemoryStore;
         var collections = await _sqliteStore.GetCollectionsAsync().ToListAsync();
         Console.WriteLine($"Collections: {string.Join((string?)"\n", collections)}");
-        return Kernel.Builder
+        return new KernelBuilder()
             .WithLoggerFactory(_loggerFactory)
             .WithOpenAIChatCompletionService(chatModel, TestConfiguration.OpenAI!.ApiKey, alsoAsTextCompletion: true)
             .WithOpenAITextEmbeddingGenerationService("text-embedding-ada-002", TestConfiguration.OpenAI.ApiKey)
+            .WithRetryBasic(new BasicRetryConfig { MaxRetryCount = 3, MinRetryDelay = TimeSpan.FromSeconds(1), UseExponentialBackoff = true })
             .Build();
     }
 
@@ -137,7 +140,7 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
             .WithOpenAITextEmbeddingGenerationService("text-embedding-ada-002", TestConfiguration.OpenAI.ApiKey)
             .Build();
     }
-    private async Task<IKernel> ChatWithSkKernal(string chatModel = "gpt-3.5-turbo-16k")
+    private async Task<IKernel> ChatWithSkKernal(string chatModel = "gpt-3.5-turbo-1106")
     {
         var sqliteMemoryStore = await SqliteMemoryStore.ConnectAsync(TestConfiguration.Sqlite!.ChatContentConnectionString!);
 
@@ -149,21 +152,67 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
             await GenerateAndSaveEmbeddings();
         }
 
-
-        return Kernel.Builder
+        return new KernelBuilder()
             .WithLoggerFactory(_loggerFactory)
             .WithOpenAIChatCompletionService(chatModel, TestConfiguration.OpenAI!.ApiKey, alsoAsTextCompletion: true)
             .WithOpenAITextEmbeddingGenerationService("text-embedding-ada-002", TestConfiguration.OpenAI.ApiKey)
+            .WithRetryBasic(new BasicRetryConfig { MaxRetryCount = 3, MinRetryDelay = TimeSpan.FromSeconds(1), UseExponentialBackoff = true })
             .Build();
     }
 
     private async Task<ISemanticTextMemory> ChatWithSkKernelMemory()
     {
         var sqliteMemoryStore = await SqliteMemoryStore.ConnectAsync(TestConfiguration.Sqlite!.ChatContentConnectionString!);
+        var collections = await sqliteMemoryStore.GetCollectionsAsync().ToListAsync();
+        Console.WriteLine($"Collections: {string.Join((string?)"\n", collections)}");
+        if (!collections.Contains(CollectionName.SkDocsCollection))
+        {
+            await sqliteMemoryStore.CreateCollectionAsync(CollectionName.SkDocsCollection);
+            await GenerateAndSaveEmbeddings();
+        }
+        return new MemoryBuilder()
+            .WithMemoryStore(sqliteMemoryStore)
+            .WithLoggerFactory(_loggerFactory)
+            .WithOpenAITextEmbeddingGenerationService(TestConfiguration.OpenAI.EmbeddingModelId, TestConfiguration.OpenAI.ApiKey)
+            .Build();
+    }
+
+    public static async Task<ISemanticTextMemory> CodeWithSkKernelMemory()
+    {
+        var filename = TestConfiguration.Sqlite!.ChatContentConnectionString!/* _configuration["Sqlite:CodeContentConnectionString"]*/;
+        var sqliteMemoryStore = await SqliteMemoryStore.ConnectAsync(filename);
+        var collections = await sqliteMemoryStore.GetCollectionsAsync().ToListAsync();
+        Console.WriteLine($"Collections: {string.Join((string?)"\n", collections)}");
+        if (!collections.Contains(CollectionName.SkCodeCollection))
+        {
+            await sqliteMemoryStore.CreateCollectionAsync(CollectionName.SkCodeCollection);
+            await GenerateAndSaveCodeEmbeddings();
+        }
         return new MemoryBuilder()
             .WithMemoryStore(sqliteMemoryStore)
             .WithOpenAITextEmbeddingGenerationService(TestConfiguration.OpenAI.EmbeddingModelId, TestConfiguration.OpenAI.ApiKey)
             .Build();
+    
+    }
+
+    private static async Task GenerateAndSaveCodeEmbeddings()
+    {
+        var memory = await CodeWithSkKernelMemory();
+        var pathExamples = @"C:\Users\adamh\source\repos\AdventuresInSemanticKernel\SkPluginLibrary\Examples";
+        var pathGenDocs = Path.Combine(pathExamples, "GenDocs");
+        var readMeFiles = Directory.EnumerateFiles(pathGenDocs, "*.md", SearchOption.AllDirectories);
+        foreach (var file in readMeFiles)
+        {
+            var text = await File.ReadAllTextAsync(file);
+            var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(file);
+            var codeFilePath = Path.Combine(RepoFiles.CodeTextDirectoryPath, $"{fileNameWithoutExtension.Replace(".readme",".txt")}");
+
+            var code = await File.ReadAllTextAsync(codeFilePath);
+            //var codeLines = TextChunker.SplitPlainTextLines(code, 128, StringHelpers.GetTokens);
+            //var codeSections = TextChunker.SplitPlainTextParagraphs(codeLines, 512, 128, fileNameWithoutExtension, StringHelpers.GetTokens);
+            await memory.SaveInformationAsync(CollectionName.SkCodeCollection, text, fileNameWithoutExtension, additionalMetadata:code);
+        }
+        
     }
     private async Task<bool> GenerateAndSaveEmbeddings()
     {
@@ -233,7 +282,7 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
         var initialDescription = characterDescription;
         var detailString = $" a {details.Race} {details.Class} with a {details.Alignment} alignment";
         characterDescription += detailString;
-        var planGenKernel = CreateKernel();
+        var planGenKernel = CreateKernel("gpt-4-1106-preview");
         var dndSkill = await planGenKernel.ImportPluginFunctionsAsync("DndApiPlugin", Path.Combine(RepoFiles.ApiPluginDirectoryPath, "DndApiPlugin", "openapi.json"), new OpenApiFunctionExecutionParameters { IgnoreNonCompliantErrors = true });
         var writer = planGenKernel.ImportSemanticFunctionsFromDirectory(RepoFiles.PluginDirectoryPath, "WriterPlugin");
         planGenKernel.ImportFunctions(new DndPlugin());
@@ -327,7 +376,7 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
         return context;
     }
 
-    private async Task<FunctionResult?> PlanResult(Plan plan, SKContext ctx)
+    private async Task<KernelResult?> PlanResult(Plan plan, SKContext ctx)
     {
         //var ctx = _kernel.CreateNewContext();
         try
@@ -338,7 +387,7 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
 
             _loggerFactory.LogInformation("Plan:\n{plan.ToPlanString()}", plan.ToPlanString());
             var kernel = CreateKernel();
-            var planResult = /*await kernel.RunAsync(plan, ctx.Variables); */await plan.InvokeAsync(ctx);
+            var planResult = await kernel.RunAsync(plan, ctx.Variables); /*await plan.InvokeAsync(ctx);*/
 
 
             var result = planResult.GetValue<string>();

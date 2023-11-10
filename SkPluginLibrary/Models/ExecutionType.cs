@@ -16,12 +16,18 @@ public enum ExecutionType
     [Description("Execute a Sequential Planner with selected Plugins and Functions")]
     [LongDescription("Execute a Sequential Planner with selected Plugins and Functions. Start by selecting plugins. Then you'll have the opportunity to either exclude any function from or require inclusion of any function in the Sequential Plan. The Sequential Planner will then determine which functions are required and in what order to satisfy your input reqeuest")]
     SequentialPlanner,
+    [Description("Execute a Stepwise Planner with selected Plugins and Functions")]
+    [LongDescription("Execute a Stepwise Planner with selected Plugins and Functions. Start by selecting plugins. Then you'll have the opportunity to either exclude any function from or require inclusion of any function in the Stepwise Plan. The Stepwise Planner will then determine which functions are required and in what order to satisfy your input reqeuest")]
+    StepwisePlanner,
     [Description("Create Chat using an Action Planner")]
     [LongDescription("Execute Action Planner with selected Plugins and Functions. Start by selecting plugins. Then you'll have the opportunity to add any additional inputs required for any function. The Action Planner will then determine which function to execute based on your input, the result of which will added to a system prompt for an interactive chat")]
-    ActionPlannerWithChat,
+    ActionPlannerChat,
     [Description("Create Chat using a Sequential Planner")]
     [LongDescription("Execute a Sequential Planner with selected Plugins and Functions. Start by selecting plugins. Then you'll have the opportunity to either exclude any function from or require inclusion of any function in the Sequential Plan. The Sequential Planner will then determine which functions are required and in what order to satisfy your input reqeuest, the result of which will added to a system prompt for an interactive chat")]
-    SequentialPlannerWithChat
+    SequentialPlannerChat,
+    [Description("Create Chat using a Stepwise Planner")]
+    [LongDescription("Execute a Stepwise Planner with selected Plugins and Functions. Start by selecting plugins. Then you'll have the opportunity to either exclude any function from or require inclusion of any function in the Stepwise Plan. The Stepwise Planner will then determine which functions are required and in what order to satisfy your input reqeuest, the result of which will added to a system prompt for an interactive chat")]
+    StepwisePlannerChat
 }
 
 [AttributeUsage(AttributeTargets.All)]

@@ -149,47 +149,38 @@ public static class Example51_StepwisePlanner
             StepwisePlanner planner = new(kernel: kernel, config: plannerConfig);
             var plan = planner.CreatePlan(question);
             Console.WriteLine($"Plan\n{plan.ToPlanWithGoalString()}");
-            var id = 0;
-            while (plan.HasNextStep)
+
+            var kernelResult = await kernel.RunAsync(plan);
+            var planResult = kernelResult.FunctionResults.First();
+            var result = kernelResult.GetValue<string>()!;
+
+            if (result.Contains("Result not found, review _stepsTaken to see what", StringComparison.OrdinalIgnoreCase))
             {
-                var ctx = plan.State;
-                var next = await plan.RunNextStepAsync(kernel, ctx);
-                var state = string.Join("\n\t", next.State.Select(x => $"{x.Key}: {x.Value}"));
-                var outputs = string.Join("\n\t", next.Outputs);
-                Console.WriteLine($"Plan Step {++id}\n\nState:\n\n {state}\n\nOutputs:\n\n{outputs}");
+                Console.WriteLine("Could not answer question in " + plannerConfig.MaxIterations + " iterations");
+                currentExecutionResult.answer = "Could not answer question in " + plannerConfig.MaxIterations + " iterations";
+            }
+            else
+            {
+                Console.WriteLine("Result: " + result);
+                currentExecutionResult.answer = result;
             }
 
-            //var kernelResult = await kernel.RunAsync(plan);
-            //var planResult = kernelResult.FunctionResults.First();
-            //var result = kernelResult.GetValue<string>()!;
+            if (planResult.TryGetMetadataValue("stepCount", out string stepCount))
+            {
+                Console.WriteLine("Steps Taken: " + stepCount);
+                currentExecutionResult.stepsTaken = stepCount;
+            }
 
-            //if (result.Contains("Result not found, review _stepsTaken to see what", StringComparison.OrdinalIgnoreCase))
-            //{
-            //    Console.WriteLine("Could not answer question in " + plannerConfig.MaxIterations + " iterations");
-            //    currentExecutionResult.answer = "Could not answer question in " + plannerConfig.MaxIterations + " iterations";
-            //}
-            //else
-            //{
-            //    Console.WriteLine("Result: " + result);
-            //    currentExecutionResult.answer = result;
-            //}
+            if (planResult.TryGetMetadataValue("functionCount", out string functionCount))
+            {
+                Console.WriteLine("Functions Used: " + functionCount);
+            }
 
-            //if (planResult.TryGetMetadataValue("stepCount", out string stepCount))
-            //{
-            //    Console.WriteLine("Steps Taken: " + stepCount);
-            //    currentExecutionResult.stepsTaken = stepCount;
-            //}
-
-            //if (planResult.TryGetMetadataValue("functionCount", out string functionCount))
-            //{
-            //    Console.WriteLine("Functions Used: " + functionCount);
-            //}
-
-            //if (planResult.TryGetMetadataValue("iterations", out string iterations))
-            //{
-            //    Console.WriteLine("Iterations: " + iterations);
-            //    currentExecutionResult.iterations = iterations;
-            //}
+            if (planResult.TryGetMetadataValue("iterations", out string iterations))
+            {
+                Console.WriteLine("Iterations: " + iterations);
+                currentExecutionResult.iterations = iterations;
+            }
         }
 #pragma warning disable CA1031
         catch (Exception ex)

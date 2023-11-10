@@ -22,9 +22,10 @@ If MAIN CHARACTER ALIGNMENT is good, make the story heroic.
 If MAIN CHARACTER ALIGNMENT is neutral. make the story harrowing. 
 DO NOT REPEAT SYNOPSIS IN THE STORY.
 DO NOT STATE THE MAIN CHARACTER ALIGNMENT VERBATIM IN THE STORY.
+The Story should be comprised of 3 distinct chapters, each representing a meaningful part of the story.
 
 Story Synopsis:
-{{$input}}
+{{$synopsis}}
 
 complete short story:
 

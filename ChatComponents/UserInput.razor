@@ -3,15 +3,30 @@
         <RadzenCard Style="padding-top:2px;padding-bottom:6px">
             <RadzenTemplateForm Data="_requestForm" TItem="RequestForm" Submit="SubmitRequest">
                 <RadzenRow>
-                    <RadzenColumn Size="10" SizeLG="10">
-                        <RadzenFormField Text="@HelperText" Style="width:100%">
-                            <ChildContent>
-                                <RadzenTextBox ReadOnly="_isDisabled" Name="Input" Style="width:100%" @bind-Value="@_requestForm.Content"></RadzenTextBox>
-                            </ChildContent>
-                            <Helper>
-                                <RadzenRequiredValidator Component="Input" Text="@($"{HelperText} required")"></RadzenRequiredValidator>
-                            </Helper>
-                        </RadzenFormField>
+                    <RadzenColumn Size="@(10)">
+                        
+                        @if (_requestForm.UserInputRequest.UserInputType is UserInputType.Ask or UserInputType.Both)
+                        {
+                            <RadzenFormField Text="Ask for Planner (optional)" Style="width: 100%">
+                                <ChildContent>
+                                    <RadzenTextBox ReadOnly="_isDisabled" Style="width: 100%" @bind-Value="@_requestForm.UserInputRequest.AskInput"></RadzenTextBox>
+                                </ChildContent>
+                                <Helper>
+                                    @* <RadzenRequiredValidator Component="Input" Text="@($"{HelperText} required")"></RadzenRequiredValidator> *@
+                                </Helper>
+                            </RadzenFormField>
+                        }
+                        @if (_requestForm.UserInputRequest.UserInputType is UserInputType.Chat or UserInputType.Both)
+                        {
+                            <RadzenFormField Text="@HelperText" Style="width: 100%">
+                                <ChildContent>
+                                    <RadzenTextBox ReadOnly="_isDisabled" Name="Input" Style="width: 100%" @bind-Value="@_requestForm.UserInputRequest.ChatInput"></RadzenTextBox>
+                                </ChildContent>
+                                <Helper>
+                                    <RadzenRequiredValidator Component="Input" Text="@($"{HelperText} required")"></RadzenRequiredValidator>
+                                </Helper>
+                            </RadzenFormField>
+                        }
                     </RadzenColumn>
                     <RadzenColumn Size="2" SizeLG="2" Style="display: flex; align-items:center">
                         <RadzenCard Style="display: flex; align-items: center; justify-items: center; justify-content:center; justify-items:center; padding:0">

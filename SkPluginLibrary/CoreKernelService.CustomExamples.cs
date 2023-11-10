@@ -13,7 +13,7 @@ public partial class CoreKernelService
     #region Custom Plugins - crawl wiki,c# repl, web search chat
 
     public async Task<CodeOutputModel> GenerateCompileAndExecuteReplPlugin(string input, string code = "",
-        ReplType replType = ReplType.SemanticKernelCode)
+        ReplType replType = ReplType.ReplConsole)
     {
         var kernel = await ChatWithSkKernal();
         var replSkill = new ReplCsharpPlugin(kernel, _scriptService, _compilerService);
@@ -38,7 +38,7 @@ public partial class CoreKernelService
     public async IAsyncEnumerable<string> RunWebSearchChat(string query)
     {
         var kernel = CreateKernel();
-        var memory = CreateSemanticMemoryStore(MemoryStoreType.InMemory);
+        var memory = CreateSemanticMemory(MemoryStoreType.InMemory);
         var webPlugin = new WebCrawlPlugin(kernel, _bingSearchService, memory);
         var webPluginInstance = kernel.ImportFunctions(webPlugin);
         var chatService = kernel.GetService<IChatCompletion>();

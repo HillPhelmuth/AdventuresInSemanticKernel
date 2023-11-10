@@ -1,16 +1,26 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using DocumentFormat.OpenXml.Bibliography;
+using Google.Apis.CustomSearchAPI.v1.Data;
+using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.AI.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.AI.OpenAI;
 using Microsoft.SemanticKernel.Diagnostics;
+using Microsoft.SemanticKernel.Events;
 using Microsoft.SemanticKernel.Functions.OpenAPI.Extensions;
 using Microsoft.SemanticKernel.Planners;
 using Microsoft.SemanticKernel.Planning;
 using Microsoft.SemanticKernel.Plugins.Core;
 using Microsoft.SemanticKernel.Plugins.Memory;
+using Microsoft.SemanticKernel.Plugins.Web;
+using Microsoft.SemanticKernel.Plugins.Web.Bing;
+using Microsoft.SemanticKernel.TemplateEngine.Basic;
 using NCalcPlugins;
+using SkPluginLibrary.Models.Helpers;
 using SkPluginLibrary.Plugins;
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Threading.Channels;
+using Microsoft.SemanticKernel.Orchestration;
 
 namespace SkPluginLibrary;
 
@@ -39,7 +49,7 @@ public partial class CoreKernelService
 
     public async Task<string> ExecuteFunction(ISKFunction function, Dictionary<string, string>? variables = null)
     {
-        var kernel = CreateKernel();
+        var kernel = CreateKernel("gpt-4-1106-preview");
         var context = kernel.CreateNewContext();
         foreach (var variable in variables ?? new Dictionary<string, string>())
         {
@@ -49,9 +59,20 @@ public partial class CoreKernelService
         return result.Result();
     }
 
+    public async Task<KernelResult> ExecuteKernelFunction(ISKFunction function, Dictionary<string, string>? variables = null)
+    {
+        var kernel = CreateKernel("gpt-4-1106-preview");
+        var context = kernel.CreateNewContext();
+        foreach (var variable in variables ?? new Dictionary<string, string>())
+        {
+            context.Variables[variable.Key] = variable.Value;
+        }
+        var result = await kernel.RunAsync(context.Variables, function);
+        return result;
+    }
     public async IAsyncEnumerable<string> ExecuteFunctionStream(ISKFunction function, Dictionary<string, string>? variables = null)
     {
-        var kernel = CreateKernel();
+        var kernel = CreateKernel("gpt-4-1106-preview");
         var context = kernel.CreateNewContext();
         foreach (var variable in variables ?? new Dictionary<string, string>())
         {
@@ -87,6 +108,11 @@ public partial class CoreKernelService
         _nativePlugins.TryAdd(nameof(TextPlugin), textPlugin);
         var convoSummaryPlugin = new ConversationSummaryPlugin(CreateKernel());
         _nativePlugins.TryAdd(nameof(ConversationSummaryPlugin), convoSummaryPlugin);
+        var bingConnector = new BingConnector(TestConfiguration.Bing.ApiKey);
+        var webSearchPlugin = new WebSearchEnginePlugin(bingConnector);
+        _nativePlugins.TryAdd(nameof(WebSearchEnginePlugin), webSearchPlugin);
+        var searchUrlPlugin = new SearchUrlPlugin();
+        _nativePlugins.TryAdd(nameof(SearchUrlPlugin), searchUrlPlugin);
         return _nativePlugins;
     }
 
@@ -111,6 +137,8 @@ public partial class CoreKernelService
         _customNativePlugins.TryAdd(nameof(StreamingPlugin), streamPlugin);
         var wikiPlugin = new WikiChatPlugin(kernel);
         _customNativePlugins.TryAdd(nameof(WikiChatPlugin), wikiPlugin);
+        var youtubePlugin = new YouTubePlugin(kernel, _configuration["YouTubeSearch:ApiKey"]!);
+        _customNativePlugins.TryAdd(nameof(YouTubePlugin), youtubePlugin);
         return _customNativePlugins;
     }
 
@@ -119,22 +147,14 @@ public partial class CoreKernelService
 
     private List<string> CoreNativePluginNames => _nativePlugins?.Keys.ToList() ?? GetCoreNativePlugins().Keys.ToList();
 
-    private async Task<Dictionary<string, ISKFunction>> GetApiFunctionsFromNames(List<string> apiPluginNames)
+    private async Task<Dictionary<string, ISKFunction>> GetApiFunctionsFromNames(IEnumerable<string> apiPluginNames)
     {
-        var result = new Dictionary<string, ISKFunction>();
         var kernel = CreateKernel();
-        var tasks = new List<Task<IDictionary<string, ISKFunction>>>();
-        foreach (var apiPlugin in apiPluginNames)
-        {
-            tasks.Add(kernel.ImportPluginFunctionsAsync(apiPlugin,
-                Path.Combine(RepoFiles.ApiPluginDirectoryPath, apiPlugin, "openapi.json"), new OpenApiFunctionExecutionParameters { EnableDynamicPayload = true, EnablePayloadNamespacing = true, IgnoreNonCompliantErrors = true }));
-            //IDictionary<string, ISKFunction> plugin = await kernel.ImportPluginFunctionsAsync(apiPlugin,
-            //    Path.Combine(RepoFiles.ApiPluginDirectoryPath, apiPlugin, "openapi.json"));
-            //result = result.AddRange(plugin);
-        }
+        var tasks = apiPluginNames.Select(apiPlugin => kernel.ImportPluginFunctionsAsync(apiPlugin, Path.Combine(RepoFiles.ApiPluginDirectoryPath, apiPlugin, "openapi.json"), new OpenApiFunctionExecutionParameters {EnableDynamicPayload = true, EnablePayloadNamespacing = true, IgnoreNonCompliantErrors = true})).ToList();
 
         var taskResults = await Task.WhenAll(tasks);
-        return taskResults.Aggregate(result, (current, resultItem) => current.AddRange(resultItem));
+        var functionsResult = taskResults.SelectMany(x => x).ToDictionary(x => x.Key, x => x.Value, EqualityComparer<string>.Default);
+        return functionsResult;
     }
 
     private async Task<Dictionary<string, ISKFunction>> GetApiFunctionsFromNames(params string[] apiPluginNames)
@@ -142,7 +162,7 @@ public partial class CoreKernelService
         return await GetApiFunctionsFromNames(apiPluginNames.ToList());
     }
 
-    private Dictionary<string, ISKFunction> GetNativeFunctionsFromNames(List<string> pluginNames, bool isCustom = false)
+    private Dictionary<string, ISKFunction> GetNativeFunctionsFromNames(IEnumerable<string> pluginNames, bool isCustom = false)
     {
         var result = new Dictionary<string, ISKFunction>();
         var kernel = CreateKernel();
@@ -150,7 +170,7 @@ public partial class CoreKernelService
             ? _customNativePlugins ?? GetCustomNativePlugins()
             : _nativePlugins ?? GetCoreNativePlugins();
         return pluginNames.Select(plugin => kernel.ImportFunctions(allPlugins[plugin], plugin))
-            .Aggregate(result, (current, funcs) => current.AddRange(funcs));
+            .Aggregate(result, (current, funcs) => current.UpsertConcat(funcs));
     }
 
     private Dictionary<string, ISKFunction> GetNativeFunctionsFromNames(bool isCustom = false,
@@ -207,7 +227,18 @@ public partial class CoreKernelService
         var plugin = await kernel.ImportPluginFunctionsAsync(replaceNonAsciiWithUnderscore, uri, executionParameters);
         return plugin.ToDictionary(x => x.Key, x => x.Value);
     }
+    private void FunctionInvokedHandler(object? sender, FunctionInvokingEventArgs e)
+    {
+        var originalOutput = e.SKContext.Result;
+        var originalValues = e.SKContext.Variables;
+        var function = e.FunctionView;
+        Console.WriteLine($"Executed {function.PluginName}.{function.Name}.\nResult: {originalOutput}\nVariables:\n{string.Join("\n", originalValues.Select(x => $"Name: {x.Key}, Value: {x.Value}"))}");
+    }
 
+    private void FunctionInvokedHandler(object? sender, FunctionInvokedEventArgs args)
+    {
+
+    }
     public async Task<string> ExecuteFunctionChain(ChatRequestModel chatRequestModel)
     {
         var kernel = await CreateKernelWithPlugins(chatRequestModel.SelectedPlugins);
@@ -228,14 +259,14 @@ public partial class CoreKernelService
     {
         var kernel = await CreateKernelWithPlugins(requestModel.SelectedPlugins);
         var functions = kernel.Functions.GetFunctionViews();
-
+        kernel.FunctionInvoked += FunctionInvokedHandler;
         var config = new SequentialPlannerConfig
         {
             MaxTokens = 2000,
             SemanticMemoryConfig = new SemanticMemoryConfig
             {
                 RelevancyThreshold = 0.77,
-                MaxRelevantFunctions = 10
+                MaxRelevantFunctions = 20
             },
 
         };
@@ -254,13 +285,45 @@ public partial class CoreKernelService
         return planner;
     }
 
+    private async Task<(IStepwisePlanner planner, StepwisePlannerConfig config, IKernel kernel)> CreateStepwisePlanner(ChatRequestModel requestModel)
+    {
+        var kernel = await CreateKernelWithPlugins(requestModel.SelectedPlugins);
+        var functions = kernel.Functions.GetFunctionViews();
+        var config = new StepwisePlannerConfig
+        {
+            MaxTokens = 8000,
+            SemanticMemoryConfig = new SemanticMemoryConfig
+            {
+                RelevancyThreshold = 0.77,
+                MaxRelevantFunctions = 20
+            },
+            Suffix = "Now, Take a deep breath. Let's break down the problem step by step and think about the best approach. Label steps as they are taken.\n\nContinue the thought process!",
+            MaxIterations = 10,
+
+
+        };
+        foreach (var exclude in requestModel.ExcludedFunctions ?? new List<string>())
+        {
+            config.ExcludedFunctions.Add(exclude);
+        }
+
+        foreach (var include in requestModel.RequredFunctions ?? new List<string>())
+        {
+            var pluginname = functions.FirstOrDefault(x => x.Name == include)?.PluginName ?? "";
+            config.SemanticMemoryConfig.IncludedFunctions.Add((pluginname, include));
+        }
+
+        var planner = new StepwisePlanner(kernel, config);
+        return (planner, config, kernel);
+
+    }
 
     private record ChatExchange(string UserMessage, string AssistantMessage);
 
     private readonly List<ChatExchange> _chatExchanges = new();
-   
+
     public async IAsyncEnumerable<string> ChatWithActionPlanner(string query, ChatRequestModel chatRequestModel,
-        bool runAsChat = true)
+        bool runAsChat = true, string? askOverride = null)
     {
         var userMessage = $"User: {query}";
         var kernel = await CreateKernelWithPlugins(chatRequestModel.SelectedPlugins);
@@ -271,9 +334,11 @@ public partial class CoreKernelService
         Plan plan;
         var errorMsg = "";
         var iscreateError = false;
+        askOverride ??= query;
         try
         {
-            plan = await planner.CreatePlanAsync(query);
+            
+            plan = await planner.CreatePlanAsync(askOverride);
         }
         catch (Exception ex)
         {
@@ -315,18 +380,10 @@ public partial class CoreKernelService
             yield break;
         }
 
-        var systemPrmpt =
-            $"You are a helpful AI chatbot. Respond to the user to the best of your ability using the following Context. If Context indicates an error. Apologize for the error and explain the error as well as possible.\n\n[Context]\n{result}";
-        var chat = chatService.CreateNewChat(systemPrmpt);
-        foreach (var exchange in _chatExchanges)
-        {
-            chat.AddUserMessage(exchange.UserMessage);
-            chat.AddAssistantMessage(exchange.AssistantMessage);
-        }
+        yield return $"\n<sup><sub>\n```\n{result} \n```\n</sub></sup>\n";
 
-        chat.AddUserMessage(query);
         var response = "";
-        await foreach (var token in chatService.GenerateMessageStreamAsync(chat))
+        await foreach (var token in ExecuteChatStream(query, result, kernel))
         {
             response += token;
             yield return token;
@@ -335,15 +392,76 @@ public partial class CoreKernelService
         var assistantMessage = $"Assistant: {response}";
         _chatExchanges.Add(new ChatExchange(userMessage, assistantMessage));
     }
-
-    public async IAsyncEnumerable<string> ChatWithSequentialPlanner(string query, ChatRequestModel chatRequestModel,
-        bool runAsChat = true)
+    private static StepwiseExecutionResult _executionResults = new();
+    public event Action<string>? YieldAdditionalText;
+    public async IAsyncEnumerable<string> ChatWithStepwisePlanner(string query, ChatRequestModel chatRequestModel,
+        bool runAsChat = true, string? askOverride = null)
     {
-        var kernel = CreateKernel();
+        var (planner, config, kernel) = await CreateStepwisePlanner(chatRequestModel);
+        kernel.CreateSemanticFunction(
+            "Generate an answer for the following question: {{$input}}",
+            functionName: "GetAnswerForQuestion",
+            pluginName: "AnswerBot",
+            description: "Given a question, get an answer and return it as the result of the function");
+        yield return "## Generating Plan...\n\n";
+        askOverride ??= query;
+        var (plan, skillStepsHeader, isError) = await GeneratePlanAsync(askOverride, planner);
+        yield return skillStepsHeader;
+        if (isError)
+        {
+            yield break;
+        }
 
+       
+       
+        yield return "\n### Executing plan...\n\n";
+        var finalResult = "";
+        kernel.FunctionInvoking += (_, e) =>
+        {
+            var soemthing = e.FunctionView;
+            YieldAdditionalText?.Invoke($"\n#### Executing _{soemthing.Name} {soemthing.PluginName}_\n\n");
+        };
+        kernel.FunctionInvoked += (_, e) =>
+        {
+            var function = e.FunctionView;
+            
+            YieldAdditionalText?.Invoke($"\n##### {function.Name} {function.PluginName} Completed\n\n");
+           
+        };
+        var result = await kernel.RunAsync(plan);
+        var executionResult = result.AsStepwiseExecutionResult(config);
+        finalResult = executionResult.Answer;
+        //await plan.InvokeAsync(kernel.CreateNewContext()).ContinueWith(x =>
+        //{
+        //    var executionResult = x.Result.AsStepwiseExecutionResult(config);
+        //    _executionResults = executionResult;
+        //    finalResult = $"{executionResult}";
+        //});
+        if (runAsChat)
+        {
+            yield return "### Execution Complete\n\n#### Chat:\n\n";
+            await foreach (var p in ExecuteChatStream(query, finalResult, kernel))
+                yield return p;
+        }
+        else
+        {
+            yield return "### Execution Complete";
+            yield return "#### Final Result\n\n";
+            yield return finalResult;
+        }
+    }
+    
+    
+    public async IAsyncEnumerable<string> ChatWithSequentialPlanner(string query, ChatRequestModel chatRequestModel,
+        bool runAsChat = true, string? askOverride = null)
+    {
+        var kernel = CreateKernel("gpt-4-1106-preview");
+        kernel.FunctionInvoked += FunctionInvokedHandler;
         var planner = await CreateSequentialPlanner(chatRequestModel);
+        //var planner = await CreateStepwisePlanner(chatRequestModel);
         yield return "## Generating Plan\n\n";
-        var (plan, skillStepsHeader, isError) = await GeneratePlanAsync(query, planner);
+        askOverride ??= query;
+        var (plan, skillStepsHeader, isError) = await GeneratePlanAsync(askOverride, planner);
 
 
         yield return skillStepsHeader;
@@ -359,8 +477,64 @@ public partial class CoreKernelService
         }
 
         yield return "\nExecuting plan...\n\n";
-        stepNumber = 0;
-        //var something = plan.ExecutePlanBySteps(kernel.CreateNewContext())
+        var finalResult = "";
+        await foreach (var item in ExecuteSequentialPlannerByStep(chatRequestModel, kernel, plan, GetFinalResult))
+        {
+            yield return item;
+        }
+        //stepNumber = 0;
+        ////var something = plan.ExecutePlanBySteps(kernel.CreateNewContext())
+
+        //var context = kernel.CreateNewContext();
+        //foreach (var input in chatRequestModel.Variables ?? new Dictionary<string, string>())
+        //{
+        //    context.Variables[input.Key] = input.Value;
+        //}
+
+        //while (plan.HasNextStep)
+        //{
+        //    var hasError = false;
+        //    yield return $"### Step {++stepNumber}\n";
+        //    string? stepResultString;
+        //    try
+        //    {
+        //        var stepResult = await plan.InvokeNextStepAsync(context);
+        //        stepResultString = stepResult.State.ToString();
+        //        finalResult = stepResult.State.ToString();
+        //    }
+        //    catch (SKException ex)
+        //    {
+        //        stepResultString = $"Error on step {stepNumber}\n\n {ex.Message}\n\n{ex.StackTrace}";
+        //        hasError = true;
+        //    }
+
+        //    yield return $"{stepResultString}\n\n";
+        //    if (hasError) break;
+        //}
+
+        //var planResult = await plan.InvokeAsync(loggerFactory: _loggerFactory);
+        var result = finalResult;
+        Console.WriteLine($"Final Result from plan:\n{result}");
+        if (runAsChat)
+        {
+            yield return "### Execution Complete\n\n#### Chat:\n\n";
+            await foreach (var p in ExecuteChatStream(query, result, kernel))
+                yield return p;
+        }
+        else
+        {
+            yield return "### Execution Complete";
+        }
+
+        yield break;
+
+        void GetFinalResult(string returnedResult) => finalResult = returnedResult;
+    }
+
+    private async IAsyncEnumerable<string> ExecuteSequentialPlannerByStep(ChatRequestModel chatRequestModel, IKernel kernel,
+        Plan plan, Action<string> finalResultDelegate)
+    {
+        var stepNumber = 0;
         var finalResult = "";
         var context = kernel.CreateNewContext();
         foreach (var input in chatRequestModel.Variables ?? new Dictionary<string, string>())
@@ -378,6 +552,7 @@ public partial class CoreKernelService
                 var stepResult = await plan.InvokeNextStepAsync(context);
                 stepResultString = stepResult.State.ToString();
                 finalResult = stepResult.State.ToString();
+                Console.WriteLine($"{string.Join("\n", stepResult.State.Select(x => $"{x.Key} -- {x.Value}"))}");
             }
             catch (SKException ex)
             {
@@ -389,18 +564,7 @@ public partial class CoreKernelService
             if (hasError) break;
         }
 
-        //var planResult = await plan.InvokeAsync(loggerFactory: _loggerFactory);
-        var result = finalResult;
-        if (runAsChat)
-        {
-            yield return "### Execution Complete\n\n#### Chat:\n\n";
-            await foreach (var p in ExecuteChatStream(query, result, kernel))
-                yield return p;
-        }
-        else
-        {
-            yield return "### Execution Complete";
-        }
+        finalResultDelegate(finalResult);
     }
 
     private async Task<(Plan plan, string skillStepsHeader, bool isError)> GeneratePlanAsync(string query,
@@ -414,7 +578,7 @@ public partial class CoreKernelService
             plan = await planner.CreatePlanAsync(query);
             _loggerFactory.CreateLogger<CoreKernelService>()
                 .LogInformation("Plan:\n{plan.ToPlanString()}", plan.ToPlanString());
-            Console.WriteLine($"Plan:\n{plan.ToPlanString()}");
+           // Console.WriteLine($"Plan:\n{plan.ToPlanString()}");
         }
         catch (Exception ex)
         {
@@ -425,19 +589,47 @@ public partial class CoreKernelService
 
         return (plan, skillStepsHeader, isError);
     }
+    private async Task<(Plan plan, string skillStepsHeader, bool isError)> GeneratePlanAsync(string query,
+        IStepwisePlanner planner)
+    {
+        Plan plan;
+        var skillStepsHeader = "| Name | Value |\n|:---:|:---:|\n";
+        var isError = false;
+        try
+        {
+            plan = planner.CreatePlan(query);
+            _loggerFactory.CreateLogger<CoreKernelService>()
+                .LogInformation("Plan:\n{plan.ToPlanString()}", plan.ToPlanString());
+            //Console.WriteLine($"Plan:\n{plan.ToPlanString()}");
+        }
+        catch (Exception ex)
+        {
+            plan = new Plan(query);
+            skillStepsHeader = ex.ToString();
+            isError = true;
+        }
 
+        return (plan, skillStepsHeader, isError);
+    }
     private async IAsyncEnumerable<string> ExecuteChatStream(string query, string result, IKernel kernel)
     {
         var systemPrmpt =
-            $"""
+            $$$"""
                 You are "Adventures in Semantic Kernal" a helpful, intelligent and resourceful AI chatbot. Respond to the user to the best of your ability using the following Context. If Context indicates an error. Aplogize for the error and explain the error as well as possible.
                 The following [Context] is based on the user's query and with in a medium with access to real-time information and web access. Assume [Context] was generated with access to real-time information. Use the [Context] along with the query to respond. Respond with the exact language in [Context] when appropriate.
                 NEVER REVEAL THAT ANY CONTEXT WAS PROVIDED.
-                [Context]
-                {result}
+                [Context - {{instruct.Bridge input='{{{query}}}' related='{{{result}}}'}}]
+                {{{result}}}
                 """;
+        Console.WriteLine($"InitialSysPrompt:\n{systemPrmpt}");
+        var instruct = new InstructPlugin(kernel);
+        var instructPlugin = kernel.ImportFunctions(instruct, "instruct");
         var chatService = kernel.GetService<IChatCompletion>();
-        var chat = chatService.CreateNewChat(systemPrmpt);
+        var engine = new BasicPromptTemplateEngine();
+        var ctx = kernel.CreateNewContext();
+        var finalSysPrompt = await engine.RenderAsync(systemPrmpt, ctx);
+        
+        var chat = chatService.CreateNewChat(finalSysPrompt);
         foreach (var exchange in _chatExchanges)
         {
             chat.AddUserMessage(exchange.UserMessage);
@@ -460,13 +652,13 @@ public partial class CoreKernelService
 
     private async Task<IKernel> CreateKernelWithPlugins(IReadOnlyCollection<PluginFunctions> pluginFunctions)
     {
-        var kernel = CreateKernel();
+        var kernel = CreateKernel("gpt-4-1106-preview");
         var semanticPlugins = kernel.ImportSemanticFunctionsFromDirectory(RepoFiles.PluginDirectoryPath,
             pluginFunctions.Where(x => x.PluginType == PluginType.Semantic).Select(x => x.PluginName).ToArray());
         foreach (var apiPlugin in pluginFunctions.Where(x => x.PluginType == PluginType.Api))
         {
             var api = await kernel.ImportPluginFunctionsAsync(apiPlugin.PluginName,
-                Path.Combine(RepoFiles.ApiPluginDirectoryPath, apiPlugin.PluginName, "openapi.json"));
+                Path.Combine(RepoFiles.ApiPluginDirectoryPath, apiPlugin.PluginName, "openapi.json"), new OpenApiFunctionExecutionParameters {EnableDynamicPayload = true, EnablePayloadNamespacing = true, IgnoreNonCompliantErrors = true});
         }
 
         var natives = pluginFunctions.Where(x => x.PluginType == PluginType.Native)

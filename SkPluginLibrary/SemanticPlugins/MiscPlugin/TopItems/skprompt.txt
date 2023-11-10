@@ -3,4 +3,4 @@
 ===END OBJECT ARRAY
 
 
-Given the above list of objects, find the first {{$topN}} objects in the array. respond with a new json array containing only those object. No prose.
+Given the above array of objects, find the first {{$topN}} objects in the array. respond with a new array containing only those object. Use the format of the array. If array is plain text, discern the objects and respond with a list of plain text objects, if array is XML responsd with a list of XML elements. If array is Json, response with a json object array. No prose.

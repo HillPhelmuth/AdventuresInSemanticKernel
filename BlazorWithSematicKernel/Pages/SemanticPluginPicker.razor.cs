@@ -1,6 +1,7 @@
 ﻿using BlazorWithSematicKernel.Components;
 using Microsoft.AspNetCore.Components;
 using SkPluginLibrary.Abstractions;
+using SkPluginLibrary.Models;
 
 namespace BlazorWithSematicKernel.Pages
 {
@@ -8,6 +9,7 @@ namespace BlazorWithSematicKernel.Pages
     {
         public List<string?> Plugins => Directory.GetDirectories(RepoFiles.PluginDirectoryPath).Select(Path.GetFileName).ToList();
         private List<ChatGptPlugin> ChatGptPlugins = new();
+        private List<ChatGptPluginManifest> ChatGptPluginsManifests = new();
         [Inject] private ICoreKernelExecution CoreKernelService { get; set; } = default!;
         [Inject] private NotificationService NotificationService { get; set; } = default!;
         [Inject] private ILoggerFactory LoggerFactory { get; set; } = default!;
@@ -18,6 +20,8 @@ namespace BlazorWithSematicKernel.Pages
         {
             _allPlugins = await CoreKernelService.GetAllPlugins();
             ChatGptPlugins = ChatGptPlugin.AllChatGptPlugins;
+            ChatGptPluginsManifests = ChatGptPluginManifest.GetAllPluginManifests().Where(x => x.Auth.TypeEnum == TypeEnum.None).ToList();
+            await ChatGptPluginManifest.GetAndSaveAllNonAuthMantifestFiles();
             await base.OnInitializedAsync();
         }
 
@@ -31,35 +35,19 @@ namespace BlazorWithSematicKernel.Pages
             _stepIndex = 2;
             StateHasChanged();
         }
-        private async Task ShowManifest(ChatGptPlugin chatGptPlugin)
+       
+        private async Task SelectChatGptPluginManifest(ChatGptPluginManifest chatGptPluginManifest, string overrideUrl = "")
         {
             try
             {
-                _selectedManifest = await CoreKernelService.GetManifest(chatGptPlugin);
-                DialogService.Open<ManifestDisplay>("Manifest",
-                    new Dictionary<string, object> {{"ChatGptPluginManifest", _selectedManifest}},
-                    new DialogOptions {Height = "max-content", Width = "60vw", Resizable = true, Draggable = true, CloseDialogOnEsc = true, CloseDialogOnOverlayClick = true});
-                StateHasChanged();
-            }
-            catch (Exception ex)
-            {
-                NotificationService.Notify(NotificationSeverity.Error, "Error Retrieving Manifest", ex.Message);
-            }
-        }
-
-        private async Task SelectChatGptPlugin(ChatGptPlugin chatGptPlugin)
-        {
-            try
-            {
-                var manifest = await CoreKernelService.GetManifest(chatGptPlugin);
-                if (!string.IsNullOrEmpty(chatGptPlugin.OverrideUrl))
-                    manifest.OverrideUrl = chatGptPlugin.OverrideUrl;
-                _selectedFunctions = await CoreKernelService.GetExternalPluginFunctions(manifest);
+                if (!string.IsNullOrEmpty(overrideUrl))
+                    chatGptPluginManifest.OverrideUrl = overrideUrl;
+                _selectedFunctions = await CoreKernelService.GetExternalPluginFunctions(chatGptPluginManifest);
                 _stepIndex = 2;
             }
             catch (Exception ex)
             {
-                NotificationService.Notify(NotificationSeverity.Error, "Error Retrieving Functions", ex.Message);
+                NotificationService.Notify(NotificationSeverity.Error, "Error Retrieving Functions", $"{ex.Message}\n{ex.StackTrace}");
             }
             StateHasChanged();
         }
