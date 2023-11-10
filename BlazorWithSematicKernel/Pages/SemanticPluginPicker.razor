@@ -57,37 +57,32 @@
                             </Columns>
                         </RadzenDataGrid>
                     </RadzenTabsItem>
+
                     <RadzenTabsItem Text="ChatGPT Plugins">
                         <RadzenRow>
                             <RadzenColumn Size="12">
-                                <RadzenDataGrid Data="ChatGptPlugins" TItem="ChatGptPlugin" AllowFiltering="true" AllowSorting="true" AllowPaging="true" PageSize="20" Density="Density.Compact">
+                                <RadzenDataGrid Data="@ChatGptPluginsManifests" TItem="ChatGptPluginManifest" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowFiltering="true" AllowSorting="true" AllowPaging="true" PageSize="20" ShowPagingSummary="true" Density="Density.Compact">
+                                    <Template Context="manifest">
+                                        <ManifestDisplay ChatGptPluginManifest="manifest"></ManifestDisplay>
+                                    </Template>
                                     <Columns>
-                                        <RadzenDataGridColumn TItem="ChatGptPlugin" Property="Logo" Title="Logo" Width="5%">
+                                        <RadzenDataGridColumn TItem="ChatGptPluginManifest" Property="LogoUrl" Title="Logo" Width="5%">
                                             <Template Context="plugin">
-                                                <RadzenImage Style="width: 20px; height: 20px; border-radius: 8px; margin-right: auto; margin-left:auto;" Path="@plugin.Logo"></RadzenImage>
-                                                @* <RadzenText TextStyle="TextStyle.Subtitle1">@plugin.Title</RadzenText>
-                                                <RadzenText>@plugin.Category</RadzenText> *@
+                                                <RadzenImage Style="width: 20px; height: 20px; border-radius: 8px; margin-right: auto; margin-left: auto;" Path="@plugin.LogoUrl.ToString()"></RadzenImage>
                                             </Template>
                                         </RadzenDataGridColumn>
-                                        <RadzenDataGridColumn TItem="ChatGptPlugin" Property="Title" Title="Title" Width="15%"></RadzenDataGridColumn>
-                                        <RadzenDataGridColumn TItem="ChatGptPlugin" Property="Category" Title="Category" Width="15%"></RadzenDataGridColumn>
-                                        <RadzenDataGridColumn TItem="ChatGptPlugin" Property="Description" Title="Description" Width="50%"></RadzenDataGridColumn>
-                                        <RadzenDataGridColumn TItem="ChatGptPlugin" Width="8%">
+                                        <RadzenDataGridColumn TItem="ChatGptPluginManifest" Property="NameForHuman" Title="Name" Width="15%"></RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="ChatGptPluginManifest" Property="NameForModel" Title="NameForModel" Width="15%"></RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="ChatGptPluginManifest" Property="DescriptionForHuman" Title="Description" Width="50%"></RadzenDataGridColumn>
+
+                                        <RadzenDataGridColumn TItem="ChatGptPluginManifest" Width="10%">
                                             <Template Context="plugin">
-                                                <RadzenButton Size=ButtonSize.ExtraSmall Text="Manifest" Icon="search" Click="@(() => ShowManifest(plugin))"></RadzenButton>
-                                            </Template>
-                                        </RadzenDataGridColumn>
-                                        <RadzenDataGridColumn TItem="ChatGptPlugin" Width="7%">
-                                            <Template Context="plugin">
-                                                <RadzenButton Size=ButtonSize.ExtraSmall Text="Pick" Click="@(() => SelectChatGptPlugin(plugin))"></RadzenButton>
+                                                <RadzenButton Size=ButtonSize.ExtraSmall Text="Pick" Click="@(() => SelectChatGptPluginManifest(plugin, plugin.OverrideUrl))"></RadzenButton>
                                             </Template>
                                         </RadzenDataGridColumn>
                                     </Columns>
                                 </RadzenDataGrid>
                             </RadzenColumn>
-                            @* <RadzenColumn Size="6">
-                                <ManifestDisplay ChatGptPluginManifest="_selectedManifest"></ManifestDisplay>
-                            </RadzenColumn> *@
                         </RadzenRow>
                     </RadzenTabsItem>
                 </Tabs>

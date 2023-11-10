@@ -23,18 +23,22 @@
 	<ItemGroup>
 		<PackageReference Include="AbotX" Version="2.1.12" />
 		<PackageReference Include="Auth0.AspNetCore.Authentication" Version="1.3.1" />
+		<PackageReference Include="Azure.Storage.Blobs" Version="12.13.1" />
+		<PackageReference Include="Azure.Storage.Files.Shares" Version="12.1.0" />
+		<PackageReference Include="Azure.Storage.Queues" Version="12.11.1" />
 		<PackageReference Include="Blazor-ApexCharts" Version="1.2.1" />
 		<PackageReference Include="Markdig" Version="0.33.0" />
 		<PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.21.0" />
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="7.0.11" />
 		<PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="7.0.0" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="6.0.1" />
+		<PackageReference Include="Microsoft.Extensions.Azure" Version="1.5.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging.ApplicationInsights" Version="2.21.0" />
 		<PackageReference Include="Microsoft.Identity.Client.Extensions.Msal" Version="2.32.0" />
 		<PackageReference Include="Microsoft.Identity.Web" Version="2.13.2" />
 		<PackageReference Include="Microsoft.Identity.Web.MicrosoftGraph" Version="2.13.2" />
 		<PackageReference Include="Microsoft.Identity.Web.UI" Version="2.13.2" />
-		<PackageReference Include="Radzen.Blazor" Version="4.18.0" />
+		<PackageReference Include="Radzen.Blazor" Version="4.19.0" />
 		<PackageReference Include="System.Linq.Async" Version="6.0.1" />
 				
 	</ItemGroup>
@@ -46,161 +50,18 @@
 		<ProjectReference Include="..\SkPluginLibrary\SkPluginLibrary.csproj" />
 	</ItemGroup>
 	<ItemGroup>
+		<None Update="Data\CodeFiles\**">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
 		<None Update="Data\ChatContentDb.db">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example01_NativeFunctions.txt">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
-		<None Update="Data\CodeFiles\Example02_Pipeline.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		<None Update="Data\CodeContentDb.db">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
-		<None Update="Data\CodeFiles\Example03_Variables.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example04_CombineLLMPromptsAndNativeCode.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example05_InlineFunctionDefinition.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example06_TemplateLanguage.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example07_BingAndGooglePlugins.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example08_RetryHandler.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example09_FunctionTypes.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example10_DescribeAllPluginsAndFunctions.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example11_WebSearchQueries.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example12_SequentialPlanner.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example13_ConversationSummaryPlugin.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example14_SemanticMemory.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example15_TextMemoryPlugin.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example16_CustomLLM.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example17_ChatGPT.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example18_DallE.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example20_HuggingFace.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example21_ChatGPTPlugins.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example22_OpenApiPlugin_AzureKeyVault.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example23_OpenApiPlugin_Github.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example24_OpenApiPlugin_Jira.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example25_ReadOnlyMemoryStore.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example26_AADAuth.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example27_SemanticFunctionsUsingChatGPT.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example28_ActionPlanner.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example30_ChatWithPrompts.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example31_CustomPlanner.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example32_StreamingCompletion.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example33_StreamingChat.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example34_CustomChatModel.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example36_MultiCompletion.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example37_MultiStreamingCompletion.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example40_DIContainer.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example41_HttpClientUsage.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example42_KernelBuilder.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example43_GetModelResult.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example44_MultiChatCompletion.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example45_MultiStreamingChatCompletion.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example48_GroundednessChecks.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example49_LogitBias.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example51_StepwisePlanner.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example52_ApimAuth.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example54_AzureChatCompletionWithData.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example55_TextChunker.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example56_TemplateNativeFunctionsWithMultipleArguments.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example57_FunctionEventHandlers.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example58_ConfigureRequestSettings.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeFiles\Example59_OpenAIFunctionCalling.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
+		
 		<None Update="Data\SemanticKernelDb.db">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>
 

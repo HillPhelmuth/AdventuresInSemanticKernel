@@ -4,6 +4,7 @@ using SkPluginLibrary.Abstractions;
 using Markdig;
 using System.Text.Json.Serialization;
 using System.Diagnostics;
+using SkPluginLibrary.Models.Helpers;
 
 namespace BlazorWithSematicKernel.Components
 {
@@ -105,7 +106,7 @@ namespace BlazorWithSematicKernel.Components
                 {
                     if (field.Type.Equals("array", StringComparison.InvariantCultureIgnoreCase))
                     {
-                        var values = new InputArray {Items = field.Value.Split(',').ToList()};
+                        var values = new InputArray { Items = field.Value.Split(',').ToList() };
                         var value = JsonSerializer.Serialize(values);
                         newVariables.Add(field.Name, value);
                     }
@@ -115,33 +116,66 @@ namespace BlazorWithSematicKernel.Components
                     }
                     else if (field.Type.Equals("boolean", StringComparison.InvariantCultureIgnoreCase))
                     {
-                        newVariables.Add(field.Name, field.BoolValue.ToString());
+                        newVariables.Add(field.Name, field.BoolValue ? "true" : "false");
                     }
-                    else if (field.Type.Equals("number", StringComparison.InvariantCultureIgnoreCase))
+                    else if (field.Type.Equals("number", StringComparison.InvariantCultureIgnoreCase) || field.Type.Equals("integer", StringComparison.InvariantCultureIgnoreCase))
                     {
                         newVariables.Add(field.Name, field.NumValue.ToString());
                     }
+                    else
+                    {
+                        newVariables.Add(field.Name, JsonSerializer.Serialize(field.Value));
+                    }
                 }
-                if (Function.Name is "TryStreamFunction" or "ExecuteChatStreamResponse" or "WikiSearchAndChat")
+
+                foreach (var variable in variables)
                 {
-                    var result = CoreKernelService.ExecuteFunctionStream(Function.SkFunction, variables);
-                    await foreach (var item in result)
+                    newVariables.TryAdd(variable.Key, variable.Value);
+                }
+                var kernelResult = await CoreKernelService.ExecuteKernelFunction(Function.SkFunction, newVariables);
+                if (kernelResult.IsStreamingResult())
+                {
+                    await foreach (var item in kernelResult.ResultStream<string>())
                     {
                         _output += item;
                         StateHasChanged();
                     }
-
-                    StateHasChanged();
-                    return;
                 }
+                else
+                {
+                    _output = kernelResult.Result();
+                    StateHasChanged();
+                }
+                //if (Function.Name is "TryStreamFunction" or "ExecuteChatStreamResponse" or "WikiSearchAndChat")
+                //{
+                //    var result = CoreKernelService.ExecuteFunctionStream(Function.SkFunction, variables);
+                //    await foreach (var item in result)
+                //    {
+                //        _output += item;
+                //        StateHasChanged();
+                //    }
 
-                _output = await CoreKernelService.ExecuteFunction(Function.SkFunction, variables);
-                StateHasChanged();
+                //    StateHasChanged();
+                //    return;
+                //}
+
+                //_output = await CoreKernelService.ExecuteFunction(Function.SkFunction, newVariables);
+                //StateHasChanged();
             }
             catch (Exception ex)
             {
                 sw.Stop();
-                NotificationService.Notify(NotificationSeverity.Error, $"Error Executing Function after {sw.ElapsedMilliseconds}ms", ex.Message, 10000);
+                var notificationMessage = new NotificationMessage
+                {
+                    Style = "top:10px;width:30rem;height:10rem;overflow:auto; right:25vw", 
+                    Severity = NotificationSeverity.Error, 
+                    Duration = int.MaxValue,
+                    Summary = $"Error Executing Function after {sw.ElapsedMilliseconds}ms",
+                    Detail = $"{ex.Message}\n{ex.StackTrace}"
+                };
+                NotificationService.Notify(notificationMessage);
+                //NotificationService.Notify(NotificationSeverity.Error, $"Error Executing Function after {sw.ElapsedMilliseconds}ms",
+                //    $"{ex.Message}\n{ex.StackTrace}", int.MaxValue);
             }
         }
         private string AsHtml(string? text)

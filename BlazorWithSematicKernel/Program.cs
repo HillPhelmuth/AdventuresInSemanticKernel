@@ -1,20 +1,20 @@
 using Auth0.AspNetCore.Authentication;
 using BlazorAceEditor.Extensions;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Logging.ApplicationInsights;
 using SkPluginLibrary.Abstractions;
 using SkPluginLibrary.Services;
-using CrawlService = SkPluginLibrary.Services.CrawlService;
-using WebApplication = Microsoft.AspNetCore.Builder.WebApplication;
-
+using SkPluginLibrary.Models.Helpers;
 
 var builder = WebApplication.CreateBuilder(args);
-TestConfiguration.Initialize(builder.Configuration);
+IConfiguration configuration = builder.Configuration;
+TestConfiguration.Initialize(configuration);
 var services = builder.Services;
 services.AddAuth0WebAppAuthentication(options =>
 {
-    options.Domain = builder.Configuration["Auth0:Domain"]!;
-    options.ClientId = builder.Configuration["Auth0:ClientId"]!;
+    options.Domain = configuration["Auth0:Domain"]!;
+    options.ClientId = configuration["Auth0:ClientId"]!;
     
 });
 services.AddRazorPages();
@@ -23,27 +23,17 @@ builder.Services.Configure<HubOptions>(options =>
 {
     options.MaximumReceiveMessageSize = null;
 });
-services.AddScoped<CrawlService>();
-services.AddScoped<ICoreKernelExecution, CoreKernelService>();
-services.AddScoped<IMemoryConnectors, CoreKernelService>();
-services.AddScoped<ISemanticKernelSamples, CoreKernelService>();
-services.AddScoped<ITokenization, CoreKernelService>();
-services.AddScoped<ICustomNativePlugins, CoreKernelService>();
-services.AddScoped<ICustomCombinations, CoreKernelService>();
-services.AddScoped<IChatWithSk, CoreKernelService>();
-
+services.AddSkPluginLibraryServices(configuration);
 services.AddHttpClient();
-services.AddScoped<BingWebSearchService>();
+
 services.AddBlazorAceEditor();
-services.AddSingleton<ScriptService>();
-services.AddScoped<CompilerService>();
-services.AddScoped<TooltipService>();
+
 services.AddChat();
 services.AddRadzenComponents();
 
 var stringEventWriter = new StringEventWriter();
 services.AddScoped<StringEventWriter>();
-var appInsightsConnectionString = builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"] ?? builder.Configuration["ApplicationInsights:ConnectionString"];
+var appInsightsConnectionString = configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"] ?? configuration["ApplicationInsights:ConnectionString"];
 services.AddApplicationInsightsTelemetry(options =>
 {
     options.ConnectionString = appInsightsConnectionString;
@@ -61,8 +51,9 @@ services.AddLogging(config =>
     config.AddProvider(new StringEventWriterLoggerProvider(stringEventWriter));
     config.AddApplicationInsights();
 });
-services.AddScoped<HdbscanService>();
+
 services.AddSingleton<ActivityLogging>();
+
 
 var app = builder.Build();
 

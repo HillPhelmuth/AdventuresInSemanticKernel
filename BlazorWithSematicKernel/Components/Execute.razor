@@ -16,9 +16,9 @@
                         if (input.Type.Equals("string", StringComparison.InvariantCultureIgnoreCase))
                         {
                             <RadzenColumn Size="6">
-                                <RadzenFormField Text="@input.Name">
+                                <RadzenFormField Text="@input.Name" Style="width:100%">
                                     <ChildContent>
-                                        <RadzenTextBox @bind-Value="input.Value"></RadzenTextBox>
+                                        <RadzenTextArea Style="width:100%" @bind-Value="input.Value"></RadzenTextArea>
                                     </ChildContent>
                                     <Helper>
                                         @input.Description
@@ -31,7 +31,7 @@
                             <RadzenColumn Size="6">
                                 <RadzenFormField Text="@input.Name">
                                     <ChildContent>
-                                        <RadzenTextBox @bind-Value="input.Value"></RadzenTextBox>
+                                        <RadzenTextArea @bind-Value="input.Value"></RadzenTextArea>
                                     </ChildContent>
                                     <Helper>
                                         @input.Description
@@ -39,7 +39,7 @@
                                 </RadzenFormField>
                             </RadzenColumn>
                         }
-                        else if (input.Type.Equals("number", StringComparison.InvariantCultureIgnoreCase))
+                        else if (input.Type.Equals("number", StringComparison.InvariantCultureIgnoreCase) || input.Type.Equals("integer", StringComparison.InvariantCultureIgnoreCase))
                         {
                             <RadzenColumn Size="6">
                                 <RadzenFormField Text="@input.Name">
@@ -57,7 +57,7 @@
                             <RadzenColumn Size="6">
                                 <RadzenFormField Text="@input.Name">
                                     <ChildContent>
-                                        <RadzenSwitch @bind-Value="input.BoolValue"></RadzenSwitch>
+                                        <RadzenSwitch Style="outline: 0 none;width: 3rem;margin-right: auto;flex: none;" @bind-Value="input.BoolValue"></RadzenSwitch><RadzenLabel Style="width: 4rem;margin-right: auto;flex: none;"> @input.BoolValue</RadzenLabel>
                                     </ChildContent>
                                     <Helper>
                                         @input.Description

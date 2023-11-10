@@ -14,6 +14,7 @@ namespace BlazorWithSematicKernel.Pages
             if (firstRender)
             {
                 StateHasChanged();
+                //await ChatGptPlugin.GetAndSaveAllMantifestFiles();
             }
             await base.OnAfterRenderAsync(firstRender);
         }

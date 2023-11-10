@@ -24,7 +24,7 @@
                             }
                            
                         </RadzenCard>
-                        @if (IsSequential)
+                        @if (IsSequential || IsStepwise)
                         {
                             <RadzenCard>
                                 <RadzenButton MouseEnter="@((args) => ShowTooltip(args, "Prevent inclusion in Plan"))" Icon="@(ExcludedFunctions.Contains(functionview.Name) ? "unpublished" : "")" Size="ButtonSize.ExtraSmall" Text="Exclude Function" Click="@(() => ExcludeFunction(functionview.Name))"></RadzenButton>
@@ -58,7 +58,7 @@
                                         </ChildContent>
                                         <Helper>
                                             <RadzenText TextStyle="TextStyle.Caption" Text="@field.Description"></RadzenText>
-                                            <RadzenRequiredValidator Visible="@(!IsSequential)"></RadzenRequiredValidator>
+                                            <RadzenRequiredValidator Visible="@(!IsSequential && !IsStepwise)"></RadzenRequiredValidator>
                                         </Helper>
                                     </RadzenFormField>
 
@@ -77,7 +77,7 @@
                                         </ChildContent>
                                         <Helper>
                                             <RadzenText TextStyle="TextStyle.Caption" Text="@field.Description"></RadzenText>
-                                            <RadzenRequiredValidator Visible="@(!IsSequential)"></RadzenRequiredValidator>
+                                            <RadzenRequiredValidator Visible="@(!IsSequential && !IsStepwise)"></RadzenRequiredValidator>
                                         </Helper>
                                     </RadzenFormField>
 

@@ -6,7 +6,7 @@ namespace ChatComponents
     {
         public static IServiceCollection AddChat(this IServiceCollection services)
         {
-            return services.AddScoped<ChatState>().AddTransient<AppJsInterop>();
+            return services.AddScoped<ChatStateCollection>().AddTransient<AppJsInterop>();
         }
     }
 }

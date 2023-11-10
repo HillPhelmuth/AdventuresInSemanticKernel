@@ -362,3 +362,5 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /BlazorWithSematicKernel/appsettings.Development.json
+/SkPluginLibrary/Examples/Readme.md
+/SkPluginLibrary/Examples/GenDocs

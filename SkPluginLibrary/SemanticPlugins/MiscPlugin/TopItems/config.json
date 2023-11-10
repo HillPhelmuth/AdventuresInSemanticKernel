@@ -12,7 +12,7 @@
   "input": {
     "parameters": [
       {
-        "name": "input",
+        "name": "objects",
         "description": "The input array",
         "defaultValue": ""
       },

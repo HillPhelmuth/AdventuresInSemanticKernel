@@ -31,7 +31,8 @@ namespace BlazorWithSematicKernel.Components
         public EventCallback<List<Function>> PluginFunctionsChanged { get; set; }
         [Parameter]
         public EventCallback<KeyValuePair<string, ISKFunction>> FunctionSelected { get; set; }
-        private bool IsSequential => ExecutionType is ExecutionType.SequentialPlanner or ExecutionType.SequentialPlannerWithChat;
+        private bool IsSequential => ExecutionType is ExecutionType.SequentialPlanner or ExecutionType.SequentialPlannerChat;
+        private bool IsStepwise => ExecutionType is ExecutionType.StepwisePlanner or ExecutionType.StepwisePlannerChat;
         [Inject]
         private TooltipService TooltipService { get; set; } = default!;
 
@@ -49,8 +50,8 @@ namespace BlazorWithSematicKernel.Components
                 {
                     ExecutionType.ChainFunctions => "Select Functions to Chain",
                     ExecutionType.SingleFunction => "Select Function to Execute",
-                    ExecutionType.ActionPlanner or ExecutionType.ActionPlannerWithChat => "Execute Action Plan",
-                    ExecutionType.SequentialPlanner or ExecutionType.SequentialPlannerWithChat =>
+                    ExecutionType.ActionPlanner or ExecutionType.ActionPlannerChat => "Execute Action Plan",
+                    ExecutionType.SequentialPlanner or ExecutionType.SequentialPlannerChat =>
                         "Exclude or Require Functions to Execute",
                     _ => "View Functions"
                 };

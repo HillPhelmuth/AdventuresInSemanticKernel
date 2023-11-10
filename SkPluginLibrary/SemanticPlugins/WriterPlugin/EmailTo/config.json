@@ -20,6 +20,11 @@
         "name": "sender",
         "description": "Intended sender of email",
         "defaultValue": ""
+      },
+      {
+        "name": "bullets",
+        "description": "Bullet points to turn into an email",
+        "defaultValue": ""
       }
     ]
   }

@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Reflection;
 
 namespace SkPluginLibrary.Models.Helpers
 {
@@ -25,6 +26,18 @@ namespace SkPluginLibrary.Models.Helpers
             var enumDict = Enum.GetValues(enumType).Cast<TEnum>()
                 .ToDictionary(t => t, t => t.GetDescription());
             return enumDict;
+        }
+        public static TEnum GetEnumValueFromDescription<TEnum>(string description) where TEnum : Enum
+        {
+            foreach (var field in typeof(TEnum).GetFields())
+            {
+                if (field.GetCustomAttributes(typeof(DescriptionAttribute), false)
+                        .FirstOrDefault() is DescriptionAttribute attribute && attribute.Description == description)
+                {
+                    return (TEnum)field.GetValue(null);
+                }
+            }
+            return default;
         }
     }
 }

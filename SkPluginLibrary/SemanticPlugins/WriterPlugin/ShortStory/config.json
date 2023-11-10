@@ -12,7 +12,7 @@
   "input": {
     "parameters": [
       {
-        "name": "input",
+        "name": "synopsis",
         "description": "A synopsis of what the short story should be about.",
         "defaultValue": ""
       },
@@ -23,7 +23,7 @@
       },
       {
         "name": "character",
-        "description": "The main character and primary protagonist",
+        "description": "The main character and primary protagonist or antihero",
         "defaultValue": ""
       },
       {

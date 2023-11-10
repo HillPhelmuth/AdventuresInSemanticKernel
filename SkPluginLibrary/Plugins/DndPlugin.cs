@@ -24,7 +24,7 @@ namespace SkPluginLibrary.Plugins
 
         public DndPlugin()
         {
-            _kernel = CoreKernelService.ChatCompletionOnlyKernel();
+            _kernel = CoreKernelService.ChatCompletionKernel("gpt-3.5-turbo-1106");
             _summarizeMonsterFunction =
                 _kernel.ImportSemanticFunctionsFromDirectory(RepoFiles.PluginDirectoryPath, "WriterPlugin")["MonsterGen"];
         }

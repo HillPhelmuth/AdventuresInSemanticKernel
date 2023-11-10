@@ -4,7 +4,7 @@
     <RadzenColumn Size="12">
         <RadzenText Text="Wiki Chat" TextStyle="TextStyle.DisplayH6" TextAlign="TextAlign.Center"></RadzenText>
         <RadzenCard>
-            <ChatView @ref=_chatView></ChatView>
+            <ChatView @ref=_chatView ViewId="wikiChat" ResetOnClose="false"></ChatView>
         </RadzenCard>
         <RadzenCard Style="width: 100%"><UserInput ButtonLabel="Send" HelperText="What is ChatGPT and who founded the company that created it?" MessageSubmit="Submit" IsBusy="_isBusy"></UserInput></RadzenCard>
 

@@ -40,7 +40,7 @@ public partial class CoreKernelService
         _playgroundStore = storeType == MemoryStoreType.SqlLite
             ? await SqliteMemoryStore.ConnectAsync(_configuration["ConnectionStrings:SqlLite2"]!)
             : CreateMemoryStore(storeType);
-        _playgroundTextMemory = storeType == MemoryStoreType.SqlLite ? await CreateSqliteMemoryAsync() : CreateSemanticMemoryStore(storeType);
+        _playgroundTextMemory = storeType == MemoryStoreType.SqlLite ? await CreateSqliteMemoryAsync() : CreateSemanticMemory(storeType);
         if (delete)
         {
             await DeleteCollection(collection);
