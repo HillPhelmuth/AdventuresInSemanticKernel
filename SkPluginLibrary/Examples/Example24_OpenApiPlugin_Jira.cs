@@ -38,12 +38,12 @@ public static class Example24_OpenApiPlugin_Jira
         bool useLocalFile = true;
         if (useLocalFile)
         {
-            jiraFunctions = await kernel.ImportPluginFunctionsAsync("jiraPlugin", Path.Combine(RepoFiles.ApiPluginDirectoryPath, "JiraPlugin", "openapi.json"), new OpenApiFunctionExecutionParameters(authCallback: tokenProvider.AuthenticateRequestAsync));
+            jiraFunctions = await kernel.ImportOpenApiPluginFunctionsAsync("jiraPlugin", Path.Combine(RepoFiles.ApiPluginDirectoryPath, "JiraPlugin", "openapi.json"), new OpenApiFunctionExecutionParameters(authCallback: tokenProvider.AuthenticateRequestAsync));
         }
         else
         {
             var apiPluginRawFileURL = new Uri("https://raw.githubusercontent.com/microsoft/PowerPlatformConnectors/dev/certified-connectors/JIRA/apiDefinition.swagger.json");
-            jiraFunctions = await kernel.ImportPluginFunctionsAsync("jiraPlugin", apiPluginRawFileURL, new OpenApiFunctionExecutionParameters(httpClient, tokenProvider.AuthenticateRequestAsync));
+            jiraFunctions = await kernel.ImportOpenApiPluginFunctionsAsync("jiraPlugin", apiPluginRawFileURL, new OpenApiFunctionExecutionParameters(httpClient, tokenProvider.AuthenticateRequestAsync));
         }
 
         // GetIssue Function

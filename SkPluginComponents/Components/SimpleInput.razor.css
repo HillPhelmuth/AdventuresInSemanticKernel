@@ -1,0 +1,267 @@
+﻿/* General styling for form elements */
+.form-field, .numeric-input {
+    border: 1px solid #ced4da; /* Light grey border */
+    padding: 0.375rem 0.75rem; /* Padding inside the fields */
+    border-radius: 0.25rem; /* Rounded corners */
+    margin-bottom: 1rem; /* Space between fields */
+}
+    .form-field:focus, .numeric-input:focus {
+        border: 1px solid #007bff; /* Blue border on hover */
+    }
+/* Specific styling for text boxes */
+.text-box {
+    width: 100%; /* Full width */
+}
+
+/* Styling for dropdowns */
+.dropdown {
+    display: block;
+    width: 100%;
+}
+
+/* Styling for radio buttons list */
+.radio-button-list {
+    display: flex;
+    gap: 1rem; /* Space between radio buttons */
+}
+
+.radio-button-list input[type="radio"] {
+    margin-right: 0.5rem; /* Space between radio button and label */
+}
+
+/* Color picker styling */
+.color-picker {
+    height: 2.25rem; /* Fixed height */
+    cursor: pointer;
+}
+
+/* Autocomplete styling */
+.autocomplete {
+    position: relative;
+    width: 100%;
+}
+
+/* Base style for numeric input */
+/* Base style for numeric input */
+.numeric-input {
+    border: 1px solid #007bff; /* Blue border */
+    padding: .375rem .75rem; /* Padding inside the text field */
+    border-radius: .25rem; /* Rounded corners */
+    position: relative; /* Position relative to place increment/decrement buttons */
+    width: calc(100% - 50px); /* Full width minus the button width */
+    -webkit-appearance: none; /* Removes default webkit styles */
+    margin-bottom: 0; /* Remove margin between input and buttons */
+}
+
+/* Container for the numeric input and buttons */
+.numeric-input-container {
+    position: relative; /* Container to position the buttons */
+    display: inline-block; /* Aligns with other inline elements */
+}
+
+/* Style for the increment/decrement buttons */
+.increment-btn,
+.decrement-btn {
+    position: absolute;
+    right: 0; /* Position to the right of the input */
+    width: 25px; /* Width of the buttons */
+    height: calc(50% - 1px); /* Half height of the input */
+    border: 1px solid #007bff; /* Blue border */
+    background-color: #007bff; /* Blue background */
+    color: white; /* White text */
+    text-align: center; /* Center the text */
+    vertical-align: middle; /* Align text vertically */
+    line-height: 25px; /* Line height to match the button height */
+    cursor: pointer; /* Pointer cursor on hover */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.increment-btn {
+    top: 0; /* Position at the top */
+    border-bottom: none; /* No border at the bottom */
+    border-top-right-radius: .25rem; /* Rounded top right corner */
+}
+
+.decrement-btn {
+    bottom: 0; /* Position at the bottom */
+    border-top: none; /* No border at the top */
+    border-bottom-right-radius: .25rem; /* Rounded bottom right corner */
+}
+
+/* Adjust the input field to not show default arrows/spinners */
+.numeric-input::-webkit-outer-spin-button,
+.numeric-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.numeric-input[type=number] {
+    -moz-appearance: textfield; /* Removes spinner from Firefox */
+}
+
+/* Optional: Style for hovering over the buttons */
+.increment-btn:hover,
+.decrement-btn:hover {
+    background-color: #0056b3; /* Darker blue background on hover */
+}
+
+/* Optional: Style for focus on the input */
+.numeric-input:focus {
+    outline: none; /* Removes default focus outline */
+    border-color: #0056b3; /* Darker blue border for focus */
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25); /* Glowing effect for focus */
+}
+
+/* Base style for date input */
+.date-input {
+    border: 1px solid #007bff; /* Blue border */
+    padding: .375rem .75rem; /* Padding inside the text field */
+    border-radius: .25rem; /* Rounded corners */
+    position: relative; /* Position relative for potential icons or overlays */
+    width: 100%; /* Full width */
+    -webkit-appearance: none; /* Removes default styling for webkit browsers */
+    -moz-appearance: none; /* Removes default styling for Firefox */
+    appearance: none; /* Removes default styling */
+}
+
+/* Style for the date input container, if you want to add an icon */
+.date-input-container {
+    position: relative; /* Allows for absolute positioning of the icon */
+}
+
+/* Style for an icon inside the date input, if desired */
+.date-input-icon {
+    position: absolute;
+    right: 10px; /* Position towards the right */
+    top: 50%; /* Center vertically */
+    transform: translateY(-50%); /* Center align the icon */
+    pointer-events: none; /* Makes the icon non-interactive */
+    color: #007bff; /* Blue icon color */
+}
+
+/* Focus style to highlight the field when it is active */
+.date-input:focus {
+    border-color: #0056b3; /* Darker blue border on focus */
+    outline: none; /* Remove default focus outline */
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25); /* Glowing effect on focus */
+}
+
+/* If you want to hide the clear button on date inputs */
+.date-input[type="date"]::-webkit-clear-button {
+    display: none;
+}
+
+/* If you want to style the dropdown icon on date inputs */
+.date-input[type="date"]::-webkit-calendar-picker-indicator {
+    color: rgba(0, 0, 0, 0);
+    background: url('path-to-your-icon.png') no-repeat center center;
+    background-size: contain;
+    cursor: pointer;
+}
+
+/*Style for buttons*/
+
+.primary-button, .danger-button {
+    color: white; /* White text */
+    padding: 10px 20px; /* Top and bottom padding, Left and right padding */
+    border: none; /* No border */
+    border-radius: 20px; /* Rounded corners */
+    font-family: Arial, sans-serif; /* Font family */
+    font-size: 16px; /* Font size */
+    text-align: center; /* Center the text */
+    cursor: pointer; /* Pointer cursor on hover */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Slight shadow for depth */
+    outline: none; /* Removes the outline */
+    transition: background-color 0.3s; /* Smooth transition for hover effect */
+}
+/* Style for a primary button */
+.primary-button {
+    background-color: #007bff; /* Blue background */   
+}
+
+/* Hover effect */
+.primary-button:hover {
+    background-color: #0056b3; /* Slightly darker blue on hover */
+}
+
+/* Focus effect */
+.primary-button:focus {
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25); /* Glowing effect for accessibility */
+}
+
+/* Active effect (when the button is pressed) */
+.primary-button:active {
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2) inset; /* Inward shadow for a pressed effect */
+}
+/* Style for a danger button */
+.danger-button {
+    background-color: #dc3545; /* Red background */
+}
+
+/* Hover effect */
+.danger-button:hover {
+    background-color: #c82333; /* Slightly darker red on hover */
+}
+
+/* Focus effect */
+.danger-button:focus {
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, .25); /* Glowing effect for accessibility */
+}
+
+/* Active effect (when the button is pressed) */
+.danger-button:active {
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2) inset; /* Inward shadow for a pressed effect */
+}
+/* Container style for buttons */
+.buttons-container {
+    display: flex; /* Aligns children inline */
+    gap: 1rem; /* Space between the buttons */
+    justify-content:center;
+    align-content:center;
+}
+
+/* Styles the select element */
+.custom-select {
+    appearance: none; /* Removes default system appearance */
+    -moz-appearance: none; /* Removes default appearance for Firefox */
+    -webkit-appearance: none; /* Removes default appearance for WebKit browsers */
+
+    background-color: white; /* Background color */
+    border: 1px solid #ced4da; /* Border color */
+    padding: 0.5rem 1.5rem 0.5rem 0.75rem; /* Padding inside the select */
+    border-radius: 0.25rem; /* Rounded corners */
+    font-size: 1rem; /* Font size */
+    line-height: 1.25; /* Line height for text inside the select */
+    margin: 0; /* Margin reset if needed */
+    width: 100%; /* Full width */
+    cursor: pointer; /* Pointer cursor to indicate it's clickable */
+    position: relative; /* Needed for absolute positioning of custom arrow */
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"><polygon points="0,0 20,0 10,10" style="fill: black;" /></svg>'); /* Custom arrow */
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center; /* Position for the custom arrow */
+    background-size: 0.65rem; /* Size of the custom arrow */
+}
+
+/* Styles the container for the custom select to position the custom arrow */
+.custom-select-wrapper {
+    position: relative; /* Needed for absolute positioning of custom arrow */
+}
+
+/* Hides the arrow for IE10/11 */
+.custom-select::-ms-expand {
+    display: none;
+}
+
+/* Optional: styles the select element when it has focus */
+.custom-select:focus {
+    border-color: #80bdff;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+/* Optional: styles for when the select is disabled */
+.custom-select:disabled {
+    background-color: #e9ecef;
+}

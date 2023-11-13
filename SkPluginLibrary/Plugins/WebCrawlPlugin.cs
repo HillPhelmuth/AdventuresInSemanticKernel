@@ -130,7 +130,7 @@ public class WebCrawlPlugin
 
         try
         {
-            _scraperPlugin ??= await _kernel.ImportPluginFunctionsAsync("ScraperPlugin",
+            _scraperPlugin ??= await _kernel.ImportOpenApiPluginFunctionsAsync("ScraperPlugin",
                 new Uri("https://scraper.gafo.tech/.well-known/ai-plugin.json"),
                 new OpenApiFunctionExecutionParameters { EnableDynamicPayload = true, IgnoreNonCompliantErrors = true });
             var context = _kernel.CreateNewContext();

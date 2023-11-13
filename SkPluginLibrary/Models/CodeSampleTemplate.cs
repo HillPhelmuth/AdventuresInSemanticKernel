@@ -103,5 +103,6 @@ using Microsoft.SemanticKernel.Connectors.AI.OpenAI.AzureSdk;
 using SkPluginLibrary.Models;
 using SkPluginLibrary.Models.Helpers;
 using SkPluginLibrary.Plugins;
-using System.Net.Http;";
+using System.Net.Http;
+using Microsoft.SemanticKernel.TemplateEngine.Handlebars;";
 }

@@ -6,10 +6,8 @@ namespace SkPluginLibrary.Abstractions;
 
 public interface ICoreKernelExecution
 {
-    Task<ChatGptPluginManifest> GetManifest(ChatGptPlugin chatGptPlugin);
     Task<Dictionary<string, ISKFunction>> GetExternalPluginFunctions(ChatGptPluginManifest manifest);
-    Task<string> ExecuteFunction(ISKFunction function, Dictionary<string, string>? variables = null);
-    IAsyncEnumerable<string> ExecuteFunctionStream(ISKFunction function, Dictionary<string, string>? variables = null);
+
     IAsyncEnumerable<string> ChatWithActionPlanner(string query, ChatRequestModel chatRequestModel,
         bool runAsChat = true, string? askOverride = null);
     IAsyncEnumerable<string> ChatWithSequentialPlanner(string query, ChatRequestModel chatRequestModel,

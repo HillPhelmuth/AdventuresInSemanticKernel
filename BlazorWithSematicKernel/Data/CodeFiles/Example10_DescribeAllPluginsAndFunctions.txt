@@ -39,7 +39,7 @@ public static class Example10_DescribeAllPluginsAndFunctions
             requestSettings: new OpenAIRequestSettings() { MaxTokens = 150 });
         
         // Import OpenAPI functions
-        await kernel.ImportPluginFunctionsAsync("MediumPlugin",
+        await kernel.ImportOpenApiPluginFunctionsAsync("MediumPlugin",
             Path.Combine(RepoFiles.ApiPluginDirectoryPath, "MediumApiPlugin", "openapi.json"), new OpenApiFunctionExecutionParameters { EnableDynamicPayload = true, IgnoreNonCompliantErrors = true });
         var functions = kernel.Functions.GetFunctionViews();
 

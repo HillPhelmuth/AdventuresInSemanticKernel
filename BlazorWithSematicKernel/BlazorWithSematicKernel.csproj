@@ -34,7 +34,6 @@
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="6.0.1" />
 		<PackageReference Include="Microsoft.Extensions.Azure" Version="1.5.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging.ApplicationInsights" Version="2.21.0" />
-		<PackageReference Include="Microsoft.Identity.Client.Extensions.Msal" Version="2.32.0" />
 		<PackageReference Include="Microsoft.Identity.Web" Version="2.13.2" />
 		<PackageReference Include="Microsoft.Identity.Web.MicrosoftGraph" Version="2.13.2" />
 		<PackageReference Include="Microsoft.Identity.Web.UI" Version="2.13.2" />

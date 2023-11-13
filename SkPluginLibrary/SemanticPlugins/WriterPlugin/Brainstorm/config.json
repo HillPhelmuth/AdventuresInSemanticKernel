@@ -13,7 +13,7 @@
   "input": {
     "parameters": [
       {
-        "name": "input",
+        "name": "topic",
         "description": "A topic description or goal.",
         "defaultValue": ""
       }

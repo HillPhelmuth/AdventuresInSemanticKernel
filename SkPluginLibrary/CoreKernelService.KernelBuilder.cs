@@ -21,6 +21,9 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Channels;
 using Microsoft.SemanticKernel.Orchestration;
+using SkPluginComponents;
+using SkPluginComponents.Models;
+using Microsoft.SemanticKernel.Functions.OpenAPI.OpenAI;
 
 namespace SkPluginLibrary;
 
@@ -139,6 +142,8 @@ public partial class CoreKernelService
         _customNativePlugins.TryAdd(nameof(WikiChatPlugin), wikiPlugin);
         var youtubePlugin = new YouTubePlugin(kernel, _configuration["YouTubeSearch:ApiKey"]!);
         _customNativePlugins.TryAdd(nameof(YouTubePlugin), youtubePlugin);
+        var askUserPlugin = new AskUserPlugin(_modalService);
+        _customNativePlugins.TryAdd(nameof(AskUserPlugin), askUserPlugin);
         return _customNativePlugins;
     }
 
@@ -150,7 +155,7 @@ public partial class CoreKernelService
     private async Task<Dictionary<string, ISKFunction>> GetApiFunctionsFromNames(IEnumerable<string> apiPluginNames)
     {
         var kernel = CreateKernel();
-        var tasks = apiPluginNames.Select(apiPlugin => kernel.ImportPluginFunctionsAsync(apiPlugin, Path.Combine(RepoFiles.ApiPluginDirectoryPath, apiPlugin, "openapi.json"), new OpenApiFunctionExecutionParameters {EnableDynamicPayload = true, EnablePayloadNamespacing = true, IgnoreNonCompliantErrors = true})).ToList();
+        var tasks = apiPluginNames.Select(apiPlugin => kernel.ImportOpenApiPluginFunctionsAsync(apiPlugin, Path.Combine(RepoFiles.ApiPluginDirectoryPath, apiPlugin, "openapi.json"), new OpenApiFunctionExecutionParameters {EnableDynamicPayload = true, EnablePayloadNamespacing = true, IgnoreNonCompliantErrors = true})).ToList();
 
         var taskResults = await Task.WhenAll(tasks);
         var functionsResult = taskResults.SelectMany(x => x).ToDictionary(x => x.Key, x => x.Value, EqualityComparer<string>.Default);
@@ -217,14 +222,14 @@ public partial class CoreKernelService
         var uri = string.IsNullOrWhiteSpace(manifest.Api!.PluginUrl)
             ? manifest.Api.Url
             : new Uri(manifest.Api.PluginUrl);
-        var executionParameters = new OpenApiFunctionExecutionParameters { IgnoreNonCompliantErrors = true, EnableDynamicPayload = true, EnablePayloadNamespacing = true };
+        var executionParameters = new OpenAIFunctionExecutionParameters { IgnoreNonCompliantErrors = true, EnableDynamicPayload = true, EnablePayloadNamespacing = true };
         if (!string.IsNullOrEmpty(manifest.OverrideUrl))
         {
             executionParameters.ServerUrlOverride = new Uri(manifest.OverrideUrl);
         }
 
         var replaceNonAsciiWithUnderscore = manifest.NameForModel.ReplaceNonAsciiWithUnderscore();
-        var plugin = await kernel.ImportPluginFunctionsAsync(replaceNonAsciiWithUnderscore, uri, executionParameters);
+        var plugin = await kernel.ImportOpenAIPluginFunctionsAsync(replaceNonAsciiWithUnderscore, uri, executionParameters);
         return plugin.ToDictionary(x => x.Key, x => x.Value);
     }
     private void FunctionInvokedHandler(object? sender, FunctionInvokingEventArgs e)
@@ -289,6 +294,7 @@ public partial class CoreKernelService
     {
         var kernel = await CreateKernelWithPlugins(requestModel.SelectedPlugins);
         var functions = kernel.Functions.GetFunctionViews();
+        //await kernel.ImportFunctions(new AskUserPlugin(_modalService));
         var config = new StepwisePlannerConfig
         {
             MaxTokens = 8000,
@@ -298,7 +304,7 @@ public partial class CoreKernelService
                 MaxRelevantFunctions = 20
             },
             Suffix = "Now, Take a deep breath. Let's break down the problem step by step and think about the best approach. Label steps as they are taken.\n\nContinue the thought process!",
-            MaxIterations = 10,
+            MaxIterations = 20,
 
 
         };
@@ -393,6 +399,7 @@ public partial class CoreKernelService
         _chatExchanges.Add(new ChatExchange(userMessage, assistantMessage));
     }
     private static StepwiseExecutionResult _executionResults = new();
+    private readonly AskUserService _modalService;
     public event Action<string>? YieldAdditionalText;
     public async IAsyncEnumerable<string> ChatWithStepwisePlanner(string query, ChatRequestModel chatRequestModel,
         bool runAsChat = true, string? askOverride = null)
@@ -425,18 +432,28 @@ public partial class CoreKernelService
         {
             var function = e.FunctionView;
             
-            YieldAdditionalText?.Invoke($"\n##### {function.Name} {function.PluginName} Completed\n\n");
+            YieldAdditionalText?.Invoke($"\n#### {function.Name} {function.PluginName} Completed\n\n");
+            var result = $"\n{e.SKContext.Result}\n";
+            var markdownExpando = $"""
+            
+            <details>
+              <summary>See Results</summary>
+              
+              <h5>Results</h5>
+              <p>
+              {result}
+              </p>
+              <br/>
+            </details>
+            """;
+            
+            YieldAdditionalText?.Invoke(markdownExpando);
            
         };
         var result = await kernel.RunAsync(plan);
         var executionResult = result.AsStepwiseExecutionResult(config);
         finalResult = executionResult.Answer;
-        //await plan.InvokeAsync(kernel.CreateNewContext()).ContinueWith(x =>
-        //{
-        //    var executionResult = x.Result.AsStepwiseExecutionResult(config);
-        //    _executionResults = executionResult;
-        //    finalResult = $"{executionResult}";
-        //});
+       
         if (runAsChat)
         {
             yield return "### Execution Complete\n\n#### Chat:\n\n";
@@ -636,7 +653,7 @@ public partial class CoreKernelService
             chat.AddAssistantMessage(exchange.AssistantMessage);
         }
 
-        var settings = new OpenAIRequestSettings { Temperature = 1.0, TopP = 1.0, MaxTokens = 3000 };
+        var settings = new OpenAIRequestSettings { Temperature = 0.7, TopP = 1.0, MaxTokens = 3000 };
         chat.AddUserMessage(query);
         var response = "";
         await foreach (var token in chatService.GenerateMessageStreamAsync(chat, settings))
@@ -657,7 +674,7 @@ public partial class CoreKernelService
             pluginFunctions.Where(x => x.PluginType == PluginType.Semantic).Select(x => x.PluginName).ToArray());
         foreach (var apiPlugin in pluginFunctions.Where(x => x.PluginType == PluginType.Api))
         {
-            var api = await kernel.ImportPluginFunctionsAsync(apiPlugin.PluginName,
+            var api = await kernel.ImportOpenApiPluginFunctionsAsync(apiPlugin.PluginName,
                 Path.Combine(RepoFiles.ApiPluginDirectoryPath, apiPlugin.PluginName, "openapi.json"), new OpenApiFunctionExecutionParameters {EnableDynamicPayload = true, EnablePayloadNamespacing = true, IgnoreNonCompliantErrors = true});
         }
 

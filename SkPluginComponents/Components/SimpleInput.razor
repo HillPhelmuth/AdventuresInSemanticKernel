@@ -1,0 +1,54 @@
+﻿<div style="min-width:300px; min-height:200px">
+    @switch (SimpleInputType)
+    {
+        case SimpleInputType.Text:
+        case SimpleInputType.TextArea:
+            <div class="form-field">
+                <textarea style="width:100%;height:7rem;" @bind=@_formFieldValue.TextInput></textarea>
+            </div>
+            break;
+        case SimpleInputType.Boolean:
+            <div class="buttons-container">
+                <button class="primary-button" @onclick="@(() => Confirm(true))">Yes</button>
+                <button class="danger-button" @onclick="@(() => Confirm(false))">No</button>
+            </div>
+            break;
+        case SimpleInputType.Number:
+
+            <div class="numeric-input-container">
+                <input type="number" class="numeric-input" @bind=@_formFieldValue.NumberInput>
+                <button class="increment-btn" @onclick="@(() => _formFieldValue.NumberInput++)">▲</button>
+                <button class="decrement-btn" @onclick="@(() => _formFieldValue.NumberInput--)">▼</button>
+            </div>
+            break;
+        case SimpleInputType.Date:
+            <div class="date-input-container">
+                <input type="date" class="date-input" @bind=@_formFieldValue.DateInput>
+                <!-- You can use an SVG or an icon font like FontAwesome for the calendar icon -->
+                <i class="date-input-icon"><svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><g><rect fill="none" height="24" width="24" /></g><g><path d="M19,4h-1V2h-2v2H8V2H6v2H5C3.89,4,3.01,4.9,3.01,6L3,20c0,1.1,0.89,2,2,2h14c1.1,0,2-0.9,2-2V6C21,4.9,20.1,4,19,4z M19,20 H5V10h14V20z M9,14H7v-2h2V14z M13,14h-2v-2h2V14z M17,14h-2v-2h2V14z M9,18H7v-2h2V18z M13,18h-2v-2h2V18z M17,18h-2v-2h2V18z" /></g></svg></i>
+            </div>
+            break;
+        case SimpleInputType.Select:
+            <div class="custom-select-wrapper">
+                <select class="custom-select" @bind=@_formFieldValue.TextInput>
+                    @foreach (var option in _options)
+                    {
+                        <option value="@option">@option</option>                    
+                    }
+                </select>
+            </div>
+            break;
+        default:
+            <div class="form-field">
+                <textarea style="width:100%;height:7rem;" @bind=@_formFieldValue.TextInput></textarea>
+            </div>
+            break;
+    }
+
+    <br />
+    @if (SimpleInputType != SimpleInputType.Boolean)
+    {
+        <button class="primary-button" @onclick=Submit>Send</button>
+    }
+    
+</div>

@@ -30,7 +30,7 @@ public static class Example33_StreamingChat
     {
         Console.WriteLine("======== Azure Open AI - ChatGPT Streaming ========");
 
-        AzureChatCompletion azureChatCompletion = new(
+        AzureOpenAIChatCompletion azureChatCompletion = new(
             TestConfiguration.AzureOpenAI.ChatDeploymentName,
             TestConfiguration.AzureOpenAI.Endpoint,
             TestConfiguration.AzureOpenAI.ApiKey);

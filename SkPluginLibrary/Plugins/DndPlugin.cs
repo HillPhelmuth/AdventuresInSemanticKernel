@@ -64,7 +64,7 @@ namespace SkPluginLibrary.Plugins
         {
             Console.WriteLine("Starting generate monster");
             var dndApiSkill =
-                await _kernel.ImportPluginFunctionsAsync("DndApiPlugin", Path.Combine(RepoFiles.ApiPluginDirectoryPath, "DndApiPlugin", "openapi.json"));
+                await _kernel.ImportOpenApiPluginFunctionsAsync("DndApiPlugin", Path.Combine(RepoFiles.ApiPluginDirectoryPath, "DndApiPlugin", "openapi.json"));
             var random = new Random();
             if (!context.Variables.ContainsKey("challenge_rating"))
             {
@@ -76,14 +76,14 @@ namespace SkPluginLibrary.Plugins
             try
             {
                 var result = monstersResult.GetValue<object>();
-                var monsterList = new MonsterList() { Count = 1, Results = new List<Result> { new() { Index = "young-black-dragon", Name = "Young Black Dragon" } } };
+                var monsterList = new MonsterList() { Count = 1, Monsters = new List<Monster> { new() { Index = "young-black-dragon", Name = "Young Black Dragon" } } };
                 if (result is RestApiOperationResponse restApiResponse)
                 {
                     var content = restApiResponse.Content.ToString();
                     monsterList = JsonSerializer.Deserialize<MonsterList>(content);
                 }
-                var index = random.Next(0, monsterList.Results.Count);
-                var monsterResult = monsterList.Results[index];
+                var index = random.Next(0, monsterList.Monsters.Count);
+                var monsterResult = monsterList.Monsters[index];
                 var summary = await _kernel.RunAsync(monsterResult.Name, _summarizeMonsterFunction);
                 //var summary = await _summarizeMonsterFunction.InvokeAsync(monsterResult.Name, context);
                 return summary.Result();
@@ -138,10 +138,10 @@ namespace SkPluginLibrary.Plugins
         public long Count { get; set; }
 
         [JsonPropertyName("results")]
-        public List<Result> Results { get; set; }
+        public List<Monster> Monsters { get; set; }
     }
 
-    public partial class Result
+    public partial class Monster
     {
         [JsonPropertyName("index")]
         public string Index { get; set; }

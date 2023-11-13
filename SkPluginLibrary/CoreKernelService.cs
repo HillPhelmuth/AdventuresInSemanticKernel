@@ -26,7 +26,9 @@ using SkPluginLibrary.Services;
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
+using SkPluginComponents.Models;
 using StringHelpers = SkPluginLibrary.Models.Helpers.StringHelpers;
+using SkPluginComponents;
 
 namespace SkPluginLibrary;
 
@@ -48,7 +50,7 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
         public const string SkDocsCollection = "skDocsCollection";
         public const string SkCodeCollection = "skCodeCollection";
     }
-    public CoreKernelService(IConfiguration configuration, ScriptService scriptService, CompilerService compilerService, HdbscanService hdbscanService,  ILoggerFactory loggerFactory, BingWebSearchService bingSearchService)
+    public CoreKernelService(IConfiguration configuration, ScriptService scriptService, CompilerService compilerService, HdbscanService hdbscanService,  ILoggerFactory loggerFactory, BingWebSearchService bingSearchService, AskUserService modalService)
     {
         _configuration = configuration;
         _scriptService = scriptService;
@@ -56,6 +58,7 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
         _hdbscanService = hdbscanService;
         _loggerFactory = loggerFactory;
         _bingSearchService = bingSearchService;
+        _modalService = modalService;
 
         _memoryStore = new VolatileMemoryStore();
         CreateKernel();
@@ -283,7 +286,7 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
         var detailString = $" a {details.Race} {details.Class} with a {details.Alignment} alignment";
         characterDescription += detailString;
         var planGenKernel = CreateKernel("gpt-4-1106-preview");
-        var dndSkill = await planGenKernel.ImportPluginFunctionsAsync("DndApiPlugin", Path.Combine(RepoFiles.ApiPluginDirectoryPath, "DndApiPlugin", "openapi.json"), new OpenApiFunctionExecutionParameters { IgnoreNonCompliantErrors = true });
+        var dndSkill = await planGenKernel.ImportOpenApiPluginFunctionsAsync("DndApiPlugin", Path.Combine(RepoFiles.ApiPluginDirectoryPath, "DndApiPlugin", "openapi.json"), new OpenApiFunctionExecutionParameters { IgnoreNonCompliantErrors = true });
         var writer = planGenKernel.ImportSemanticFunctionsFromDirectory(RepoFiles.PluginDirectoryPath, "WriterPlugin");
         planGenKernel.ImportFunctions(new DndPlugin());
         var context = await PopulateContext(dndSkill["Monsters"]);
@@ -359,18 +362,27 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
         var semanticSkills = kernel.ImportSemanticFunctionsFromDirectory(RepoFiles.PluginDirectoryPath, "SummarizePlugin",
             "WriterPlugin", "MiscPlugin");
         var result = monstersResult.GetValue<object>();
-        var monsterList = new MonsterList() { Count = 1, Results = new List<Result> { new() { Index = "young-black-dragon", Name = "Young Black Dragon" } } };
+        var fullTypeName = result.GetType().FullName;
+        Console.WriteLine($"Result Type: {fullTypeName}");
+        var monsterList = new MonsterList() { Count = 1, Monsters = new List<Monster> { new() { Index = "young-black-dragon", Name = "Young Black Dragon" } } };
         if (result is RestApiOperationResponse restApiResponse)
         {
             var content = restApiResponse.Content.ToString();
             monsterList = JsonSerializer.Deserialize<MonsterList>(content);
         }
-
-
-        var index = random.Next(0, monsterList.Results.Count);
-        var monsterResult = monsterList.Results[index];
+        else if (result is string monsterJson)
+        {
+            monsterList = JsonSerializer.Deserialize<MonsterList>(monsterJson);
+        }
+        var askUserplugin = new AskUserPlugin(_modalService);
+        var askUser = kernel.ImportFunctions(askUserplugin);
+        context.Variables["question"] = $"Which of these monsters should be in the story?(copy-paste name verbatim)\n{string.Join("<br/>", monsterList.Monsters.Select(x => x.Index))}";
+        var userResponse = await askUser.First().Value.InvokeAsync(context);
+        var monsterName = userResponse.Result();
+        var index = random.Next(0, monsterList.Monsters.Count);
+        var monsterResult = monsterList.Monsters[index];
         var summarizeMonsterFunction = semanticSkills["MonsterGen"];
-        var monsterDescription = await kernel.RunAsync(monsterResult.Name, summarizeMonsterFunction);
+        var monsterDescription = await kernel.RunAsync(monsterName, summarizeMonsterFunction);
         //kernel.ImportFunctions(new DndSkill(_kernel));
         context.Variables["monster"] = monsterDescription.Result();
         return context;

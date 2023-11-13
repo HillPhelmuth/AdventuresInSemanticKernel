@@ -6,6 +6,6 @@
 
   <ItemGroup>
     <PackageReference Include="CoreCLR-NCalc" Version="2.2.113" />
-    <PackageReference Include="Microsoft.SemanticKernel" Version="1.0.0-beta4" />
+    <PackageReference Include="Microsoft.SemanticKernel" Version="1.0.0-beta6" />
   </ItemGroup>
 </Project>

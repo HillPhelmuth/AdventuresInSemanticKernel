@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging.ApplicationInsights;
 using SkPluginLibrary.Abstractions;
 using SkPluginLibrary.Services;
 using SkPluginLibrary.Models.Helpers;
+using SkPluginComponents.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 IConfiguration configuration = builder.Configuration;
@@ -30,6 +31,7 @@ services.AddBlazorAceEditor();
 
 services.AddChat();
 services.AddRadzenComponents();
+services.AddAskUserService();
 
 var stringEventWriter = new StringEventWriter();
 services.AddScoped<StringEventWriter>();

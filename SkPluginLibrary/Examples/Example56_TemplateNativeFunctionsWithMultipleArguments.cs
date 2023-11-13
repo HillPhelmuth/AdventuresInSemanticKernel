@@ -18,21 +18,10 @@ public static class Example56_TemplateNativeFunctionsWithMultipleArguments
     {
         Console.WriteLine("======== TemplateNativeFunctionsWithMultipleArguments ========");
 
-        string serviceId = TestConfiguration.AzureOpenAI.ServiceId;
-        string apiKey = TestConfiguration.AzureOpenAI.ApiKey;
-        string deploymentName = TestConfiguration.AzureOpenAI.ChatDeploymentName;
-        string endpoint = TestConfiguration.AzureOpenAI.Endpoint;
-
-        if (serviceId == null || apiKey == null || deploymentName == null || endpoint == null)
-        {
-            Console.WriteLine("Azure serviceId, endpoint, apiKey, or deploymentName not found. Skipping example.");
-            return;
-        }
-
-        IKernel kernel = Kernel.Builder
-            .WithLoggerFactory(ConsoleLogger.LoggerFactory)
-            .WithOpenAIChatCompletionService(TestConfiguration.OpenAI.ModelId, TestConfiguration.OpenAI.ApiKey, alsoAsTextCompletion: true)
-            .Build();
+        IKernel kernel = new KernelBuilder()
+     .WithLoggerFactory(ConsoleLogger.LoggerFactory)
+     .WithOpenAIChatCompletionService(TestConfiguration.OpenAI.ModelId, TestConfiguration.OpenAI.ApiKey, alsoAsTextCompletion: true)
+     .Build();
 
         var variableName = "word2";
         var variableValue = " Potter";

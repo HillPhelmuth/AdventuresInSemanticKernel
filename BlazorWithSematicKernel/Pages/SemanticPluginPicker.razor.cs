@@ -8,7 +8,6 @@ namespace BlazorWithSematicKernel.Pages
     public partial class SemanticPluginPicker : ComponentBase
     {
         public List<string?> Plugins => Directory.GetDirectories(RepoFiles.PluginDirectoryPath).Select(Path.GetFileName).ToList();
-        private List<ChatGptPlugin> ChatGptPlugins = new();
         private List<ChatGptPluginManifest> ChatGptPluginsManifests = new();
         [Inject] private ICoreKernelExecution CoreKernelService { get; set; } = default!;
         [Inject] private NotificationService NotificationService { get; set; } = default!;
@@ -19,14 +18,12 @@ namespace BlazorWithSematicKernel.Pages
         protected override async Task OnInitializedAsync()
         {
             _allPlugins = await CoreKernelService.GetAllPlugins();
-            ChatGptPlugins = ChatGptPlugin.AllChatGptPlugins;
             ChatGptPluginsManifests = ChatGptPluginManifest.GetAllPluginManifests().Where(x => x.Auth.TypeEnum == TypeEnum.None).ToList();
             await ChatGptPluginManifest.GetAndSaveAllNonAuthMantifestFiles();
             await base.OnInitializedAsync();
         }
 
         private Dictionary<string, ISKFunction> _selectedFunctions = new();
-        private ChatGptPluginManifest _selectedManifest = new();
         private bool _isBusy;
 
         private void SelectPlugin(PluginFunctions pluginFunctions)

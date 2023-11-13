@@ -70,7 +70,7 @@ public class WikiChatPlugin
     {
         try
         {
-            var scraperPlugin = await _kernel.ImportPluginFunctionsAsync("ScraperPlugin",
+            var scraperPlugin = await _kernel.ImportOpenApiPluginFunctionsAsync("ScraperPlugin",
                 new Uri("https://scraper.gafo.tech/.well-known/ai-plugin.json"),
                 new OpenApiFunctionExecutionParameters { EnableDynamicPayload = true, IgnoreNonCompliantErrors = true });
             var summarizePlugin = _kernel.ImportSemanticFunctionsFromDirectory(RepoFiles.PluginDirectoryPath, "SummarizePlugin")["Summarize"];
