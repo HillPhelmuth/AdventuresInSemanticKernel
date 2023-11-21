@@ -2,17 +2,19 @@
   "schema": 1,
   "description": "A complex chat using SemanticTextMemory and Time plugins and user details",
   "type": "completion",
-  "completion": {
-    "max_tokens": 450,
-    "temperature": 0.9,
-    "top_p": 1.0,
-    "presence_penalty": 0.6,
-    "frequency_penalty": 0.0,
-    "stop_sequences": [
-      "[Done]"
-    ]
-  },
-  "input": {
+  "models": [
+    {
+      "max_tokens": 450,
+      "temperature": 0.9,
+      "top_p": 1.0,
+      "presence_penalty": 0.6,
+      "frequency_penalty": 0.0,
+      "stop_sequences": [
+        "[Done]"
+      ]
+    }
+  ],
+"input": {
     "parameters": [
       {
         "name": "input",

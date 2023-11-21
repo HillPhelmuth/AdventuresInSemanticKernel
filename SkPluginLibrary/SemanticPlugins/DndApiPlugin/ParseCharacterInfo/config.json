@@ -2,12 +2,14 @@
   "schema": 1,
   "description": "Parse a plain english description of a D&D character into necessary element - class",
   "type": "completion",
-  "completion": {
-    "max_tokens": 250,
-    "temperature": 0.2,
-    "top_p": 0.0,
-    "presence_penalty": 0.0,
-    "frequency_penalty": 0.0
+  "models": [
+    {
+      "max_tokens": 250,
+      "temperature": 0.2,
+      "top_p": 0.0,
+      "presence_penalty": 0.0,
+      "frequency_penalty": 0.0
 
-  }
+    }
+  ]
 }
