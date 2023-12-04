@@ -82,6 +82,7 @@ using Microsoft.SemanticKernel.Connectors.AI.OpenAI.TextCompletion;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel.Services;
 using Microsoft.SemanticKernel.TemplateEngine;
+using Microsoft.SemanticKernel.TemplateEngine.Basic;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.SemanticKernel.Reliability.Polly;
 using Polly.Retry;

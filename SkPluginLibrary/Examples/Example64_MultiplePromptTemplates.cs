@@ -1,6 +1,7 @@
 ﻿using Microsoft.SemanticKernel.Orchestration;
 using Microsoft.SemanticKernel.TemplateEngine;
 using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.TemplateEngine.Basic;
 using Microsoft.SemanticKernel.TemplateEngine.Handlebars;
 
 namespace SkPluginLibrary.Examples;
@@ -27,7 +28,7 @@ public static class Example64_MultiplePromptTemplates
             .Build();
 
         var promptTemplateFactory = new AggregatorPromptTemplateFactory(
-            new KernelPromptTemplateFactory(),
+            new BasicPromptTemplateFactory(),
             new HandlebarsPromptTemplateFactory());
 
         var skPrompt = "Hello AI, my name is {{$name}}. What is the origin of my name?";

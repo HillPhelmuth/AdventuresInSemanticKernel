@@ -28,6 +28,7 @@ using SkPluginComponents;
 using Microsoft.SemanticKernel.TemplateEngine;
 using SkPluginLibrary.Models;
 using DocumentFormat.OpenXml.Wordprocessing;
+using Microsoft.SemanticKernel.TemplateEngine.Basic;
 
 namespace SkPluginLibrary;
 
@@ -263,7 +264,7 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
         context.Variables["memory_context"] = memory;
         if (history is not null)
             context.Variables["history"] = history;
-        var engine = new KernelPromptTemplateFactory().Create(ChatWithSkSystemPromptTemplate, new PromptTemplateConfig());
+        var engine = new BasicPromptTemplateFactory().Create(ChatWithSkSystemPromptTemplate, new PromptTemplateConfig());
         var systemPrompt = await engine.RenderAsync(context);
         var chatService = _skChatKernel.GetService<IChatCompletion>();
         var chat = chatService.CreateNewChat(systemPrompt);

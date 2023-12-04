@@ -59,33 +59,33 @@
 		<PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="8.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.0" />
 		<PackageReference Include="Microsoft.ML.Tokenizers" Version="0.21.0" />
-		<PackageReference Include="Microsoft.SemanticKernel.Core" Version="1.0.1-beta8" />
-		<PackageReference Include="Microsoft.SemanticKernel.Experimental.Orchestration.Flow" Version="1.0.1-beta8" />
-		<PackageReference Include="Microsoft.SemanticKernel.Functions.OpenAPI" Version="1.0.1-beta8" />
-		<PackageReference Include="Microsoft.SemanticKernel.Planners.Core" Version="1.0.1-beta8" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Core" Version="1.0.1-beta8" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Document" Version="1.0.1-beta8" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Memory" Version="1.0.1-beta8" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Web" Version="1.0.1-beta8" />
-		<PackageReference Include="Microsoft.SemanticKernel.Reliability.Polly" Version="1.0.1-beta8" />
-		<PackageReference Include="Microsoft.SemanticKernel.TemplateEngine.Handlebars" Version="1.0.1-beta8" />
+		<PackageReference Include="Microsoft.SemanticKernel.Core" Version="1.0.0-beta8" />
+		<PackageReference Include="Microsoft.SemanticKernel.Experimental.Orchestration.Flow" Version="1.0.0-beta8" />
+		<PackageReference Include="Microsoft.SemanticKernel.Functions.OpenAPI" Version="1.0.0-beta8" />
+		<PackageReference Include="Microsoft.SemanticKernel.Planners.Core" Version="1.0.0-beta8" />
+		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Core" Version="1.0.0-beta8" />
+		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Document" Version="1.0.0-beta8" />
+		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Memory" Version="1.0.0-beta8" />
+		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Web" Version="1.0.0-beta8" />
+		<PackageReference Include="Microsoft.SemanticKernel.Reliability.Polly" Version="1.0.0-beta8" />
+		<PackageReference Include="Microsoft.SemanticKernel.TemplateEngine.Handlebars" Version="1.0.0-beta8" />
 		<PackageReference Include="PdfPig" Version="0.1.9-alpha-20230930-06ac8" />
 		<PackageReference Include="ReverseMarkdown" Version="3.25.0" />
 		<PackageReference Include="SharpToken" Version="1.2.12" />
 		<PackageReference Include="System.Linq.Async" Version="6.0.1" />
 		<PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
-		<PackageReference Include="Microsoft.SemanticKernel" Version="1.0.1-beta8" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.AI.HuggingFace" Version="1.0.1-beta8" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.AzureCognitiveSearch" Version="1.0.1-beta8" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.Chroma" Version="1.0.1-beta8" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.Kusto" Version="1.0.1-beta8" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.Pinecone" Version="1.0.1-beta8" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.Postgres" Version="1.0.1-beta8" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.Qdrant" Version="1.0.1-beta8" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.Redis" Version="1.0.1-beta8" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.Sqlite" Version="1.0.1-beta8" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.Weaviate" Version="1.0.1-beta8" />
+		<PackageReference Include="Microsoft.SemanticKernel" Version="1.0.0-beta8" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.AI.HuggingFace" Version="1.0.0-beta8" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.AzureCognitiveSearch" Version="1.0.0-beta8" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.Chroma" Version="1.0.0-beta8" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.Kusto" Version="1.0.0-beta8" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.Pinecone" Version="1.0.0-beta8" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.Postgres" Version="1.0.0-beta8" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.Qdrant" Version="1.0.0-beta8" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.Redis" Version="1.0.0-beta8" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.Sqlite" Version="1.0.0-beta8" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.Weaviate" Version="1.0.0-beta8" />
 		<PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.8.0" />
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0" />
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="4.8.0" />

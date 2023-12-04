@@ -22,6 +22,7 @@ using Microsoft.SemanticKernel.Functions.OpenAPI.OpenAI;
 using Microsoft.SemanticKernel.Planners.Handlebars;
 using Microsoft.SemanticKernel.TemplateEngine;
 using System.Runtime.CompilerServices;
+using Microsoft.SemanticKernel.TemplateEngine.Basic;
 
 namespace SkPluginLibrary;
 
@@ -770,7 +771,7 @@ public partial class CoreKernelService
                 """;
         Console.WriteLine($"InitialSysPrompt:\n{systemPrmpt}");
         var chatService = kernel.GetService<IChatCompletion>();
-        var engine = new KernelPromptTemplateFactory(_loggerFactory).Create(systemPrmpt, new PromptTemplateConfig());
+        var engine = new BasicPromptTemplateFactory(_loggerFactory).Create(systemPrmpt, new PromptTemplateConfig());
         var ctx = kernel.CreateNewContext();
         var finalSysPrompt = await engine.RenderAsync(ctx);
 

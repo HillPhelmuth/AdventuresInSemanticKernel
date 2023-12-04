@@ -4,6 +4,7 @@ using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.AI.OpenAI;
 using Microsoft.SemanticKernel.Plugins.Core;
 using Microsoft.SemanticKernel.TemplateEngine;
+using Microsoft.SemanticKernel.TemplateEngine.Basic;
 
 // ReSharper disable once InconsistentNaming
 namespace SkPluginLibrary.Examples;
@@ -39,7 +40,7 @@ public static class Example56_TemplateNativeFunctionsWithMultipleArguments
 
         // This allows to see the prompt before it's sent to OpenAI
         Console.WriteLine("--- Rendered Prompt");
-        var promptTemplateFactory = new KernelPromptTemplateFactory();
+        var promptTemplateFactory = new BasicPromptTemplateFactory();
         var promptTemplate = promptTemplateFactory.Create(FunctionDefinition, new PromptTemplateConfig());
         var renderedPrompt = await promptTemplate.RenderAsync(context);
         Console.WriteLine(renderedPrompt);

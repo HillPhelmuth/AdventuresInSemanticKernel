@@ -6,6 +6,7 @@ using Microsoft.SemanticKernel.Plugins.Core;
 using Microsoft.SemanticKernel.TemplateEngine;
 using SkPluginLibrary.Resources;
 using System.Globalization;
+using Microsoft.SemanticKernel.TemplateEngine.Basic;
 
 namespace SkPluginLibrary.Examples;
 
@@ -86,7 +87,7 @@ public static class Example30_ChatWithPrompts
         // Instantiate the prompt template factory, which we will use to turn prompt templates
         // into strings, that we will store into a Chat history object, which is then sent
         // to the Chat Model.
-        var promptTemplateFactory = new KernelPromptTemplateFactory();
+        var promptTemplateFactory = new BasicPromptTemplateFactory();
 
         // Render the system prompt. This string is used to configure the chat.
         // This contains the context, ie a piece of a wikipedia page selected by the user.

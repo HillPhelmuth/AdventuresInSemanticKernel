@@ -6,6 +6,7 @@ using Microsoft.SemanticKernel.Plugins.Web;
 using Microsoft.SemanticKernel.Plugins.Web.Bing;
 using Microsoft.SemanticKernel.Plugins.Web.Google;
 using Microsoft.SemanticKernel.TemplateEngine;
+using Microsoft.SemanticKernel.TemplateEngine.Basic;
 
 namespace SkPluginLibrary.Examples;
 
@@ -148,7 +149,7 @@ Answer: ";
         // If the answer contains commands, execute them using the prompt renderer.
         if (result.Contains("bing.search", StringComparison.OrdinalIgnoreCase))
         {
-            var promptTemplateFactory = new KernelPromptTemplateFactory();
+            var promptTemplateFactory = new BasicPromptTemplateFactory();
             var promptTemplate = promptTemplateFactory.Create(result, new PromptTemplateConfig());
 
             Console.WriteLine("---- Fetching information from Bing...");
