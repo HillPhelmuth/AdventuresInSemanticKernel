@@ -190,7 +190,7 @@
             "name": "name",
             "in": "path",
             "required": true,
-            "description": "The `name` of the alignment to get.\n",
+            "description": "The `name` of the alignment to get. Must be lowercase-hyphenated format. ex: 'chaotic-neutral'\n",
             "schema": {
               "type": "string",
               "enum": [
@@ -233,7 +233,7 @@
     "/api/classes/{name}": {
       "get": {
         "summary": "Get a class by name.",
-        "description": "# Class\n\nA character class is a fundamental part of the identity and nature of\ncharacters in the Dungeons & Dragons role-playing game. A character's\ncapabilities, strengths, and weaknesses are largely defined by its class.\nA character's class affects a character's available skills and abilities. [[SRD p8-55](https://media.wizards.com/2016/downloads/DND/SRD-OGL_V5.1.pdf#page=8)]\n",
+        "description": "# Class\n\nA character class is a fundamental part of the identity and nature of\ncharacters in the Dungeons & Dragons role-playing game. A character's\ncapabilities, strengths, and weaknesses are largely defined by its class.\nA character's class affects a character's available skills and abilities.",
         "tags": [
           "Class"
         ],
@@ -242,7 +242,7 @@
             "name": "name",
             "in": "path",
             "required": true,
-            "description": "The `name` of the class to get.\n",
+            "description": "The `name` of the class to get. Must be all lowercase\n",
             "schema": {
               "type": "string",
               "enum": [
@@ -1223,7 +1223,7 @@
             "name": "name",
             "in": "path",
             "required": true,
-            "description": "The `name` of the race to get.\n",
+            "description": "The `name` of the race to get. must be all lowercase with no spaces\n",
             "schema": {
               "type": "string",
               "enum": [
@@ -1857,30 +1857,9 @@
         "required": false,
         "description": "The challenge rating or ratings to filter on.",
         "schema": {
-          "type": "array",
-          "items": {
-            "type": "number"
-          }
-        },
-        "examples": {
-          "single-value": {
-            "value": [
-              1
-            ]
-          },
-          "multiple-value": {
-            "value": [
-              1,
-              2
-            ]
-          },
-          "multiple-value-with-float": {
-            "value": [
-              2,
-              0.25
-            ]
-          }
+          "type": "number"         
         }
+        
       },
       "levels-subclass-filter": {
         "name": "subclass",

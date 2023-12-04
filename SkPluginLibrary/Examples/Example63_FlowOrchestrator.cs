@@ -1,13 +1,9 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
-using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.AI;
@@ -20,6 +16,7 @@ using Microsoft.SemanticKernel.Plugins.Memory;
 using Microsoft.SemanticKernel.Plugins.Web;
 using Microsoft.SemanticKernel.Plugins.Web.Bing;
 using NCalcPlugins;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 /**
  * This example shows how to use FlowOrchestrator to execute a given flow with interaction with client.
@@ -28,6 +25,7 @@ using NCalcPlugins;
 // ReSharper disable once InconsistentNaming
 public static class Example63_FlowOrchestrator
 {
+#pragma warning disable SKEXP0001
     private static readonly Flow s_flow = FlowSerializer.DeserializeFromYaml(@"
 name: FlowOrchestrator_Example_Flow
 goal: answer question and send email
@@ -58,6 +56,7 @@ provides:
     - email
 ");
 
+
     public static Task RunAsync()
     {
         // Load assemblies for external plugins
@@ -87,7 +86,7 @@ provides:
             plugins,
             config: GetOrchestratorConfig());
         var sessionId = Guid.NewGuid().ToString();
-
+        
         Console.WriteLine("*****************************************************");
         Console.WriteLine("Executing {0}", nameof(RunInteractiveAsync));
         Stopwatch sw = new();
@@ -266,7 +265,7 @@ Do not expose the regex unless asked.
             ChatHistory? chatHistory = context.GetChatHistory();
             if (chatHistory?.Any() ?? false)
             {
-                chat.Messages.AddRange(chatHistory);
+                chat.AddRange(chatHistory);
             }
 
             if (!string.IsNullOrEmpty(email) && IsValidEmail(email))
@@ -323,6 +322,7 @@ Do not expose the regex unless asked.
         }
     }
 }
+#pragma warning restore SKEXP0001
 //*****************************************************
 //Executing RunExampleAsync
 //Flow: FlowOrchestrator_Example_Flow

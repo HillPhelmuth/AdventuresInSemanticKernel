@@ -14,19 +14,19 @@ public static class Example51_StepwisePlanner
     {
         string[] questions = new string[]
         {
-            "What color is the sky?",
-            "What is the weather in Seattle?",
-            "What is the tallest mountain on Earth? How tall is it divided by 2?",
+            //"What color is the sky?",
+            //"What is the weather in Seattle?",
+            //"What is the tallest mountain on Earth? How tall is it divided by 2?",
             "What is the capital of France? Who is that city's current mayor? What percentage of their life has been in the 21st century as of today?",
-            "What is the current day of the calendar year? Using that as an angle in degrees, what is the area of a unit circle with that angle?",
-            "If a spacecraft travels at 0.99 the speed of light and embarks on a journey to the nearest star system, Alpha Centauri, which is approximately 4.37 light-years away, how much time would pass on Earth during the spacecraft's voyage?"
+            //"What is the current day of the calendar year? Using that as an angle in degrees, what is the area of a unit circle with that angle?",
+            //"If a spacecraft travels at 0.99 the speed of light and embarks on a journey to the nearest star system, Alpha Centauri, which is approximately 4.37 light-years away, how much time would pass on Earth during the spacecraft's voyage?"
         };
 
         foreach (var question in questions)
         {
             for (int i = 0; i < 1; i++)
             {
-                await RunTextCompletionAsync(question);
+                //await RunTextCompletionAsync(question);
                 await RunChatCompletionAsync(question);
             }
         }
@@ -127,11 +127,12 @@ public static class Example51_StepwisePlanner
         }
 
         sw.Start();
-
+        var context = kernel.CreateNewContext();
         try
         {
             StepwisePlanner planner = new(kernel: kernel, config: plannerConfig);
             var plan = planner.CreatePlan(question);
+            Console.WriteLine($"Plan\n{plan.ToPlanWithGoalString()}");
 
             var kernelResult = await kernel.RunAsync(plan);
             var planResult = kernelResult.FunctionResults.First();

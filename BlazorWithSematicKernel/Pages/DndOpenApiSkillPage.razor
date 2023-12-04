@@ -11,16 +11,27 @@
             <RadzenFormField Text="Select Alignment">
                 <RadzenDropDown Data="_alignments" @bind-Value="_dndPlanForm.Alignment"></RadzenDropDown>
             </RadzenFormField>
+            <RadzenFormField Text="Select Planner">
+                <RadzenRadioButtonList Style="margin:1rem .5rem" TValue="bool" @bind-Value=_dndPlanForm.UseStepwisePlanner>
+                    <Items>
+                        <RadzenRadioButtonListItem Value="false" Text="Sequential Planner"></RadzenRadioButtonListItem>
+                        <RadzenRadioButtonListItem Value="true" Text="Stepwise Planner"></RadzenRadioButtonListItem>
+                    </Items>
+                </RadzenRadioButtonList>
+            </RadzenFormField>
             <RadzenFormField Text="Additional details" Style="width: 100%;">
                 <ChildContent>
                     <RadzenTextArea Style="width: 100%; height: 8rem;" Name="Ask" @bind-Value="@_dndPlanForm.Input"></RadzenTextArea>
                 </ChildContent>
                 <Helper>
-                    <RadzenRequiredValidator Component="Ask" Popup="true" Text="Just ask for SOMETHING dumbass! This shit isn't hard..."></RadzenRequiredValidator>
+                    <RadzenRequiredValidator Component="Ask" Popup="true" Text="Just ask for SOMETHING dumbass! This isn't hard..."></RadzenRequiredValidator>
                 </Helper>
             </RadzenFormField>
             <RadzenButton ButtonType="ButtonType.Submit" Text="Run" IsBusy="_isBusy" BusyText="Running..."></RadzenButton>
         </RadzenTemplateForm>
+        <RadzenCard>
+            @((MarkupString)MarkdownAsHtml(_planString))
+        </RadzenCard>
     </RadzenColumn>
     <RadzenColumn Size="8">
         <RadzenCard>

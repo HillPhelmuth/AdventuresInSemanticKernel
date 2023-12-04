@@ -19,7 +19,6 @@ using Microsoft.SemanticKernel.Plugins.Memory;
 using Microsoft.SemanticKernel.Reliability.Basic;
 using Microsoft.SemanticKernel.Reliability.Polly;
 using Microsoft.SemanticKernel.Services;
-using Microsoft.SemanticKernel.TemplateEngine.Basic;
 using Polly;
 using Polly.Retry;
 
@@ -71,14 +70,13 @@ public static class Example42_KernelBuilder
         var loggerFactory = NullLoggerFactory.Instance;
         var memoryStorage = new VolatileMemoryStore();
         var textEmbeddingGenerator = new AzureOpenAITextEmbeddingGeneration(
-            modelId: azureOpenAIEmbeddingDeployment,
+            deploymentName: azureOpenAIEmbeddingDeployment,
             endpoint: azureOpenAIEndpoint,
             apiKey: azureOpenAIKey,
             loggerFactory: loggerFactory);
 
         var memory = new SemanticTextMemory(memoryStorage, textEmbeddingGenerator);
         var plugins = new FunctionCollection();
-        var templateEngine = new BasicPromptTemplateEngine(loggerFactory);
 
         var httpHandlerFactory = BasicHttpRetryHandlerFactory.Instance;
         //var httpHandlerFactory = new PollyHttpRetryHandlerFactory( your policy );
@@ -87,16 +85,16 @@ public static class Example42_KernelBuilder
         using var httpClient = new HttpClient(httpHandler);
         var aiServices = new AIServiceCollection();
         ITextCompletion Factory() => new AzureOpenAIChatCompletion(
-            modelId: azureOpenAIChatCompletionDeployment,
+            deploymentName: azureOpenAIChatCompletionDeployment,
             endpoint: azureOpenAIEndpoint,
             apiKey: azureOpenAIKey,
-            httpClient,
-            loggerFactory);
+            httpClient: httpClient,
+            loggerFactory: loggerFactory);
         aiServices.SetService("foo", Factory);
         IAIServiceProvider aiServiceProvider = aiServices.Build();
 
         // Create kernel manually injecting all the dependencies
-        using var kernel3 = new Kernel(plugins, aiServiceProvider, templateEngine, memory, httpHandlerFactory, loggerFactory);
+        using var kernel3 = new Kernel(plugins, aiServiceProvider, memory, httpHandlerFactory, loggerFactory);
 
         // ==========================================================================================================
         // The kernel builder purpose is to simplify this process, automating how dependencies

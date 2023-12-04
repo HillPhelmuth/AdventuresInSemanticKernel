@@ -37,12 +37,13 @@ public static class Example10_DescribeAllPluginsAndFunctions
             functionName: "Novel",
             description: "Write a bedtime story",
             requestSettings: new OpenAIRequestSettings() { MaxTokens = 150 });
-        
+
         // Import OpenAPI functions
         await kernel.ImportOpenApiPluginFunctionsAsync("MediumPlugin",
             Path.Combine(RepoFiles.ApiPluginDirectoryPath, "MediumApiPlugin", "openapi.json"), new OpenApiFunctionExecutionParameters { EnableDynamicPayload = true, IgnoreNonCompliantErrors = true });
-        var functions = kernel.Functions.GetFunctionViews();
 
+        var functions = kernel.Functions.GetFunctionViews();
+        
         Console.WriteLine("*****************************************");
         Console.WriteLine("****** Registered plugins and functions ******");
         Console.WriteLine("*****************************************");
@@ -52,7 +53,8 @@ public static class Example10_DescribeAllPluginsAndFunctions
         {
             PrintFunction(func);
         }
-        
+
+        //return Task.CompletedTask;
     }
 
     private static void PrintFunction(FunctionView func)

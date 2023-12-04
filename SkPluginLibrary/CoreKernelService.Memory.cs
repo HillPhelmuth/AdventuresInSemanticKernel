@@ -1,6 +1,5 @@
 ﻿using AI.Dev.OpenAI.GPT;
 using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.AI.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.AI.OpenAI;
 using Microsoft.SemanticKernel.Connectors.Memory.Sqlite;
 using Microsoft.SemanticKernel.Memory;
@@ -10,7 +9,6 @@ using SkPluginLibrary.Services;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Microsoft.SemanticKernel.Plugins.Document.OpenXml;
 using UglyToad.PdfPig;
 
 namespace SkPluginLibrary;
@@ -19,10 +17,10 @@ public partial class CoreKernelService
 {
     #region Memory and Embeddings (AddEmbeddings.razor, ClusteringPage.razor)
 
-    private (string titleResultValue, string tagResultValue) _valueTuple;
+    private (string titleResultValue, string summaryValue) _valueTuple;
     private ISemanticTextMemory? _playgroundTextMemory;
+    private ISemanticTextMemory? _dbScanMemory;
 
-  
     private async Task<string> SaveToNewKernelMemory(ISemanticTextMemory? memory, string id, string item, string collection)
     {
         return await memory.SaveInformationAsync(collection, item, id);
@@ -64,7 +62,7 @@ public partial class CoreKernelService
 
     public async Task<List<string>> GenerateRandomSentances(int count = 10)
     {
-        var kernel = CreateKernel("gpt-3.5-turbo");
+        var kernel = CreateKernel();
         var randoSkill = kernel.CreateSemanticFunction(
             $"Generate {count} random and distinct sentances or math equations that are each 30 to 60 characters long. Each sentance and equation should be on its own line. Do not label the lines", requestSettings: new OpenAIRequestSettings { MaxTokens = 250, Temperature = 1.2, TopP = 1.0 });
         var randomSentances = await kernel.RunAsync(randoSkill);
@@ -77,11 +75,16 @@ public partial class CoreKernelService
         string searchTerm = "*", int minpoints = 3, int minCluster = 3,
         DistanceFunction distanceFunction = DistanceFunction.CosineSimilarity, string? collection = null)
     {
+        _loggerFactory.LogInformation("Getting clusters from collection {collection}", collection ?? "null");
+        if (collection is null)
+        {
+            _dbScanMemory = await CreateSqliteMemoryAsync();
+        }
         collection ??= CollectionName.ClusterCollection;
         var kernel = await CreateSqliteKernel();
-        var memory = await CreateSqliteMemoryAsync();
-        var items = await memory.SearchAsync(collection, searchTerm, numberOfItems, 0.0, true).ToListAsync();
-        await _memoryStore.CreateCollectionAsync(collection);
+        var memory = _dbScanMemory;
+        var items = await memory!.SearchAsync(collection, searchTerm, numberOfItems, 0.0, true).ToListAsync();
+        //await _memoryStore.CreateCollectionAsync(collection);
 
         Console.WriteLine($"\n{items.Count} items found\n");
 
@@ -98,23 +101,23 @@ public partial class CoreKernelService
         var summarySkill = kernel.ImportSemanticFunctionsFromDirectory(RepoFiles.PluginDirectoryPath, "SummarizePlugin");
 
         var context = kernel.CreateNewContext();
-        var clusterTitles = await AddClusterTitles(result, context, writerPlugin["TitleGen"], summarySkill["Topics"]);
+        var clusterTitles = await AddClusterTitles(result, context, writerPlugin["TitleGen"], summarySkill["Summarize"], kernel);
 
         foreach (var item in result)
         {
             item.ClusterTitle = clusterTitles[item.Cluster].Item1;
             var itemTagString = clusterTitles[item.Cluster].Item2;
-            try
-            {
-                var topicList = JsonSerializer.Deserialize<Topic>(itemTagString);
-                itemTagString = string.Join(", ", topicList.Topics);
-            }
-            catch (Exception ex)
-            {
-                _loggerFactory.LogInformation("Failed to deserialize topics: {ex}", ex.Message);
-            }
+            //try
+            //{
+            //    var topicList = JsonSerializer.Deserialize<Topic>(itemTagString);
+            //    itemTagString = string.Join(", ", topicList.Topics);
+            //}
+            //catch (Exception ex)
+            //{
+            //    _loggerFactory.LogInformation("Failed to deserialize topics: {ex}", ex.Message);
+            //}
 
-            item.TagString = itemTagString;
+            item.ClusterSummary = itemTagString;
         }
 
         return result;
@@ -126,7 +129,7 @@ public partial class CoreKernelService
     }
 
     private async Task<Dictionary<int, (string, string)>> AddClusterTitles(IEnumerable<MemoryResult> result,
-        SKContext context, ISKFunction titleGen, ISKFunction topicGen)
+        SKContext context, ISKFunction titleGen, ISKFunction summarize, IKernel kernel)
     {
         var clusterTitles = new Dictionary<int, (string, string)>();
         var clusterGroups = result.GroupBy(x => x.Cluster);
@@ -134,29 +137,31 @@ public partial class CoreKernelService
         {
             var grpItems = group.Select(x => $"Title:{x.Title}\n\n{x.Text}").ToList();
             var documents = string.Join("\n\n", grpItems);
-            var tokenCount = GPT3Tokenizer.Encode(documents).Count;
+            var tokenCount = StringHelpers.GetTokens(documents);
             var tokenCountLog = $"{group.Key}\nToken Count: {tokenCount}";
             var groupTitle = $" {group.FirstOrDefault()?.ClusterTitle}";
             _loggerFactory.LogInformation("Cluster {groupTitle}\nKey: {tokenCountLog}", groupTitle, tokenCountLog);
             if (tokenCount > 12000)
             {
-                var lines = TextChunker.SplitMarkDownLines(documents, 100, StringHelpers.GetTokens);
+                var lines = TextChunker.SplitMarkDownLines(documents, 200, StringHelpers.GetTokens);
                 var paragraphs =
                     TextChunker.SplitMarkdownParagraphs(lines, 12000, 0, group.Key.ToString(), StringHelpers.GetTokens);
                 documents = paragraphs[0];
-                var count2 = GPT3Tokenizer.Encode(documents).Count;
+                var count2 = StringHelpers.GetTokens(documents);
                 _loggerFactory.LogInformation("Cluster {groupTitle} token reduced to {count2}", groupTitle, count2);
             }
 
             context.Variables["articles"] = documents;
             context.Variables["input"] = documents;
-            var titleResult = await titleGen.InvokeAsync(context);
+            var tagResult = await kernel.RunAsync(context.Variables, summarize) /*await summarize.InvokeAsync(context)*/;
+            context.Variables["input"] = documents;
+            var titleResult = await kernel.RunAsync(context.Variables, titleGen)/* await titleGen.InvokeAsync(context)*/;
             var groupKey = group.Key;
             _valueTuple.titleResultValue = titleResult.GetValue<string>() ?? "";
-
-            var tagResult = await topicGen.InvokeAsync(context);
-            var tagResultValue = tagResult.GetValue<string>() ?? "";
-            _valueTuple.tagResultValue = tagResultValue;
+            var summarize2 = kernel.CreateSemanticFunction("Summarize", requestSettings: new OpenAIRequestSettings { MaxTokens = 250, Temperature = 1.2, TopP = 1.0 });
+           
+            var summaryValue = tagResult.GetValue<string>() ?? "";
+            _valueTuple.summaryValue = summaryValue;
             clusterTitles.Add(groupKey, _valueTuple);
             _loggerFactory.LogInformation("Cluster {groupKey} received Title: {titleResultValue}", groupKey,
                 titleResult.GetValue<string>() ?? "");
@@ -164,20 +169,23 @@ public partial class CoreKernelService
 
         return clusterTitles;
     }
-    private WordDocumentConnector _wordDocumentConnector = new();
-    public async Task ChunkAndSaveFileCluster(byte[] file, string filename, FileType fileType = FileType.Pdf)
+
+    public async Task ChunkAndSaveFileCluster(byte[] file, string filename, FileType fileType = FileType.Pdf,
+        string? collection = null)
     {
-        var collection = CollectionName.ClusterCollection;
-        var sqlLiteMemory = await CreateSqliteMemoryAsync();
-        var hasCollection = await _sqliteStore.DoesCollectionExistAsync(collection);
-        if (!hasCollection)
-            await _sqliteStore.CreateCollectionAsync(collection);
+        _dbScanMemory = CreateSemanticMemory(MemoryStoreType.InMemory);
+        collection ??= CollectionName.ClusterCollection;
+        _loggerFactory.LogInformation("Chunking and saving file {filename} to collection {collection}", filename, collection);
+        //var sqlLiteMemory = await CreateSqliteMemoryAsync();
+        //var hasCollection = await _sqliteStore.DoesCollectionExistAsync(collection);
+        //if (!hasCollection)
+        //    await _sqliteStore.CreateCollectionAsync(collection);
         var paragraphs = await ReadAndChunkFile(file, filename, fileType);
         var index = 0;
         foreach (var paragraph in paragraphs)
         {
             var id = $"{filename}_p{++index}";
-            await sqlLiteMemory.SaveInformationAsync(collection, paragraph, id, filename);
+            await _dbScanMemory!.SaveInformationAsync(collection, paragraph, id, filename);
         }
     }
 
@@ -207,7 +215,7 @@ public partial class CoreKernelService
         }
 
         var textString = sb.ToString();
-        var lines = TextChunker.SplitPlainTextLines(textString, 64, StringHelpers.GetTokens);
+        var lines = TextChunker.SplitPlainTextLines(textString, 128, StringHelpers.GetTokens);
         var paragraphs = TextChunker.SplitPlainTextParagraphs(lines, 512, 128, filename, StringHelpers.GetTokens);
         return paragraphs;
     }

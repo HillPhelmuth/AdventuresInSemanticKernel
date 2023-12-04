@@ -1,6 +1,4 @@
 ﻿using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis;
-using System.Collections.Generic;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using SkPluginLibrary.Services;
 using System.ComponentModel;

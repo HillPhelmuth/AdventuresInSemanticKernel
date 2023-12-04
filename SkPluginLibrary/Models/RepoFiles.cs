@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
 using System.Reflection;
-using System.Text.RegularExpressions;
 
 namespace SkPluginLibrary.Models;
 

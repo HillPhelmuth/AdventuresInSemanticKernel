@@ -44,7 +44,7 @@ namespace BlazorWithSematicKernel.Components
                 _chatView!.ChatState.AddAssistantMessage(text, _chatView!.ChatState.ChatMessages.Count + 1);
         }
 
-        
+
         private async void HandleChatInput(UserInputRequest requestInput)
         {
             var input = "";
@@ -57,7 +57,7 @@ namespace BlazorWithSematicKernel.Components
             {
                 input += $"Chat: {requestInput.ChatInput}\n\n";
             }
-           
+
             _askInput = requestInput.AskInput;
             Console.WriteLine($"ChatRequestModel Received:\n{ChatRequestModel}");
             CoreKernelService.YieldAdditionalText += HandleYieldReturn;
@@ -113,6 +113,16 @@ namespace BlazorWithSematicKernel.Components
                             await ExecuteStepwiseChatSequence(input, true);
                             break;
                         }
+                    case ExecutionType.HandlebarsPlanner:
+                        {
+                            await ExecuteHandlebarsChatSequence(input, false);
+                            break;
+                        }
+                    case ExecutionType.HandlebarsPlannerChat:
+                        {
+                            await ExecuteHandlebarsChatSequence(input, true);
+                            break;
+                        }
                     case ExecutionType.None:
                     case ExecutionType.SingleFunction:
                     default:
@@ -131,62 +141,38 @@ namespace BlazorWithSematicKernel.Components
         private async Task ExecuteActionChatSequence(string input, bool runAsChat)
         {
             _chatView!.ChatState.AddUserMessage(input, _chatView!.ChatState.ChatMessages.Count + 1);
-            var hasStarted = false;
-            await foreach (var response in CoreKernelService.ChatWithActionPlanner(input,
-                               ChatRequestModel, runAsChat, _askInput))
-            {
-                if (!hasStarted)
-                {
-                    hasStarted = true;
-                    _chatView!.ChatState.AddAssistantMessage(response,
-                        _chatView!.ChatState.ChatMessages.Count + 1);
-                    _chatView!.ChatState.ChatMessages.LastOrDefault(x => x.Role == Role.Assistant)!
-                        .IsActiveStreaming = true;
-                    continue;
-                }
-
-                _chatView!.ChatState.UpdateAssistantMessage(response);
-            }
-
-            var lastAsstMessage =
-                _chatView!.ChatState.ChatMessages.LastOrDefault(x => x.Role == Role.Assistant);
-            if (lastAsstMessage is not null)
-                lastAsstMessage.IsActiveStreaming = false;
+            var chatWithActionPlanner = CoreKernelService.ChatWithActionPlanner(input,
+                ChatRequestModel, runAsChat, _askInput);
+            await ExecuteChatSequence(chatWithActionPlanner);            
         }
 
         private async Task ExecuteSequentialChatSequence(string input, bool runAsChat)
         {
             _chatView!.ChatState.AddUserMessage(input, _chatView!.ChatState.ChatMessages.Count + 1);
-            var hasStarted = false;
             var chatWithPlanner = CoreKernelService.ChatWithSequentialPlanner(input,
                 ChatRequestModel, runAsChat, _askInput);
-            await foreach (var response in chatWithPlanner)
-            {
-                if (!hasStarted)
-                {
-                    hasStarted = true;
-                    _chatView!.ChatState.AddAssistantMessage(response,
-                        _chatView!.ChatState.ChatMessages.Count + 1);
-                    _chatView!.ChatState.ChatMessages.LastOrDefault(x => x.Role == Role.Assistant)!
-                        .IsActiveStreaming = true;
-                    continue;
-                }
-
-                _chatView!.ChatState.UpdateAssistantMessage(response);
-            }
-
-            var lastAsstMessage =
-                _chatView!.ChatState.ChatMessages.LastOrDefault(x => x.Role == Role.Assistant);
-            if (lastAsstMessage is not null)
-                lastAsstMessage.IsActiveStreaming = false;
+            await ExecuteChatSequence(chatWithPlanner);            
         }
 
         private async Task ExecuteStepwiseChatSequence(string input, bool runAsChat)
         {
             _chatView!.ChatState.AddUserMessage(input, _chatView!.ChatState.ChatMessages.Count + 1);
-            var hasStarted = false;
+
             var chatWithPlanner = CoreKernelService.ChatWithStepwisePlanner(input,
                 ChatRequestModel, runAsChat, _askInput);
+            await ExecuteChatSequence(chatWithPlanner);
+        }
+        private async Task ExecuteHandlebarsChatSequence(string input, bool runAsChat)
+        {
+            _chatView!.ChatState.AddUserMessage(input, _chatView!.ChatState.ChatMessages.Count + 1);
+            var chatWithPlanner = CoreKernelService.ChatWithHandlebarsPlanner(input,
+                               ChatRequestModel, runAsChat, _askInput);
+            await ExecuteChatSequence(chatWithPlanner);
+        }
+
+        private async Task ExecuteChatSequence(IAsyncEnumerable<string> chatWithPlanner)
+        {
+            var hasStarted = false;
             await foreach (var response in chatWithPlanner)
             {
                 if (!hasStarted)

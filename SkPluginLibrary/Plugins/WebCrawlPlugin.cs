@@ -4,7 +4,6 @@ using Microsoft.SemanticKernel.Functions.OpenAPI.Extensions;
 using Microsoft.SemanticKernel.Memory;
 using Microsoft.SemanticKernel.Orchestration;
 using Microsoft.SemanticKernel.Text;
-using ReverseMarkdown;
 using SkPluginLibrary.Services;
 using System.ComponentModel;
 using System.Text.Json;

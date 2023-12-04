@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.SemanticKernel.Memory;
 using SkPluginLibrary.Abstractions;
 
 namespace BlazorWithSematicKernel.Pages
@@ -17,22 +18,19 @@ namespace BlazorWithSematicKernel.Pages
             public string Text { get; set; } = string.Empty;
 
         }
-
-        private class TokenizedChunk
+        private class SearchForm
         {
-            public int ChunkNumber { get; set; }
-            public List<TokenString> TokenStrings { get; set; } = new();
-            public string Text => string.Join("", TokenStrings.Select(x => x.StringValue)).Replace("&nbsp;", " ");
-            public int TokenCount { get; set; }
-
-            public bool IsTokenized { get; set; }
+            public string? Query { get; set; }
+            public int Limit { get; set; } = 1;
+            public double MinThreshold { get; set; } = 0.7d;
         }
-
+        private SearchForm _searchForm = new();
         private List<TokenizedChunk> _tokenizedChunks = new();
         private Dictionary<int, (List<TokenString>, int)> _tokenizedChunksDict = new();
         private ChunkForm _chunkForm = new();
         private bool _isBusy;
-
+        private int _tabIndex;
+        private List<MemoryQueryResult> _memoryQueryResults = new();
         private void HandleToggle(TokenizedChunk tokenizedChunk)
         {
             var chunk = _tokenizedChunks.FirstOrDefault(x => x.ChunkNumber == tokenizedChunk.ChunkNumber);
@@ -41,7 +39,7 @@ namespace BlazorWithSematicKernel.Pages
             StateHasChanged();
         }
 
-        private string _input = "Write a 1200 word essay about the life of Abraham Lincoln";
+        private string _input = "Write a 2000 word essay about the life of Abraham Lincoln";
         private async Task GenerateText()
         {
             _isBusy = true;
@@ -58,7 +56,34 @@ namespace BlazorWithSematicKernel.Pages
         private void Submit(ChunkForm chunkForm)
         {
             _tokenizedChunksDict = CoreKernelService.ChunkAndTokenize(chunkForm.Text, chunkForm.LineMax, chunkForm.ChunkMax, chunkForm.Overlap);
-            _tokenizedChunks = _tokenizedChunksDict.Select(x => new TokenizedChunk { ChunkNumber = x.Key, TokenStrings = x.Value.Item1, TokenCount = x.Value.Item2 }).ToList();
+            _tokenizedChunks = _tokenizedChunksDict.Select(x => new TokenizedChunk(x.Key, x.Value.Item1, x.Value.Item2)).ToList();
+            StateHasChanged();
+        }
+        private string _searchBusyString = "Saving Chuncks...";
+        private async void HandleTabIndexChanged(int index)
+        {
+            if (index == 1)
+            {
+                _isBusy = true;
+                _searchBusyString = "Saving Chuncks...";
+                StateHasChanged();
+                await Task.Delay(1);
+                await CoreKernelService.SaveChunks(_tokenizedChunks);
+                _isBusy = false;
+
+            }
+            StateHasChanged();
+        }
+        private async void Search(SearchForm search)
+        {
+            _isBusy = true;
+            _searchBusyString = "Searching...";
+            StateHasChanged();
+            await Task.Delay(1);
+            var results = await CoreKernelService.SearchInChunks(search.Query, search.Limit, search.MinThreshold);
+
+            _memoryQueryResults = results;
+            _isBusy = false;
             StateHasChanged();
         }
     }

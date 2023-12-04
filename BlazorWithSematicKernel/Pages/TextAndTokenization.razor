@@ -59,26 +59,83 @@
                 </RadzenRow>
             </RadzenTemplateForm>
         </RadzenCard>
-      
+
     </RadzenColumn>
     <RadzenColumn Size="6" Style="max-height:41rem; overflow:auto">
-       @foreach (var chunk in _tokenizedChunks)
-       {
-           <RadzenCard>
-               <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle1">Chunk @(chunk.ChunkNumber+1)</RadzenText>
-               <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Caption">@chunk.TokenCount Tokens</RadzenText>
-               <RadzenButton Size=ButtonSize.ExtraSmall Click="@(() => HandleToggle(chunk))" Text="@(chunk.IsTokenized ? "Text" : "Tokenize")"></RadzenButton>
-               @{ var isToken = chunk.IsTokenized;}
-               @if (isToken)
-               {
-                    <TextAsTokens TokenStrings="@chunk.TokenStrings" FontSize=".8rem"></TextAsTokens>
-               }
-               else
-               {
-                   <RadzenText Style="font-size:.8rem">@chunk.Text</RadzenText>
-               }
-           </RadzenCard>
-       }
-       
+        <RadzenTabs SelectedIndexChanged="HandleTabIndexChanged">
+            <Tabs>
+                <RadzenTabsItem Text="Chunked Text">
+                    @foreach (var chunk in _tokenizedChunks)
+                    {
+                        <RadzenCard>
+                            <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle1">Chunk @(chunk.ChunkNumber + 1)</RadzenText>
+                            <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Caption">@chunk.TokenCount Tokens</RadzenText>
+                            <RadzenButton Size=ButtonSize.ExtraSmall Click="@(() => HandleToggle(chunk))" Text="@(chunk.IsTokenized ? "Text" : "Tokenize")"></RadzenButton>
+                            @{
+                                var isToken = chunk.IsTokenized;
+                            }
+                            @if (isToken)
+                            {
+                                <TextAsTokens TokenStrings="@chunk.TokenStrings" FontSize=".8rem"></TextAsTokens>
+                            }
+                            else
+                            {
+                                <RadzenText Style="font-size:.8rem">@chunk.Text</RadzenText>
+                            }
+                        </RadzenCard>
+                    }
+                </RadzenTabsItem>
+                <RadzenTabsItem Text="Search Chunks">
+                    <RadzenCard>
+                        <RadzenTemplateForm Data="_searchForm" TItem=SearchForm Submit="Search">
+                            <RadzenFormField Text="Query">
+                                <ChildContent>
+                                    <RadzenTextBox Name="Query" @bind-Value=@_searchForm.Query></RadzenTextBox>
+                                </ChildContent>
+                                <Helper>
+                                    <RadzenRequiredValidator Component="Query"></RadzenRequiredValidator>
+                                    <RadzenText TextStyle="TextStyle.Caption" Text="Query for vector search"></RadzenText>
+                                </Helper>
+                            </RadzenFormField>
+                            <RadzenFormField Text="Limit">
+                                <ChildContent>
+                                    <RadzenNumeric @bind-Value=_searchForm.Limit Min="1" Max="10" TValue="int"></RadzenNumeric>
+                                </ChildContent>
+                                <Helper>
+                                    <RadzenText TextStyle="TextStyle.Caption" Text="Max result count"></RadzenText>
+                                </Helper>
+                            </RadzenFormField>
+                            <RadzenFormField Text="Threshold">
+                                <ChildContent>
+                                    <RadzenNumeric @bind-Value=_searchForm.MinThreshold Min="0" Max="0.99m" Step="0.01" TValue="double"></RadzenNumeric>
+                                </ChildContent>
+                                <Helper>
+                                    <RadzenText TextStyle="TextStyle.Caption" Text="Min similarity threshold"></RadzenText>
+                                </Helper>
+                            </RadzenFormField>
+                            <hr />
+                            <RadzenButton ButtonType="ButtonType.Submit" Text="Search" IsBusy="_isBusy" BusyText="@_searchBusyString"></RadzenButton>
+                        </RadzenTemplateForm>
+                    </RadzenCard>
+                    <RadzenCard>
+                        @if (_memoryQueryResults.Any())
+                        {
+                            <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.DisplayH6" Text="Results"></RadzenText>
+                            @foreach (var result in _memoryQueryResults.OrderByDescending(x => x.Relevance))
+                            {
+                                <RadzenCard>
+                                    <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle1">Chunk @(result.Metadata.Id)</RadzenText>
+                                    <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Caption">Relevance: @result.Relevance</RadzenText>
+                                    <RadzenCard>
+                                        <RadzenText>@result.Metadata.Text</RadzenText>
+                                    </RadzenCard>
+                                </RadzenCard>
+                            }
+                        }
+                        
+                    </RadzenCard>
+                </RadzenTabsItem>
+            </Tabs>
+        </RadzenTabs>
     </RadzenColumn>
 </RadzenRow>

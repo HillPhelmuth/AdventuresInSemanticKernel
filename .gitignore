@@ -365,3 +365,7 @@ FodyWeavers.xsd
 /SkPluginLibrary/Examples/Readme.md
 /SkPluginLibrary/Examples/GenDocs
 /BlazorWithSematicKernel/TestPlan-new.json
+/BlazorWithSematicKernel/PostBuildCopyCode.exe
+/BlazorWithSematicKernel/PostBuildCopyCode.log
+/BlazorWithSematicKernel/ChatGptPluginManifests.json
+/SkPluginLibrary/Models/TimeoutRetryHandler.cs

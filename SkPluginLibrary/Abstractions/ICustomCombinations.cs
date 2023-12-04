@@ -2,6 +2,7 @@
 
 public interface ICustomCombinations
 {
-    Task<string> SequentialDndApi(string characterDescription, (string Race, string Class, string Alignment) details);
+    Task<string> SequentialDndApi(string characterDescription, (string Race, string Class, string Alignment) details,
+        bool useStepwise = false);
    
 }

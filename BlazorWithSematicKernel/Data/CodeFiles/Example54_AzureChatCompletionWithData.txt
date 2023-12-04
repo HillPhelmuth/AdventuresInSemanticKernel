@@ -121,5 +121,5 @@ public static class Example54_AzureOpenAIChatCompletionWithData
             DataSourceIndex = TestConfiguration.ACS.IndexName
         };
     }
-    
+
 }

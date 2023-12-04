@@ -1,4 +1,5 @@
 ﻿using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.Connectors.AI.OpenAI;
 using Microsoft.SemanticKernel.Functions.OpenAPI.Extensions;
 using Microsoft.SemanticKernel.Functions.OpenAPI.Model;
 using Microsoft.SemanticKernel.Orchestration;
@@ -95,17 +96,15 @@ namespace SkPluginLibrary.Plugins
 
             return Regex.Unescape(monstersResult.Result());
         }
-        [SKFunction, SKName("DndMonster"), Description("Get the D&D monster")]
-        public string Monster(SKContext context)
-        {
-            return context.Variables.TryGetValue("monster", out var monster) ? monster : "young-black-dragon";
-        }
+        
 
         [SKFunction, SKName("StorySynopsis"),
          Description("Generate a brief 1-2 sentance summary of the character details to aid in story creation")]
-        public async Task<string> StorySynopsisAsync(SKContext context)
+        public async Task<string> StorySynopsisAsync([Description("Race, class, alignment and other character details")]string characterDetails)
         {
-            var synopsisFunction = _kernel.CreateSemanticFunction(StorySynopsisPrompt);
+            var context = _kernel.CreateNewContext();
+            context.Variables["characterDetails"] = characterDetails;
+            var synopsisFunction = _kernel.CreateSemanticFunction(StorySynopsisPrompt, requestSettings:new OpenAIRequestSettings {ChatSystemPrompt = "You are a story synopsis generator", Temperature = 1.0, TopP = 1.0, MaxTokens = 256});
             var result = await _kernel.RunAsync(context.Variables, synopsisFunction);
             return result.Result();
         }

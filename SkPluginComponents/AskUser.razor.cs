@@ -22,10 +22,10 @@ namespace SkPluginComponents
         [Parameter]
         public RenderFragment? ChildContent { get; set; }
         [Inject]
-        private AskUserService ModalService { get; set; } = default!;
+        private AskUserService AskUserService { get; set; } = default!;
         private Type? ComponentType { get; set; }
-        private AskUserParameters? ModalParameters { get; set; }
-        private AskUserWindowOptions ModalOptions { get; set; } = new();
+        private AskUserParameters? AskUserParameters { get; set; }
+        private AskUserWindowOptions AskUserOptions { get; set; } = new();
 
         public void Reset()
         {
@@ -35,9 +35,9 @@ namespace SkPluginComponents
         protected override Task OnInitializedAsync()
         {
             Debug.WriteLine("Modal Initialized");
-            ModalService.OnOpenComponent += Open;
-            ModalService.OnOpenFragment += OpenFragment;
-            ModalService.OnModalClose += Close;
+            AskUserService.OnOpenComponent += Open;
+            AskUserService.OnOpenFragment += OpenFragment;
+            AskUserService.OnModalClose += Close;
             return base.OnInitializedAsync();
         }
 
@@ -46,9 +46,9 @@ namespace SkPluginComponents
         {
             Console.WriteLine("ModalService OnOpenFragment handled in Modal.razor");
             Reset();
-            ChildContent = childContent.Invoke(ModalService);
-            ModalParameters = parameters;
-            ModalOptions = options ?? new AskUserWindowOptions();
+            ChildContent = childContent.Invoke(AskUserService);
+            AskUserParameters = parameters;
+            AskUserOptions = options ?? new AskUserWindowOptions();
             IsOpen = true;
             InvokeAsync(StateHasChanged);
         }
@@ -57,8 +57,8 @@ namespace SkPluginComponents
             Console.WriteLine("ModalService OnOpenComponent handled in Modal.razor");
             Reset();
             ComponentType = type;
-            ModalParameters = parameters;
-            ModalOptions = options ?? new AskUserWindowOptions();
+            AskUserParameters = parameters;
+            AskUserOptions = options ?? new AskUserWindowOptions();
             IsOpen = true;
             InvokeAsync(StateHasChanged);
         }
@@ -66,14 +66,12 @@ namespace SkPluginComponents
         private void Close(AskUserResults? results = null)
         {
             Console.WriteLine("ModalService OnClose handled in Modal.razor");
-            //ModalService.Close(results);
             IsOpen = false;
             InvokeAsync(StateHasChanged);
         }
         private void CloseSelf()
         {
-            ModalService.CloseSelf();
-            //InvokeAsync(StateHasChanged);
+            AskUserService.CloseSelf();
         }
         private string AsHtml(string? text)
         {
@@ -83,16 +81,10 @@ namespace SkPluginComponents
             return result;
 
         }
-        //private void ConfirmClose(bool confirm)
-        //{
-        //    Console.WriteLine("ModalService OnClose handled in Modal.razor");
-        //    ModalService.CloseConfirm(confirm);
-        //    IsOpen = false;
-        //    InvokeAsync(StateHasChanged);
-        //}
+        
         private void OutClick()
         {
-            if (ModalOptions.CloseOnOuterClick)
+            if (AskUserOptions.CloseOnOuterClick)
             {
                 CloseSelf();
             }

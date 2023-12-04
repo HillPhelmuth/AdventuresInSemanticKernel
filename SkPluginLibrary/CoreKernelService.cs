@@ -13,13 +13,9 @@ using Microsoft.SemanticKernel.Memory;
 using Microsoft.SemanticKernel.Orchestration;
 using Microsoft.SemanticKernel.Planners;
 using Microsoft.SemanticKernel.Planning;
-using Microsoft.SemanticKernel.Plugins.Core;
 using Microsoft.SemanticKernel.Plugins.Memory;
-using Microsoft.SemanticKernel.Plugins.Web;
-using Microsoft.SemanticKernel.Plugins.Web.Bing;
 using Microsoft.SemanticKernel.Text;
 using Microsoft.SemanticKernel.Reliability.Basic;
-using NCalcPlugins;
 using SkPluginLibrary.Abstractions;
 using SkPluginLibrary.Plugins;
 using SkPluginLibrary.Services;
@@ -29,6 +25,9 @@ using System.Text.Json;
 using SkPluginComponents.Models;
 using StringHelpers = SkPluginLibrary.Models.Helpers.StringHelpers;
 using SkPluginComponents;
+using Microsoft.SemanticKernel.TemplateEngine;
+using SkPluginLibrary.Models;
+using DocumentFormat.OpenXml.Wordprocessing;
 
 namespace SkPluginLibrary;
 
@@ -50,7 +49,7 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
         public const string SkDocsCollection = "skDocsCollection";
         public const string SkCodeCollection = "skCodeCollection";
     }
-    public CoreKernelService(IConfiguration configuration, ScriptService scriptService, CompilerService compilerService, HdbscanService hdbscanService,  ILoggerFactory loggerFactory, BingWebSearchService bingSearchService, AskUserService modalService)
+    public CoreKernelService(IConfiguration configuration, ScriptService scriptService, CompilerService compilerService, HdbscanService hdbscanService, ILoggerFactory loggerFactory, BingWebSearchService bingSearchService, AskUserService modalService)
     {
         _configuration = configuration;
         _scriptService = scriptService;
@@ -121,7 +120,7 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
             .Build();
     }
 
-    private async Task<ISemanticTextMemory?> CreateSqliteMemoryAsync(bool isSkChat = false)
+    private async Task<ISemanticTextMemory> CreateSqliteMemoryAsync(bool isSkChat = false)
     {
         var connectionString = isSkChat ? TestConfiguration.Sqlite!.ChatContentConnectionString : TestConfiguration.Sqlite!.ConnectionString!;
         var sqliteMemoryStore = await SqliteMemoryStore.ConnectAsync(connectionString);
@@ -131,13 +130,14 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
         Console.WriteLine($"Collections: {string.Join((string?)"\n", collections)}");
         return new MemoryBuilder()
             .WithMemoryStore(_sqliteStore)
-            .WithOpenAITextEmbeddingGenerationService("text-embedding-ada-002", TestConfiguration.OpenAI.ApiKey)
+            .WithOpenAITextEmbeddingGenerationService("text-embedding-ada-002", TestConfiguration.OpenAI!.ApiKey)
             .WithLoggerFactory(_loggerFactory)
             .Build();
     }
 
-    public static ISemanticTextMemory CreateMemoryStore(IMemoryStore memory)
+    public static ISemanticTextMemory CreateMemoryStore(IMemoryStore? memory = null)
     {
+        memory ??= new VolatileMemoryStore();
         return new MemoryBuilder()
             .WithMemoryStore(memory)
             .WithOpenAITextEmbeddingGenerationService("text-embedding-ada-002", TestConfiguration.OpenAI.ApiKey)
@@ -195,7 +195,7 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
             .WithMemoryStore(sqliteMemoryStore)
             .WithOpenAITextEmbeddingGenerationService(TestConfiguration.OpenAI.EmbeddingModelId, TestConfiguration.OpenAI.ApiKey)
             .Build();
-    
+
     }
 
     private static async Task GenerateAndSaveCodeEmbeddings()
@@ -208,14 +208,14 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
         {
             var text = await File.ReadAllTextAsync(file);
             var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(file);
-            var codeFilePath = Path.Combine(RepoFiles.CodeTextDirectoryPath, $"{fileNameWithoutExtension.Replace(".readme",".txt")}");
+            var codeFilePath = Path.Combine(RepoFiles.CodeTextDirectoryPath, $"{fileNameWithoutExtension.Replace(".readme", ".txt")}");
 
             var code = await File.ReadAllTextAsync(codeFilePath);
             //var codeLines = TextChunker.SplitPlainTextLines(code, 128, StringHelpers.GetTokens);
             //var codeSections = TextChunker.SplitPlainTextParagraphs(codeLines, 512, 128, fileNameWithoutExtension, StringHelpers.GetTokens);
-            await memory.SaveInformationAsync(CollectionName.SkCodeCollection, text, fileNameWithoutExtension, additionalMetadata:code);
+            await memory.SaveInformationAsync(CollectionName.SkCodeCollection, text, fileNameWithoutExtension, additionalMetadata: code);
         }
-        
+
     }
     private async Task<bool> GenerateAndSaveEmbeddings()
     {
@@ -263,8 +263,8 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
         context.Variables["memory_context"] = memory;
         if (history is not null)
             context.Variables["history"] = history;
-        var engine = _skChatKernel.PromptTemplateEngine;
-        var systemPrompt = await engine.RenderAsync(ChatWithSkSystemPromptTemplate, context);
+        var engine = new KernelPromptTemplateFactory().Create(ChatWithSkSystemPromptTemplate, new PromptTemplateConfig());
+        var systemPrompt = await engine.RenderAsync(context);
         var chatService = _skChatKernel.GetService<IChatCompletion>();
         var chat = chatService.CreateNewChat(systemPrompt);
         chat.AddUserMessage(query);
@@ -279,7 +279,8 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
 
     #region D&D Writer with Sequential Planner and DndApiSkill (DndOpenApiSkillPage.razor)
 
-    public async Task<string> SequentialDndApi(string characterDescription, (string Race, string Class, string Alignment) details)
+    public async Task<string> SequentialDndApi(string characterDescription,
+        (string Race, string Class, string Alignment) details, bool useStepwise = false)
     {
         //var monsterDescription = await GetDndMonsterDescription();
         var initialDescription = characterDescription;
@@ -289,24 +290,31 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
         var dndSkill = await planGenKernel.ImportOpenApiPluginFunctionsAsync("DndApiPlugin", Path.Combine(RepoFiles.ApiPluginDirectoryPath, "DndApiPlugin", "openapi.json"), new OpenApiFunctionExecutionParameters { IgnoreNonCompliantErrors = true });
         var writer = planGenKernel.ImportSemanticFunctionsFromDirectory(RepoFiles.PluginDirectoryPath, "WriterPlugin");
         planGenKernel.ImportFunctions(new DndPlugin());
-        var context = await PopulateContext(dndSkill["Monsters"]);
+        var askUserplugin = new AskUserPlugin(_modalService);
+        var askUser = planGenKernel.ImportFunctions(askUserplugin, "AskUserPlugin");
+        //var context = await PopulateContext(dndSkill["Monsters"]);
+        var context = planGenKernel.CreateNewContext();
         context.Variables["race"] = details.Race;
         context.Variables["class"] = details.Class;
         context.Variables["alignment"] = details.Alignment;
         context.Variables["characterDetails"] = characterDescription;
         context.Variables["charcterDescription"] = initialDescription;
-        var config = new SequentialPlannerConfig()
+        PlannerConfigBase config = useStepwise ? new StepwisePlannerConfig() : new SequentialPlannerConfig();
+        var plannerMemoryConfig = new SemanticMemoryConfig
         {
-            SemanticMemoryConfig = new SemanticMemoryConfig
-            {
-                MaxRelevantFunctions = 10,
-                RelevancyThreshold = .75,
-                Memory = _semanticTextMemory
-            },
-            MaxTokens = 1500,
+            MaxRelevantFunctions = 20,
+            Memory = _semanticTextMemory
         };
-        var included = new List<string>() { "ParseCharacterInfo", "Races", "Alignments", "Classes", "ShortStory", "DndMonster" };
-        var excluded = new List<string> { "AbilityScores", "RacesTraits", "GenerateMonsterDescription", "RacesProficiencies", "Monster", "Monsters" };
+        config.SemanticMemoryConfig = plannerMemoryConfig;
+        config.MaxTokens = 3500;
+        //var config = new SequentialPlannerConfig()
+        //{
+        //    SemanticMemoryConfig = plannerMemoryConfig,
+        //    MaxTokens = 1500,
+            
+        //};
+        var included = new List<string> { "ParseCharacterInfo", "Races", "Alignments", "Classes", "ShortStory", "AskUser", "Monster","Monsters" };
+        var excluded = new List<string> { "AbilityScores", "RacesTraits", "GenerateMonsterDescription", "RacesProficiencies"};
         foreach (var include in included)
         {
             config.SemanticMemoryConfig.IncludedFunctions.Add(("DndApiPlugin", include));
@@ -319,28 +327,36 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
         {
             config.ExcludedFunctions.Add(exclude);
         }
-        var ask = $"Invent a D&D character based on the description below as the protagonist. Generate a short story using the available relevant details of the character and a DndMonster as a primary antagonist.\ndescription: \n {characterDescription}.";
-        var planner = new SequentialPlanner(planGenKernel, config).WithInstrumentation(_loggerFactory);
+        var ask = $"Invent a D&D character based on the description below as the protagonist. Generate a short story using the available relevant details of the character and a DndMonster as a primary antagonist. The DndMonster should be selected from a list of all dnd monsters by Asking the User filtereed by challenge rating, aslo selected by asking the user.\ndescription: \n {characterDescription}.";
+        ISequentialPlanner? sequentialPlanner;
+        IStepwisePlanner? stepwisePlanner;
+        //var sequentialPlanner = new SequentialPlanner(planGenKernel, config as SequentialPlannerConfig).WithInstrumentation(_loggerFactory);
+        if (useStepwise)
+        {
+            sequentialPlanner = null;
+            stepwisePlanner = new StepwisePlanner(planGenKernel, config as StepwisePlannerConfig).WithInstrumentation(_loggerFactory);
+        }
+        else
+        {
+            stepwisePlanner = null;
+            sequentialPlanner = new SequentialPlanner(planGenKernel, config as SequentialPlannerConfig).WithInstrumentation(_loggerFactory);
+        }
         Plan plan = new(ask);
 
         try
         {
-            plan = await planner.CreatePlanAsync(ask);
-            //plan.AddSteps(planb.Steps.ToArray());
+            plan = useStepwise ? stepwisePlanner!.CreatePlan(ask) : await sequentialPlanner!.CreatePlanAsync(ask);
 
         }
         catch (Exception ex)
         {
             var exceptionLog = $"{ex.Message}\n{ex.StackTrace}\n{ex.InnerException}";
-
-            //Console.WriteLine($"Failed to create plan. \n{exceptionLog}");
             _loggerFactory.LogInformation("Failed to create plan. \n{exceptionLog}", exceptionLog);
             KernelError?.Invoke(this, exceptionLog);
         }
-        var planJson = plan.ToJson();
+        var planJson = plan.ToJson(true);
         Console.WriteLine($"-----------Squential PLAN---------\n{planJson}\n----------------------------");
-        await File.WriteAllTextAsync("TestPlan-new.json", planJson);
-        //var planResult = await ExecutePlanAsync(_kernel, plan, _kernel.CreateNewContext());
+       
 
         var planResult = await PlanResult(plan, context);
         return planResult?.GetValue<string>() ?? "no result";
@@ -376,7 +392,8 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
         }
         var askUserplugin = new AskUserPlugin(_modalService);
         var askUser = kernel.ImportFunctions(askUserplugin);
-        context.Variables["question"] = $"Which of these monsters should be in the story?(copy-paste name verbatim)\n{string.Join("<br/>", monsterList.Monsters.Select(x => x.Index))}";
+        context.Variables["question"] = "Which of these monsters should be in the story?";
+        context.Variables["options"] = string.Join("\n", monsterList.Monsters.Select(x => x.Index).ToList());
         var userResponse = await askUser.First().Value.InvokeAsync(context);
         var monsterName = userResponse.Result();
         var index = random.Next(0, monsterList.Monsters.Count);
@@ -398,6 +415,7 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
             sw.Start();
 
             _loggerFactory.LogInformation("Plan:\n{plan.ToPlanString()}", plan.ToPlanString());
+            YieldAdditionalText?.Invoke($"Plan:\n{plan.ToPlanWithGoalString()}");
             var kernel = CreateKernel();
             var planResult = await kernel.RunAsync(plan, ctx.Variables); /*await plan.InvokeAsync(ctx);*/
 

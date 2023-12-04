@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel;
-using System.Reflection;
 
 namespace SkPluginLibrary.Models.Helpers
 {
@@ -19,6 +18,14 @@ namespace SkPluginLibrary.Models.Helpers
             var attributes = (LongDescriptionAttribute[])fi.GetCustomAttributes(typeof(LongDescriptionAttribute), false);
 
             return attributes is { Length: > 0 } ? attributes[0].LongDescription : string.Empty;
+
+        }
+        public static bool IsActive(this Enum value)
+        {
+            var fi = value.GetType().GetField(value.ToString());
+            var attributes = (IsActiveAttribute[])fi.GetCustomAttributes(typeof(IsActiveAttribute), false);
+
+            return attributes is { Length: > 0 } && attributes[0].IsActive;
 
         }
         public static Dictionary<TEnum, string> GetEnumsWithDescriptions<TEnum>(this Type enumType) where TEnum : Enum

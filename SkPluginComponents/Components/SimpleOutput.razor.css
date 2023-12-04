@@ -1,0 +1,30 @@
+﻿.info-button {
+    background-color: green; /* Blue background */
+    max-width:5rem
+}
+
+/* Hover effect */
+.info-button:hover {
+    background-color: darkgreen; /* Slightly darker blue on hover */
+}
+
+/* Focus effect */
+.info-button:focus {
+    box-shadow: 0 0 0 0.2rem rgba(0,255,0,.25); /* Glowing effect for accessibility */
+}
+
+
+
+/* Active effect (when the button is pressed) */
+.info-button:active {
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2) inset; /* Inward shadow for a pressed effect */
+}
+
+/* Style for a raised card display */
+.card {
+    background-color: white; /* White background */
+    border-radius: 20px; /* Rounded corners */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Slight shadow for depth */
+    padding: 1rem; /* Padding */
+    margin: 1rem; /* Margin */
+}

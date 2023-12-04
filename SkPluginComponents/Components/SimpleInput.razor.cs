@@ -23,6 +23,7 @@ namespace SkPluginComponents.Components
             public bool? BooleanInput { get; set; }
             public DateOnly? DateInput { get; set; }
             public int? NumberInput { get; set; }
+            public string? OverrideInstructions { get; set; }
         }
         private FormFieldValue _formFieldValue;
         protected override Task OnParametersSetAsync()
@@ -58,6 +59,8 @@ namespace SkPluginComponents.Components
                 _value = _formFieldValue.NumberInput.ToString();
             else
                 _value = string.Empty;
+            if (!string.IsNullOrEmpty(_formFieldValue.OverrideInstructions))
+                _value = _formFieldValue.OverrideInstructions;
             var results = new AskUserResults(true, new AskUserParameters { { "Value", _value } });
             ModalService.Close(results);
         }

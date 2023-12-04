@@ -22,7 +22,7 @@ public static class Example24_OpenApiPlugin_Jira
         bool useLocalFile = true;
         if (useLocalFile)
         {
-            jiraFunctions = await kernel.ImportOpenApiPluginFunctionsAsync("jiraPlugin", Path.Combine(RepoFiles.ApiPluginDirectoryPath, "JiraPlugin","openapi.json"), new OpenApiFunctionExecutionParameters(authCallback: tokenProvider.AuthenticateRequestAsync));
+            jiraFunctions = await kernel.ImportOpenApiPluginFunctionsAsync("jiraPlugin", Path.Combine(RepoFiles.ApiPluginDirectoryPath, "JiraPlugin", "openapi.json"), new OpenApiFunctionExecutionParameters(authCallback: tokenProvider.AuthenticateRequestAsync));
         }
         else
         {

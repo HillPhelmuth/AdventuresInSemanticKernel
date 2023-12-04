@@ -1,4 +1,4 @@
-﻿public class Example64_MultiplePromptTemplates
+public static class Example64_MultiplePromptTemplates
 {
     public static async Task RunAsync()
     {
@@ -20,7 +20,7 @@
             .Build();
 
         var promptTemplateFactory = new AggregatorPromptTemplateFactory(
-            new BasicPromptTemplateFactory(),
+            new KernelPromptTemplateFactory(),
             new HandlebarsPromptTemplateFactory());
 
         var skPrompt = "Hello AI, my name is {{$name}}. What is the origin of my name?";

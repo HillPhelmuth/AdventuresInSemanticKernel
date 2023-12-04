@@ -1,7 +1,7 @@
 ﻿
 <RadzenRow>
     <RadzenColumn Size="12" Style="max-height: 75vh; overflow: auto">
-        <RadzenText Text="@Header" TextAlign="TextAlign.Center" TextStyle="TextStyle.H5"></RadzenText>
+        <RadzenText Style="color:black !important" Text="@Header" TextAlign="TextAlign.Center" TextStyle="TextStyle.H5"></RadzenText>
         @if (ExecutionType != ExecutionType.SingleFunction)
         {
             <RadzenButton Text="Execute" Icon="chat" Click="@(() => SelectionComplete.InvokeAsync())"></RadzenButton>
@@ -24,7 +24,7 @@
                             }
                            
                         </RadzenCard>
-                        @if (IsSequential || IsStepwise)
+                        @if (IsPlanner)
                         {
                             <RadzenCard>
                                 <RadzenButton MouseEnter="@((args) => ShowTooltip(args, "Prevent inclusion in Plan"))" Icon="@(ExcludedFunctions.Contains(functionview.Name) ? "unpublished" : "")" Size="ButtonSize.ExtraSmall" Text="Exclude Function" Click="@(() => ExcludeFunction(functionview.Name))"></RadzenButton>

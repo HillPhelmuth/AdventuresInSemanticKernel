@@ -19,3 +19,8 @@ public static class ObjectExtensions
         return Regex.Unescape(json).Replace("\"{", "{").Replace("}\"", "}");
     }
 }
+public static class JsonExtensions
+{
+    private static readonly JsonSerializerOptions s_jsonOptions = new() { WriteIndented = true, ReferenceHandler = ReferenceHandler.IgnoreCycles };
+    public static JsonSerializerOptions JsonOptionsIndented => s_jsonOptions;
+}

@@ -29,7 +29,6 @@ using SkPluginLibrary.Plugins;
 using Microsoft.SemanticKernel.Plugins.Web;
 using Microsoft.SemanticKernel.Plugins.Web.Bing;
 using Microsoft.SemanticKernel.Connectors.AI.OpenAI;
-using Microsoft.SemanticKernel.TemplateEngine.Basic;
 using Microsoft.SemanticKernel.Plugins.Web.Google;
 using System.Net;
 using Microsoft.SemanticKernel.Http;
@@ -104,5 +103,9 @@ using SkPluginLibrary.Models;
 using SkPluginLibrary.Models.Helpers;
 using SkPluginLibrary.Plugins;
 using System.Net.Http;
-using Microsoft.SemanticKernel.TemplateEngine.Handlebars;";
+using Microsoft.SemanticKernel.TemplateEngine.Handlebars;
+using System.Security.Cryptography;
+using Microsoft.SemanticKernel.Planners.Handlebars;
+using Microsoft.SemanticKernel.Experimental.Orchestration;
+using JsonSerializer = System.Text.Json.JsonSerializer;";
 }

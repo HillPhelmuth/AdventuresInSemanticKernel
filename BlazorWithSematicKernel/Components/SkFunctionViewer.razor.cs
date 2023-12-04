@@ -33,6 +33,8 @@ namespace BlazorWithSematicKernel.Components
         public EventCallback<KeyValuePair<string, ISKFunction>> FunctionSelected { get; set; }
         private bool IsSequential => ExecutionType is ExecutionType.SequentialPlanner or ExecutionType.SequentialPlannerChat;
         private bool IsStepwise => ExecutionType is ExecutionType.StepwisePlanner or ExecutionType.StepwisePlannerChat;
+        private bool IsAction => ExecutionType is ExecutionType.ActionPlanner or ExecutionType.ActionPlannerChat;
+        private bool IsPlanner => IsSequential || IsStepwise || IsAction;
         [Inject]
         private TooltipService TooltipService { get; set; } = default!;
 

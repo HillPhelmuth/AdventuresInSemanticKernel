@@ -1,13 +1,7 @@
-﻿using Kusto.Data;
-using Microsoft.SemanticKernel;
+﻿using Microsoft.SemanticKernel;
 using SkPluginLibrary.Services;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace SkPluginLibrary.Plugins
 {

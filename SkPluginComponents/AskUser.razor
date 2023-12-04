@@ -1,16 +1,16 @@
 @if (IsOpen)
 {
     <div class="modal-overlay" @onclick=OutClick>
-        <div class="window @($"{Enum.GetName(ModalOptions.Location)?.ToLower()} {ModalOptions.CssClasses}")" style="@ModalOptions.Style" @onclick:stopPropagation>
+        <div class="window @($"{Enum.GetName(AskUserOptions.Location)?.ToLower()} {AskUserOptions.CssClasses}")" style="@AskUserOptions.Style" @onclick:stopPropagation>
 
-            @if (ModalOptions.ShowCloseButton || !string.IsNullOrEmpty(ModalOptions.Title))
+            @if (AskUserOptions.ShowCloseButton || !string.IsNullOrEmpty(AskUserOptions.Title))
             {
                 <div class="modal-header">
                     <div class="text-center title">
-                        @((MarkupString)AsHtml(ModalOptions.Title))
+                        @((MarkupString)AsHtml(AskUserOptions.Title))
                     </div>
                     <div>
-                        @if (ModalOptions.ShowCloseButton)
+                        @if (AskUserOptions.ShowCloseButton)
                         {
                             <button class="close" @onclick="Close"><i class="fas fa-times"></i></button>
                         }
@@ -20,7 +20,7 @@
 
             @if (ComponentType != null)
             {
-                <DynamicComponent Type="ComponentType" Parameters="ModalParameters"></DynamicComponent>
+                <DynamicComponent Type="ComponentType" Parameters="AskUserParameters"></DynamicComponent>
             }
             @if (ChildContent != null)
             {

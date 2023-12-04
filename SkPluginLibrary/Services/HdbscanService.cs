@@ -24,15 +24,9 @@ public enum DistanceFunction
     [Description("Represents the maximum absolute difference between components of two vectors.")]
     SupremumDistance
 }
-public class HdbscanService
+public class HdbscanService(ILoggerFactory loggerFactory)
 {
-    private readonly ILogger<HdbscanService> _logger;
-
-    public HdbscanService(ILoggerFactory loggerFactory)
-    {
-        _logger = loggerFactory.CreateLogger<HdbscanService>();
-
-    }
+    private readonly ILogger<HdbscanService> _logger = loggerFactory.CreateLogger<HdbscanService>();
 
     private IDistanceCalculator<double[]> GetDistanceFunction(DistanceFunction distanceFunction)
     {

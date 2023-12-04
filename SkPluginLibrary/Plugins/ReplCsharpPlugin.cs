@@ -1,11 +1,9 @@
 ﻿using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Orchestration;
-using Microsoft.SemanticKernel.Plugins.Memory;
 using SkPluginLibrary.Services;
 using System.ComponentModel;
 using System.Text.Json;
 using Microsoft.SemanticKernel.Connectors.AI.OpenAI;
-using Microsoft.SemanticKernel.TemplateEngine.Basic;
 
 namespace SkPluginLibrary.Plugins
 {

@@ -9,5 +9,6 @@ public interface IMemoryConnectors
     Task<List<MemoryQueryResult>> SearchKernelMemory(string query, string collection, int topN = 3, double minThreshold = 0.0);
     Task<List<string>> GenerateRandomSentances(int count = 10);
     Task<List<MemoryResult>> GetItemClustersFromCollection(int numberOfItems = 100, string searchTerm = "*", int minpoints = 3, int minCluster = 3, DistanceFunction distanceFunction = DistanceFunction.CosineSimilarity, string? collection = null);
-    Task ChunkAndSaveFileCluster(byte[] file, string filename, FileType fileType = FileType.Pdf);
+    Task ChunkAndSaveFileCluster(byte[] file, string filename, FileType fileType = FileType.Pdf,
+        string? collectionName = null);
 }

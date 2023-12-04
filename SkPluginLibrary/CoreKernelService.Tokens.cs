@@ -1,6 +1,7 @@
 ﻿using Microsoft.SemanticKernel.AI.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.AI.OpenAI;
 using Microsoft.SemanticKernel.Connectors.AI.OpenAI.ChatCompletion;
+using Microsoft.SemanticKernel.Memory;
 using Microsoft.SemanticKernel.Text;
 using System.Text.Json;
 
@@ -13,7 +14,7 @@ public partial class CoreKernelService
     public async Task<string?> GenerateResponseWithLogitBias(Dictionary<int, int> logitBiasSettings, string query)
     {
         var chatSettings = ChatRequestSettingsWithLogitBias(logitBiasSettings);
-        var chat = new OpenAIChatCompletion("gpt-3.5-turbo", Env.Var("OPENAI_API_KEY"), loggerFactory: _loggerFactory);
+        var chat = new OpenAIChatCompletion("gpt-3.5-turbo-1106", Env.Var("OPENAI_API_KEY"), loggerFactory: _loggerFactory);
         var history = chat.CreateNewChat();
         history.AddUserMessage(query);
         var reply = await chat.GenerateMessageAsync(history, chatSettings);
@@ -38,12 +39,12 @@ public partial class CoreKernelService
     }
 
     public async IAsyncEnumerable<string> GenerateLongText(
-        string query = "Write a 1200 word essay about the life of Abraham Lincoln")
+        string query = "Write a 2000 word essay about the life of Abraham Lincoln")
     {
-        var kernel = CreateKernel("gpt-3.5-turbo");
+        var kernel = CreateKernel();
         var chatService = kernel.GetService<IChatCompletion>();
         var chat = chatService.CreateNewChat("You are a helpful AI writer");
-        var chatSettings = new OpenAIRequestSettings() { MaxTokens = 2000, Temperature = 1.0, TopP = 1.0 };
+        var chatSettings = new OpenAIRequestSettings() { MaxTokens = 4000, Temperature = 1.0, TopP = 1.0 };
         chat.AddUserMessage(query);
         await foreach (var token in chatService.GenerateMessageStreamAsync(chat, chatSettings))
         {
@@ -54,16 +55,32 @@ public partial class CoreKernelService
     public Dictionary<int, (List<TokenString>, int)> ChunkAndTokenize(string input, int lineMax, int chunkMax,
         int overlap)
     {
-        var result = new Dictionary<int, (List<TokenString>, int)>();
         var lines = TextChunker.SplitPlainTextLines(input, lineMax, StringHelpers.GetTokens);
         var chunks = TextChunker.SplitPlainTextParagraphs(lines, chunkMax, overlap, "", StringHelpers.GetTokens);
         var index = 0;
+
+        return chunks.ToDictionary(chunk => index++, chunk => (StringHelpers.EncodeDecodeWithSpaces(chunk), StringHelpers.GetTokens(chunk)));
+    }
+
+    #endregion
+
+    #region Text Search
+    private ISemanticTextMemory? _chunkMemory;
+    public async Task<string> SaveChunks(List<TokenizedChunk> chunks)
+    {
+        _chunkMemory = CreateMemoryStore();
+        var ids = new List<string>();
         foreach (var chunk in chunks)
         {
-            result.Add(index++, (StringHelpers.EncodeDecodeWithSpaces(chunk), StringHelpers.GetTokens(chunk)));
+            var id = await _chunkMemory.SaveInformationAsync("chunkCollection", chunk.Text, chunk.ChunkNumber.ToString());
+            ids.Add(id);
         }
-
-        return result;
+        return $"{ids.Count} items saved with ids: {string.Join(", ", ids)}";
+    }
+    public async Task<List<MemoryQueryResult>> SearchInChunks(string query, int limit = 1, double threshold = 0.7d)
+    {
+        var results = await _chunkMemory.SearchAsync("chunkCollection", query, limit, threshold).ToListAsync();
+        return results;
     }
 
     #endregion

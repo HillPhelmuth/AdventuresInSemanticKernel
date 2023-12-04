@@ -24,7 +24,7 @@ public partial class ReplConsole : ComponentBase
     private class CodeRequestForm
     {
         public string? Description { get; set; } =
-            "Generate an application that creates a list of playing cards representing a 52 card deck. It should then shuffle the deck of cards and deal 5 cards to each of 4 players. Then write to console the 5 card hand of each player.";
+            "Generate an application that creates a list of playing cards representing a 52 card deck. It should then shuffle the deck of cards and deal 5 cards to each of 4 players. Do not deal all 52 cards. Deal only 5 cards to each player. Then write to console the 5 card hand of each player. Use a class for Player and a class for Card.";
     }
     private CodeRequestForm _codeRequestForm = new();
     private string output = "";

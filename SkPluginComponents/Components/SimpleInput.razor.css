@@ -12,7 +12,14 @@
 .text-box {
     width: 100%; /* Full width */
 }
-
+.override {
+    font-size:.9rem;
+    font-family:Courier New, Courier, monospace
+}
+.override p {
+    color:red;
+    font-weight:700;
+}
 /* Styling for dropdowns */
 .dropdown {
     display: block;

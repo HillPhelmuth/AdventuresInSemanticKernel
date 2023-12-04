@@ -20,7 +20,7 @@ namespace BlazorWithSematicKernel.Pages
             await base.OnInitializedAsync();
         }
 
-        private Dictionary<ExecutionType, string> ExecutionTypeDescriptions => typeof(ExecutionType).GetEnumsWithDescriptions<ExecutionType>().Where(x => x.Key != ExecutionType.SingleFunction).ToDictionary(x => x.Key, x => x.Value);
+        private static Dictionary<ExecutionType, string> ExecutionTypeDescriptions => typeof(ExecutionType).GetEnumsWithDescriptions<ExecutionType>().Where(x => x.Key.IsActive() ).ToDictionary(x => x.Key, x => x.Value);
         private class ExecutionTypeForm
         {
             public ExecutionType ExecutionType { get; set; }

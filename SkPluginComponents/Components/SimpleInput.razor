@@ -46,9 +46,18 @@
     }
 
     <br />
+    
+    @if (SimpleInputType is not (SimpleInputType.Text or SimpleInputType.TextArea))
+    {
+        <div class="form-field override">
+            <label><strong>Override provided options with custom instructions.</strong></label>
+            <textarea style="width:100%;height:5rem;" @bind=@_formFieldValue.OverrideInstructions></textarea>
+            <p>This will override other input</p>
+        </div>
+    }
     @if (SimpleInputType != SimpleInputType.Boolean)
     {
-        <button class="primary-button" @onclick=Submit>Send</button>
+        <button class="primary-button" @onmouseup=Submit @onclick="@(() => Console.WriteLine("Clicked!!!!!!!"))">Send</button>
     }
     
 </div>

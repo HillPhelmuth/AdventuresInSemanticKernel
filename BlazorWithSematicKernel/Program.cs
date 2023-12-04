@@ -7,6 +7,7 @@ using SkPluginLibrary.Abstractions;
 using SkPluginLibrary.Services;
 using SkPluginLibrary.Models.Helpers;
 using SkPluginComponents.Models;
+using BlazorWithSematicKernel;
 
 var builder = WebApplication.CreateBuilder(args);
 IConfiguration configuration = builder.Configuration;
@@ -19,7 +20,9 @@ services.AddAuth0WebAppAuthentication(options =>
     
 });
 services.AddRazorPages();
-services.AddServerSideBlazor();
+//services.AddServerSideBlazor();
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents();
 builder.Services.Configure<HubOptions>(options =>
 {
     options.MaximumReceiveMessageSize = null;
@@ -53,7 +56,7 @@ services.AddLogging(config =>
     config.AddProvider(new StringEventWriterLoggerProvider(stringEventWriter));
     config.AddApplicationInsights();
 });
-
+services.AddCascadingAuthenticationState();
 services.AddSingleton<ActivityLogging>();
 
 
@@ -72,8 +75,8 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+app.UseAntiforgery();
 
-app.MapBlazorHub();
-app.MapFallbackToPage("/_Host");
-
+app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode();
 app.Run();

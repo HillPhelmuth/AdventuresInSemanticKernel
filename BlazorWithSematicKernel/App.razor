@@ -1,53 +1,100 @@
-﻿<CascadingValue Name="PageTitle" Value="@_pageTitle">
-    <CascadingAuthenticationState>
-        <Router AppAssembly="@typeof(App).Assembly" OnNavigateAsync="HandleNavigation">
-            <Found Context="routeData">
-                <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
-                    <NotAuthorized>
-                        <h1>Sorry</h1>
-                        <p>You're not authorized to access this page. You may need to log in.</p>
-                        <a href="MicrosoftIdentity/Account/SignIn">Log in</a>
-                    </NotAuthorized>
-                </AuthorizeRouteView>
-                <FocusOnNavigate RouteData="@routeData" Selector="h1" />
-            </Found>
-            <NotFound>
-                <PageTitle>Not found</PageTitle>
-                <LayoutView Layout="@typeof(MainLayout)">
-                    <p role="alert">Sorry, there's nothing at this address.</p>
-                </LayoutView>
-            </NotFound>
-        </Router>
-    </CascadingAuthenticationState>
-</CascadingValue>
-<RadzenTooltip />
-<RadzenDialog />
-<RadzenNotification />
-<SkPluginComponents.AskUser/>
-@code {
+﻿@inject IHostEnvironment Env
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
+    <link href="css/site.css" rel="stylesheet" />
+    <link href="BlazorWithSematicKernel.styles.css" rel="stylesheet" />
+    <link rel="icon" type="image/png" href="appIcon.png" />
+    <link rel="stylesheet" href="_content/Radzen.Blazor/css/standard.css">
+    <link rel="stylesheet" href="_content/ChatComponents/css/chat.css" />
+    <link rel="stylesheet" href="js/lib/prism/themes/prism.min.css">
+    <link rel="stylesheet" href="js/lib/prism/themes/prism-funky.min.css">
+    <link rel="stylesheet" href="js/lib/prism/plugins/toolbar/prism-toolbar.min.css" />
+    <HeadOutlet @rendermode="@InteractiveServer" />
+</head>
+<body>
+    <Routes @rendermode="@InteractiveServer"></Routes>
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
 
-    private string _pageTitle = "Adventures in Semantic Kernel";
+    <script src="_framework/blazor.web.js"></script>
+    <script src="_content/Radzen.Blazor/Radzen.Blazor.js"></script>
+    <script src="https://unpkg.com/turndown/dist/turndown.js"></script>
+    <script src="js/lib/prism/prism.min.js"></script>
+    <script src="js/lib/prism/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="js/lib/prism/plugins/toolbar/prism-toolbar.min.js"></script>
+    <script src="js/lib/prism/plugins/show-language/prism-show-language.min.js"></script>
+    <script src="js/lib\prism\plugins\copy-to-clipboard\prism-copy-to-clipboard.js"></script>
+    <script src="@("https://unpkg.com/@alenaksu/json-viewer@2.0.0/dist/json-viewer.bundle.js")"></script>
+    <script>
+        window.convertHtmlToMarkdown = (id, html) => {
 
-    private void HandleNavigation(NavigationContext navigationContext)
-    {
-        var path = navigationContext.Path;
-        Console.WriteLine($"Path: {path}");
-        _pageTitle = path switch
-        {
-            "samples" => "Samples and Code",
-            "executeFunction" => "Execute Plugin Function",
-            "planBuilder" => "Build and Execute a Plan",
-            "web" => "Web Chat",
-            "wikiChat" => "Wikipedia Chat",
-            "repl" => "C# Code Gen REPL Plugin",
-            "dnd" => "Dnd Story Generator with Sequential Planner",
-            "testEmbed" => "SK Memory & Vector Playground",
-            "cluster" => "SK Memory & Custom Hdbscan Clustering",
-            "textchunking" => "Chunking and Tokenization",
-            "tokens" => "Tinker with Tokens and LogitBias",
-            _ => "Adventures in Semantic Kernel"
+            const turndownService = new TurndownService();
+            turndownService.remove("style");
+            turndownService.remove("script");
+            const result = turndownService.turndown(html);
+            console.log(`html item with id: ${id} converted to markdown.`);
+            return {
+                Id: id,
+                Content: result
+            };
+        }
+    </script>
+    <script>
+        window.addCopyButtons = (element) => {
+            if (!element) {
+                console.log("No element in addCopyButtons");
+                return;
+            }
+
+            Prism.highlightAllUnder(element);
+        }
+    </script>
+    <script>
+        window.downloadFile = async (filename, data) => {
+            const response = new Response(data);
+            const blob = await response.blob();
+
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         };
-        StateHasChanged();
-    }
+    </script>
+    <script>
+        window.scrollToBottom = function (elementId) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            }
+        }
 
-}
+    </script>
+    <script>
+        window.addJsonToViewer = (jsonObj) => {
+            if (!jsonObj) {
+                console.log("No json object in addJsonToViewer");
+                return;
+            }
+            var element = document.getElementById("json");
+            if (!element) {
+                console.log("No element in addJsonToViewer");
+                return;
+            }
+            element.data = jsonObj;
+
+        }
+    </script>
+</body>
+</html>

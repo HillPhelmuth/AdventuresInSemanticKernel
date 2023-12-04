@@ -1,4 +1,5 @@
 ﻿
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Tiktoken;
 
@@ -64,5 +65,6 @@ namespace SkPluginLibrary.Models.Helpers
         {
             return Regex.Replace(input, @"[^a-zA-Z0-9_]", "_");
         }
+        
     }
 }
