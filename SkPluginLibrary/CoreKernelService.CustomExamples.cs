@@ -2,8 +2,10 @@
 using Microsoft.SemanticKernel.AI.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.AI.OpenAI;
 using Microsoft.SemanticKernel.Orchestration;
+using Microsoft.SemanticKernel.TemplateEngine.Basic;
 using SkPluginLibrary.Plugins;
 using System.Text.Json;
+using Microsoft.SemanticKernel.TemplateEngine;
 
 namespace SkPluginLibrary;
 
@@ -51,7 +53,8 @@ public partial class CoreKernelService
         //var memoryContext = string.Join("\n", memoryContextItems.Select(x => x.Metadata.Text));
         //Console.WriteLine($"Memory Context: {memoryContext}");
         context.Variables["memory_context"] = webResult.Result();
-        var sysPrompt = await kernel.PromptTemplateEngine.RenderAsync(sysPromptTemplate, context);
+        var templateEngine = new BasicPromptTemplateFactory(_loggerFactory).Create(sysPromptTemplate, new PromptTemplateConfig());
+        var sysPrompt = await templateEngine.RenderAsync(context);
         var chat = chatService.CreateNewChat(sysPrompt);
         chat.AddUserMessage(query);
         await foreach (var token in chatService.GenerateMessageStreamAsync(chat,

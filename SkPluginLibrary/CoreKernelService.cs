@@ -82,7 +82,7 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
             .WithOpenAITextEmbeddingGenerationService("text-embedding-ada-002", TestConfiguration.OpenAI.ApiKey)
             .WithRetryBasic(new BasicRetryConfig { MaxRetryCount = 3, MinRetryDelay = TimeSpan.FromSeconds(1), UseExponentialBackoff = true })
             .Build();
-        kernel.FunctionInvoked += FunctionInvokedHandler;
+     
         return kernel;
     }
     private IMemoryStore _playgroundStore = new VolatileMemoryStore();
