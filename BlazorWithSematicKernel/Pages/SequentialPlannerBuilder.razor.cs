@@ -16,8 +16,14 @@ namespace BlazorWithSematicKernel.Pages
         }
         protected override async Task OnInitializedAsync()
         {
-            await AllPlugins();
+            //await AllPlugins();
             await base.OnInitializedAsync();
+        }
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            if (firstRender)
+                await AllPlugins();
+            await base.OnAfterRenderAsync(firstRender);
         }
 
         private static Dictionary<ExecutionType, string> ExecutionTypeDescriptions => typeof(ExecutionType).GetEnumsWithDescriptions<ExecutionType>().Where(x => x.Key.IsActive() ).ToDictionary(x => x.Key, x => x.Value);
