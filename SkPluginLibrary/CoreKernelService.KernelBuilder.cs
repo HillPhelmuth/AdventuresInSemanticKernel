@@ -102,8 +102,8 @@ public partial class CoreKernelService
         _nativePlugins.TryAdd(nameof(MathPlugin), mathPlugin);
         var timePlugin = new TimePlugin();
         _nativePlugins.TryAdd(nameof(TimePlugin), timePlugin);
-        var waitPlugin = new WaitPlugin();
-        _nativePlugins.TryAdd(nameof(WaitPlugin), waitPlugin);
+        //var waitPlugin = new WaitPlugin();
+        //_nativePlugins.TryAdd(nameof(WaitPlugin), waitPlugin);
         var textMemoryPlugin = new TextMemoryPlugin(_semanticTextMemory);
         _nativePlugins.TryAdd(nameof(TextMemoryPlugin), textMemoryPlugin);
         var textPlugin = new TextPlugin();
