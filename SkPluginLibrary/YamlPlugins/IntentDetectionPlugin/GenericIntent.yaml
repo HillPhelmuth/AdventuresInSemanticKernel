@@ -1,0 +1,30 @@
+description: Given a query and a provided list of possible intents, detect which intent the input matches
+execution_settings:
+  default:
+    max_tokens: 100
+    temperature: 0.1
+    top_p: 1.0
+    presence_penalty: 0.0
+    frequency_penalty: 0.0
+input_variables:
+- name: input
+  description: current input
+  default: ''
+- name: available_intents
+  description: list of possible intents
+  default: ''
+name: GenericIntent
+template: |
+  These are available intents that one might query:
+
+      {{$available_intents}}
+
+  Which intent is this query asking for? If none match, respond with Unknown.
+
+
+
+  {{$input}}
+
+
+
+  Intent:

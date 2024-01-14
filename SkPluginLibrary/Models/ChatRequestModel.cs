@@ -4,37 +4,31 @@ using System.Text;
 namespace SkPluginLibrary.Models;
 
 
-public class Plugins
+public class Plugins(ChatRequestModel chatRequestModel)
 {
-    private ChatRequestModel _chatRequestModel;
-
-    public Plugins(ChatRequestModel chatRequestModel)
-    {
-        _chatRequestModel = chatRequestModel;
-    }
     public string Name { get; set; }
     public PluginType PluginType { get; set; }
-    public Dictionary<string, ISKFunction> Functions { get; set; }
+    public Dictionary<string, KernelFunction> Functions { get; set; }
     public List<string>? LocalPluginNames { get; set; }
     public List<string>? ApiPluginNames { get; set; }
-    public Dictionary<string, ISKFunction> CorePlugins { get; set; } = new();
-    public Dictionary<string, ISKFunction> CustomPlugins { get; set; } = new();
+    public Dictionary<string, KernelFunction> CorePlugins { get; set; } = new();
+    public Dictionary<string, KernelFunction> CustomPlugins { get; set; } = new();
 
-    public Dictionary<string, ISKFunction>? NativePlugins =>
+    public Dictionary<string, KernelFunction>? NativePlugins =>
         CorePlugins.Concat(CustomPlugins).ToDictionary(x => x.Key, x => x.Value);
 
     public override string ToString()
     {
         var sb = new StringBuilder();
-        sb.AppendLine($"Execution Type {_chatRequestModel.ExecutionType.ToString()}");
+        sb.AppendLine($"Execution Type {chatRequestModel.ExecutionType.ToString()}");
         if (LocalPluginNames != null)
         {
             sb.AppendLine($"Local Plugins: {string.Join(", ", LocalPluginNames)}");
         }
 
-        if (_chatRequestModel.ChatGptPlugins != null)
+        if (chatRequestModel.ChatGptPlugins != null)
         {
-            sb.AppendLine($"Chat GPT Plugins: {string.Join(", ", _chatRequestModel.ChatGptPlugins.Select(x => x.Title))}");
+            sb.AppendLine($"Chat GPT Plugins: {string.Join(", ", chatRequestModel.ChatGptPlugins.Select(x => x.Title))}");
         }
 
         if (ApiPluginNames != null)
@@ -65,7 +59,7 @@ public class ChatRequestModel
     }
 
     public ExecutionType ExecutionType { get; set; }
-    public List<PluginFunctions> SelectedPlugins { get; set; } = new();
+    public List<KernelPlugin> SelectedPlugins { get; set; } = new();
     public List<ChatGptPlugin>? ChatGptPlugins { get; set; }
     public List<string>? ExcludedFunctions { get; set; }
     public List<string>? RequredFunctions { get; set; }
@@ -109,17 +103,15 @@ public class ChatRequestModel
 
 public static class FunctionExtensions
 {
-    public static List<Function> ToFunctionList(this Dictionary<string, ISKFunction> functions)
+    public static List<Function> ToFunctionList(this Dictionary<string, KernelFunction> functions)
     {
         return functions.Select(x => new Function(x.Key, x.Value)).ToList();
     }
 
-    public static PluginFunctions ToPluginFunctions(this Dictionary<string, ISKFunction> functions,
-        string pluginlName, PluginType pluginType)
+    public static KernelPlugin ToPlugin(this Dictionary<string, KernelFunction> functions,
+        string pluginName, PluginType pluginType)
     {
-        return new PluginFunctions(pluginlName, pluginType)
-        {
-            Functions = functions.ToFunctionList()
-        };
+        var result = KernelPluginFactory.CreateFromFunctions(pluginName, functions.Values.ToList());
+        return result;
     }
 }

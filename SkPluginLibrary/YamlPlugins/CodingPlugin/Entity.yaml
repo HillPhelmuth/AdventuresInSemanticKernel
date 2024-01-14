@@ -1,0 +1,28 @@
+description: Given text, annotate all recognized entities. You specify the tags to use.
+execution_settings:
+  default:
+    max_tokens: 256
+    temperature: 0.0
+    top_p: 0.0
+    presence_penalty: 0.0
+    frequency_penalty: 0.0
+    stop_sequences:
+    - '[done]'
+input_variables: []
+name: Entity
+template: |
+  Inject xml tags inline into the given text for the following:
+
+
+  {{$tags}}
+
+
+
+  - If there is nothing to tag, don't insert one.
+
+
+  - output [done] when original text was processed
+
+
+
+  {{$input}}

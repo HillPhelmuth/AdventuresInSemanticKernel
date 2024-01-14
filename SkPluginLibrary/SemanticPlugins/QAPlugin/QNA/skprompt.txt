@@ -10,7 +10,6 @@ answer
 
 EMIT WELL FORMED JSON ALWAYS.
 BE BRIEF AND TO THE POINT.
-NO PROSE.
 
 Generate a Question and Answer list (results) based on the meeting chat and transcript in CONTENT.
 Return well-formed json list. Example: { "results": [{"question": "What time is it?", "answer": "2:15pm"}]}

@@ -1,6 +1,8 @@
-﻿using System.Reflection;
+﻿using Microsoft.SemanticKernel.Text;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
+using UglyToad.PdfPig;
 
 namespace SkPluginLibrary.Models.Helpers;
 
@@ -33,6 +35,27 @@ public class FileHelper
         if (typeof(T) == typeof(string))
             return (T)result;
         return JsonSerializer.Deserialize<T>(result.ToString());
+    }
+    public static List<string> ReadAndChunkPdf(string path)
+    {
+        var docBuilder = new StringBuilder();
+        //var path = @"C:\Users\adamh\Downloads\aspnet core-aspnetcore-8.0 _Blazor_Microsoft Learn.pdf";
+        using var document = PdfDocument.Open(path, new ParsingOptions { UseLenientParsing = true });
+        foreach (var page in document.GetPages())
+        {
+            var pageBuilder = new StringBuilder();
+            foreach (var word in page.GetWords())
+            {
+                pageBuilder.Append(word.Text);
+                pageBuilder.Append(' ');
+            }
+            var pageText = pageBuilder.ToString();
+            docBuilder.AppendLine(pageText);
+        }
+        var textString = docBuilder.ToString();
+        var lines = TextChunker.SplitPlainTextLines(textString, 128, StringHelpers.GetTokens);
+        var paragraphs = TextChunker.SplitPlainTextParagraphs(lines, 512, 96, "## Blazor Documentation\n", StringHelpers.GetTokens);
+        return paragraphs;
     }
 }
 

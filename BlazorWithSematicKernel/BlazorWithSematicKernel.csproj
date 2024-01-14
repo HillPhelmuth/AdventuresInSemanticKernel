@@ -6,6 +6,7 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<UserSecretsId>ad3ef5ee-b319-4099-85a4-568668603689</UserSecretsId>
 		<ApplicationInsightsResourceId>/subscriptions/b167babc-47d2-4b9e-9fea-c9e2b399ef74/resourceGroups/AdventuresInSKAppGroup/providers/microsoft.insights/components/AdventuresInSemanticKernel</ApplicationInsightsResourceId>
+		<NoWarn>SKEXP0101</NoWarn>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -20,7 +21,16 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Compile Remove="Components\AgentComponents\AgentOrganizer.razor.cs" />
+	  <Compile Remove="Components\AgentComponents\AgentRunner.razor.cs" />
+	  <Compile Remove="Pages\AgentBuilderPage.razor.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
 	  <Content Remove="ChatGptPluginManifests.json" />
+	  <Content Remove="Components\AgentComponents\AgentOrganizer.razor" />
+	  <Content Remove="Components\AgentComponents\AgentRunner.razor" />
+	  <Content Remove="Pages\AgentBuilderPage.razor" />
 	</ItemGroup>
 
 	
@@ -31,16 +41,16 @@
 		<PackageReference Include="Azure.Storage.Queues" Version="12.17.1" />
 		<PackageReference Include="Blazor-ApexCharts" Version="2.1.0" />
 		<PackageReference Include="Markdig" Version="0.33.0" />
-		<PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.21.0" />
+		<PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.22.0" />
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="8.0.0" />
 		<PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="8.0.0" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Azure" Version="1.7.1" />
-		<PackageReference Include="Microsoft.Extensions.Logging.ApplicationInsights" Version="2.21.0" />
+		<PackageReference Include="Microsoft.Extensions.Logging.ApplicationInsights" Version="2.22.0" />
 		<PackageReference Include="Microsoft.Identity.Web" Version="2.16.0" />
 		<PackageReference Include="Microsoft.Identity.Web.MicrosoftGraph" Version="2.15.3" />
 		<PackageReference Include="Microsoft.Identity.Web.UI" Version="2.15.3" />
-		<PackageReference Include="Radzen.Blazor" Version="4.21.3" />
+		<PackageReference Include="Radzen.Blazor" Version="4.23.4" />
 		<PackageReference Include="System.Linq.Async" Version="6.0.1" />
 				
 	</ItemGroup>
@@ -66,8 +76,11 @@
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>
+	<ItemGroup>
+	  <Folder Include="Data\CodeFiles\" />
+	</ItemGroup>
 	<Target Name="PreBuild" BeforeTargets="PreBuildEvent" Condition="'$(Configuration)' == 'Debug'">
-	  <Exec Command="&quot;$(SolutionDir)PreBuildCopyCode.exe&quot; $(SolutionDir)SkPluginLibrary\Examples $(SolutionDir)BlazorWithSematicKernel\Data\CodeFiles" />
+	  <Exec Command="&quot;$(SolutionDir)PostBuildCopyCode.exe&quot; $(SolutionDir)SkPluginLibrary\Examples $(SolutionDir)BlazorWithSematicKernel\Data\CodeFiles" />
 	</Target>
 
 </Project>

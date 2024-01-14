@@ -1,17 +1,11 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
-
-using Microsoft.SemanticKernel.Memory;
 using System.Numerics.Tensors;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text.Json;
+using Microsoft.SemanticKernel.Memory;
 
-#pragma warning disable CA2201 // System.Exception is not sufficiently specific - this is a sample
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-#pragma warning disable CA1851 // Possible multiple enumerations of 'IEnumerable' collection
-
-// ReSharper disable once InconsistentNaming
 namespace SkPluginLibrary.Examples;
 
 /// <summary>

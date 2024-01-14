@@ -3,6 +3,9 @@ using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using SkPluginLibrary.Abstractions;
 using SkPluginLibrary.Services;
+using Microsoft.SemanticKernel;
+using SkPluginLibrary.Agents;
+using SkPluginLibrary.Agents.Examples;
 
 namespace SkPluginLibrary.Models.Helpers
 {
@@ -23,6 +26,8 @@ namespace SkPluginLibrary.Models.Helpers
             services.AddScoped<CompilerService>();
             services.AddScoped<HdbscanService>();
             services.AddScoped<StorageService>();
+            services.AddScoped<AdventureStoryAgents>();
+            services.AddTransient<AssistantAgentService>();
             services.AddAzureClients(clientBuilder =>
             {
                 clientBuilder.AddBlobServiceClient(configuration["AzureStorage:ConnectionString:blob"], preferMsi: true);

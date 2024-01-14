@@ -3,7 +3,6 @@
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Plugins.Web;
 
-// ReSharper disable once InconsistentNaming
 namespace SkPluginLibrary.Examples;
 
 public static class Example11_WebSearchQueries
@@ -12,18 +11,14 @@ public static class Example11_WebSearchQueries
     {
         Console.WriteLine("======== WebSearchQueries ========");
 
-        IKernel kernel = Kernel.Builder.WithLoggerFactory(ConsoleLogger.LoggerFactory).Build();
+        Kernel kernel = new();
 
         // Load native plugins
-        var plugin = new SearchUrlPlugin();
-        var bing = kernel.ImportFunctions(plugin, "search");
+        var bing = kernel.ImportPluginFromType<SearchUrlPlugin>("search");
 
         // Run
         var ask = "What's the tallest building in Europe?";
-        var result = await kernel.RunAsync(
-            ask,
-            bing["BingSearchUrl"]
-        );
+        var result = await kernel.InvokeAsync(bing["BingSearchUrl"], new() { ["input"] = ask });
 
         Console.WriteLine(ask + "\n");
         Console.WriteLine(result.GetValue<string>());

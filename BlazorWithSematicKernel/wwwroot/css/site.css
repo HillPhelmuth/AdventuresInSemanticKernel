@@ -89,12 +89,15 @@ code {
 .config-novalues {
     background-color: red !important;
 }
-.config-novalues span {
-    color:white;
-}
-.config-novalues span:hover {
-    color: darkblue;
-}
+
+    .config-novalues span {
+        color: white;
+    }
+
+        .config-novalues span:hover {
+            color: darkblue;
+        }
+
 json-viewer {
     /* Background, font and indentation */
     background-color: #2a2f3a;
@@ -118,10 +121,29 @@ json-viewer {
     --preview-color: rgba(222, 175, 143, 0.9);
     /* Search highlight color */
     --highlight-color: #6fb3d2;
-    height:100%;
-    max-height:20rem;
-    overflow:auto;
+    height: 100%;
+    max-height: 20rem;
+    overflow: auto;
 }
+
 .rz-fieldset-content {
     padding-top: 0 !important;
 }
+
+.drag-grid {
+    display: grid;
+    grid-template-columns: 50% 50%
+}
+
+.drag-item {
+    border: 1px solid black;
+    display: flex;
+    flex-direction:column;
+    justify-content: center;
+    align-items: center;
+}
+
+    .drag-item:hover {
+        cursor: pointer;
+        border: 1px solid blue;
+    }

@@ -1,10 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
 using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Orchestration;
 using Microsoft.SemanticKernel.Plugins.Core;
-
-// ReSharper disable once InconsistentNaming
 
 namespace SkPluginLibrary.Examples;
 
@@ -128,14 +125,12 @@ Jane: Goodbye!
     private static async Task ConversationSummaryPluginAsync()
     {
         Console.WriteLine("======== SamplePlugins - Conversation Summary Plugin - Summarize ========");
-        IKernel kernel = InitializeKernel();
+        Kernel kernel = InitializeKernel();
 
-        IDictionary<string, ISKFunction> conversationSummaryPlugin =
-            kernel.ImportFunctions(new ConversationSummaryPlugin(kernel));
+        KernelPlugin conversationSummaryPlugin = kernel.ImportPluginFromType<ConversationSummaryPlugin>();
 
-        KernelResult summary = await kernel.RunAsync(
-            ChatTranscript,
-            conversationSummaryPlugin["SummarizeConversation"]);
+        FunctionResult summary = await kernel.InvokeAsync(
+            conversationSummaryPlugin["SummarizeConversation"], new() { ["input"] = ChatTranscript });
 
         Console.WriteLine("Generated Summary:");
         Console.WriteLine(summary.GetValue<string>());
@@ -144,14 +139,12 @@ Jane: Goodbye!
     private static async Task GetConversationActionItemsAsync()
     {
         Console.WriteLine("======== SamplePlugins - Conversation Summary Plugin - Action Items ========");
-        IKernel kernel = InitializeKernel();
+        Kernel kernel = InitializeKernel();
 
-        IDictionary<string, ISKFunction> conversationSummary =
-            kernel.ImportFunctions(new ConversationSummaryPlugin(kernel));
+        KernelPlugin conversationSummary = kernel.ImportPluginFromType<ConversationSummaryPlugin>();
 
-        KernelResult summary = await kernel.RunAsync(
-            ChatTranscript,
-            conversationSummary["GetConversationActionItems"]);
+        FunctionResult summary = await kernel.InvokeAsync(
+            conversationSummary["GetConversationActionItems"], new() { ["input"] = ChatTranscript });
 
         Console.WriteLine("Generated Action Items:");
         Console.WriteLine(summary.GetValue<string>());
@@ -160,31 +153,31 @@ Jane: Goodbye!
     private static async Task GetConversationTopicsAsync()
     {
         Console.WriteLine("======== SamplePlugins - Conversation Summary Plugin - Topics ========");
-        IKernel kernel = InitializeKernel();
+        Kernel kernel = InitializeKernel();
 
-        IDictionary<string, ISKFunction> conversationSummary =
-            kernel.ImportFunctions(new ConversationSummaryPlugin(kernel));
+        KernelPlugin conversationSummary = kernel.ImportPluginFromType<ConversationSummaryPlugin>();
 
-        KernelResult summary = await kernel.RunAsync(
-            ChatTranscript,
-            conversationSummary["GetConversationTopics"]);
+        FunctionResult summary = await kernel.InvokeAsync(
+            conversationSummary["GetConversationTopics"], new() { ["input"] = ChatTranscript });
 
         Console.WriteLine("Generated Topics:");
         Console.WriteLine(summary.GetValue<string>());
     }
 
-    private static IKernel InitializeKernel()
+    private static Kernel InitializeKernel()
     {
-        IKernel kernel = Kernel.Builder
-            .WithLoggerFactory(ConsoleLogger.LoggerFactory)
-            .WithOpenAIChatCompletionService(TestConfiguration.OpenAI.ModelId, TestConfiguration.OpenAI.ApiKey, alsoAsTextCompletion: true)
+        Kernel kernel = Kernel.CreateBuilder()
+            .AddAzureOpenAIChatCompletion(
+                deploymentName: TestConfiguration.AzureOpenAI.ChatDeploymentName,
+                endpoint: TestConfiguration.AzureOpenAI.Endpoint,
+                apiKey: TestConfiguration.AzureOpenAI.ApiKey,
+                modelId: TestConfiguration.AzureOpenAI.ChatModelId)
             .Build();
 
         return kernel;
     }
 }
 
-// ReSharper disable CommentTypo
 /* Example Output:
 
 ======== SamplePlugins - Conversation Summary Plugin - Summarize ========
@@ -209,59 +202,58 @@ A possible summary is:
 Generated Action Items:
 
 {
-    "actionItems": [
-        {
-            "owner": "John",
-            "actionItem": "Improve chatbot's poem generation",
-            "dueDate": "",
-            "status": "In Progress",
-            "notes": "Using GPT-3 model"
-        },
-        {
-            "owner": "Jane",
-            "actionItem": "Write a bot to summarize conversations",
-            "dueDate": "",
-            "status": "In Progress",
-            "notes": "Testing with long conversations"
-        }
-    ]
+"actionItems": [
+    {
+        "owner": "John",
+        "actionItem": "Improve chatbot's poem generation",
+        "dueDate": "",
+        "status": "In Progress",
+        "notes": "Using GPT-3 model"
+    },
+    {
+        "owner": "Jane",
+        "actionItem": "Write a bot to summarize conversations",
+        "dueDate": "",
+        "status": "In Progress",
+        "notes": "Testing with long conversations"
+    }
+]
 }
 
 {
-    "action_items": []
+"action_items": []
 }
 ======== SamplePlugins - Conversation Summary Plugin - Topics ========
 Generated Topics:
 
 {
-  "topics": [
-    "Chatbot",
-    "Code",
-    "Poem",
-    "Model",
-    "GPT-3",
-    "GPT-2",
-    "Bug",
-    "Parameters",
-    "Summary",
-    "CoPilot",
-    "Tokens",
-    "Characters"
-  ]
+"topics": [
+"Chatbot",
+"Code",
+"Poem",
+"Model",
+"GPT-3",
+"GPT-2",
+"Bug",
+"Parameters",
+"Summary",
+"CoPilot",
+"Tokens",
+"Characters"
+]
 }
 
 {
-  "topics": [
-    "Long conversation",
-    "Lorem Ipsum",
-    "O Canada",
-    "Star-Spangled Banner",
-    "Seattle Kraken",
-    "Matty Beniers",
-    "Jaden Schwartz",
-    "Adam Larsson"
-  ]
+"topics": [
+"Long conversation",
+"Lorem Ipsum",
+"O Canada",
+"Star-Spangled Banner",
+"Seattle Kraken",
+"Matty Beniers",
+"Jaden Schwartz",
+"Adam Larsson"
+]
 }
 
 */
-// ReSharper restore CommentTypo

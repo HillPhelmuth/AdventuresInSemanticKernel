@@ -1,0 +1,61 @@
+description: Turns natural language into Python command line scripts. Reads variables from args, operates on stdin, out
+execution_settings:
+  default:
+    max_tokens: 256
+    temperature: 0.0
+    top_p: 0.0
+    presence_penalty: 0.0
+    frequency_penalty: 0.0
+    stop_sequences:
+    - '# Done'
+input_variables: []
+name: CommandLinePython
+template: |
+  WRITE PYTHON 3.x command line scripts. WRITE  A SINGLE FUNCTION. 
+
+
+  USE sys.argv, sys.stdin. 
+
+
+  HANDLE ERRORS. EXPLANATIONS MUST BE A COMMENT. 
+
+
+
+  # Start
+
+
+  # command line script. Read filename from args, open file, copy stdin to file
+
+
+  import sys
+
+
+
+  if (len(sys.argv) != 2:
+    print("not_handled")
+    sys.exit()
+
+  filename = sys.argv[1]
+
+
+  file = open(filename, 'w')
+
+
+  file.write(sys.stdin.read())
+
+
+  file.close()
+
+
+
+  # Done
+
+
+
+  # Start
+
+
+  #{{$input}}
+
+
+  # Read input sfrom stdin. print all output

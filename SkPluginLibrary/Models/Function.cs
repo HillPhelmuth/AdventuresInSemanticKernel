@@ -2,7 +2,7 @@
 
 namespace SkPluginLibrary.Models;
 
-public record Function(string Name, ISKFunction SkFunction)
+public record Function(string Name, KernelFunction SkFunction)
 {
     public int Order { get; set; }
 }

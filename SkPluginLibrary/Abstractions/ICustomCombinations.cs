@@ -2,7 +2,8 @@
 
 public interface ICustomCombinations
 {
-    Task<string> SequentialDndApi(string characterDescription, (string Race, string Class, string Alignment) details,
-        bool useStepwise = false);
+    Task<string> FunctionCallStepwiseDndApi(string characterDescription,
+        (string? Race, string? Class, string? Alignment) details,
+        CancellationToken cancellationToken = default);
    
 }

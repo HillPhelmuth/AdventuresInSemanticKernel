@@ -1,0 +1,17 @@
+﻿<RadzenRow>
+    <RadzenColumn>
+        <RadzenCard>
+            <RadzenText TextStyle="TextStyle.DisplayH6" TextAlign="TextAlign.Center" Text="@Agent?.Name"></RadzenText>
+            <RadzenText TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Center" Text="@Agent?.Description"></RadzenText>
+            <RadzenText TextStyle="TextStyle.Caption">
+                @(Agent.IsPrimary ? "Primary Agent" :"Secondary Agent")
+            </RadzenText>
+            <RadzenCard>
+                <RadzenText TextStyle="TextStyle.Subtitle2" TextAlign="TextAlign.Center" Text="Instructions"></RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2">
+                    @Agent.Instructions
+                </RadzenText>
+            </RadzenCard>
+        </RadzenCard>
+    </RadzenColumn>
+</RadzenRow>

@@ -1,32 +1,33 @@
 {
   "schema": 1,
   "description": "Turns natural language into ready to compile and execute c# code specifically using the Semantic Kernel SDK",
-  "type": "completion",
-  "completion": {
-    "max_tokens": 1256,
-    "temperature": 0.0,
-    "top_p": 0.0,
-    "presence_penalty": 0.0,
-    "frequency_penalty": 0.0
-
-  },
-  "input": {
-    "parameters": [
-      {
-        "name": "input",
-        "description": "The code gen instructions",
-        "defaultValue": ""
-      },
-      {
-        "name": "existingCode",
-        "description": "The code editor as it currently exists.",
-        "defaultValue": ""
-      },
-      {
-        "name": "sk_memory",
-        "description": "semantic kernel specific content",
-        "defaultValue":  ""
-      }
-    ]
-  }
+  "execution_settings": {
+  "default":{
+      "max_tokens": 1256,
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "presence_penalty": 0.0,
+      "frequency_penalty": 0.0
+    }
+  ],
+  "input_variables": [
+    {
+      "name": "input",
+      "description": "The code gen instructions",
+      "default": ""
+      
+    },
+    {
+      "name": "existingCode",
+      "description": "The code editor as it currently exists.",
+      "default": ""
+      
+    },
+    {
+      "name": "sk_memory",
+      "description": "semantic kernel specific content",
+      "default": ""
+      
+    }
+  ]
 }

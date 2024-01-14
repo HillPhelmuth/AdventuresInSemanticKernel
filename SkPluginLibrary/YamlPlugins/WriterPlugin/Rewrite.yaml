@@ -1,0 +1,23 @@
+description: Generate a fitting title for a collection of articles
+execution_settings:
+  default:
+    max_tokens: 256
+    temperature: 1.1
+    top_p: 1.0
+    presence_penalty: 0.0
+    frequency_penalty: 0.0
+input_variables:
+- name: articles
+  description: A collection of articles
+  default: ''
+name: Rewrite
+template: |
+  Rewrite the given text like it was written in this style or by: {{$style}}. 
+
+
+  MUST RETAIN THE MEANING AND FACTUAL CONTENT AS THE ORIGINAL.
+
+
+
+
+  {{$input}}

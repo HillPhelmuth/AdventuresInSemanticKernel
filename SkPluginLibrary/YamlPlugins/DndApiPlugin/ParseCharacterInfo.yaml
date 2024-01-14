@@ -1,0 +1,176 @@
+description: Parse a plain english description of a D&D character into necessary element - class
+execution_settings:
+  default:
+    max_tokens: 250
+    temperature: 0.2
+    top_p: 0.0
+    presence_penalty: 0.0
+    frequency_penalty: 0.0
+input_variables: []
+name: ParseCharacterInfo
+template: |
+  Determine the Race, Class and Alignment of the character. Response must be json only. No prose.
+
+
+
+  [Races]
+
+
+  dragonborn
+
+
+  dwarf
+
+
+  elf
+
+
+  gnome
+
+
+  half-elf
+
+
+  half-orc
+
+
+  halfling
+
+
+  human
+
+
+  tiefling
+
+
+  [END Races]
+
+
+  if Race cannot be determined, default to human.
+
+
+
+  [Classes]
+
+
+  barbarian
+
+
+  bard
+
+
+  cleric
+
+
+  druid
+
+
+  fighter
+
+
+  monk
+
+
+  paladin
+
+
+  ranger
+
+
+  rogue
+
+
+  sorcerer
+
+
+  warlock
+
+
+  wizard
+
+
+  [END Classes]
+
+
+  if Class cannot be determined, default to fighter.
+
+
+
+  [Alignments]
+
+
+  chaotic-evil
+
+
+  chaotic-good
+
+
+  chaotic-neutral
+
+
+  lawful-evil
+
+
+  lawful-good
+
+
+  lawful-neutral
+
+
+  neutral
+
+
+  neutral-evil
+
+
+  neutral-good
+
+
+  [END Alignments]
+
+
+  if Alignment cannot be determined, default to neutral-good.
+
+
+
+  ***
+
+
+  user: Galadrial is an elvin wizard that is chaotic-good.
+
+
+  assistant:
+
+
+  {
+  	"Race":"elf",
+  	"Class":"wizard",
+  	"Alignment":"chaotic-good"
+  }
+
+
+
+  ***
+
+
+  user: I am a chaotic evil ranger.
+
+
+  assistant:
+
+
+  {
+  	"Race":"human",
+  	"Class":"ranger",
+  	"Alignment":"chaotic-evil
+  }
+
+
+
+  ***
+
+
+  user: {{$input}}
+
+
+  assistant:

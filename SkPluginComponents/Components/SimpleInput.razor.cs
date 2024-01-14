@@ -31,6 +31,7 @@ namespace SkPluginComponents.Components
             if (!string.IsNullOrEmpty(Options))
             {
                 _options = Options.Split("\n").ToList();
+                Console.WriteLine($"{Options} splist into {_options.Count} items");
                 SimpleInputType = SimpleInputType.Select;
                 StateHasChanged();
             }

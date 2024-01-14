@@ -1,0 +1,26 @@
+description: Turns natural language into ready to compile and execute c# code
+execution_settings:
+  default:
+    max_tokens: 1256
+    temperature: 0.0
+    top_p: 0.0
+    presence_penalty: 0.0
+    frequency_penalty: 0.0
+input_variables:
+- name: input
+  description: The code gen instructions
+  default: ''
+- name: existingCode
+  description: The code editor as it currently exists.
+  default: ''
+name: CodeCSharp
+template: |
+  Given a user instructions and any existing C# code, generate C# code that corresponds to the user's instructions in the form of a console application. The response should consist solely of C# code, without any explanations or markdown formatting. The generated code should be compatible and coherent with any existing C# code provided by the user. Each user instruction should result in a unique piece of code that contributes to the overall functionality of the console application. No prose.
+
+  [user instructions]
+
+  {{$input}}
+  
+  [existing code]
+
+  {{$existingCode}}

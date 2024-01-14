@@ -7,16 +7,20 @@
                 <RadzenColumn Size="3"></RadzenColumn>
                 <RadzenColumn Size="6">
                     <RadzenCard>
-                        <RadzenFormField Text="Memory Source">
-                            <ChildContent>
-                                <RadzenDropDown Name="MemoryStoreType" Data="_memoryStoreTypes" ValueProperty="Key" TextProperty="Value" TValue="MemoryStoreType" @bind-Value="_memoryStoreType"></RadzenDropDown>
-                            </ChildContent>
-                            <Helper>
-                                <RadzenText Text="Get the source to use as the vector database"></RadzenText>
-                                <RadzenCompareValidator Text="Please select a source" Component="MemoryStoreType" Operator="CompareOperator.NotEqual" Value="MemoryStoreType.None" Popup="true" Style="position:absolute"></RadzenCompareValidator>
-                            </Helper>
-                        </RadzenFormField><br/>
-                        <RadzenButton Text="Next" Click="@(() => _currentStep++)"></RadzenButton>
+                        <RadzenTemplateForm Data="_memoryStoreForm" TItem=MemoryStoreForm Submit="Submit">
+                            <RadzenFormField Text="Memory Source">
+                                <ChildContent>
+                                    <RadzenDropDown Name="MemoryStoreType" Data="_memoryStoreTypes" ValueProperty="Key" TextProperty="Value" TValue="MemoryStoreType" @bind-Value="_memoryStoreForm.MemoryStoreType"></RadzenDropDown>
+                                </ChildContent>
+                                <Helper>
+                                    <RadzenText Text="Get the source to use as the vector database"></RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Caption" Text="Be sure you've add valid configuration values for external sources"></RadzenText>
+                                    <RadzenCompareValidator Text="Please select a source" Component="MemoryStoreType" Operator="CompareOperator.NotEqual" Value="MemoryStoreType.None" Popup="true" Style="position:absolute"></RadzenCompareValidator>
+                                    <RadzenCustomValidator Component="MemoryStoreType" Validator="@(() => ValidateConfig(_memoryStoreForm.MemoryStoreType))" Text="@($"Missing Configuration values for {_memoryStoreForm.MemoryStoreType} memory source.")"></RadzenCustomValidator>
+                                </Helper>
+                            </RadzenFormField><br />
+                            <RadzenButton Text="Next" ButtonType="ButtonType.Submit"></RadzenButton>
+                        </RadzenTemplateForm>
                     </RadzenCard>
                 </RadzenColumn>
                 <RadzenColumn Size="3"></RadzenColumn>
@@ -67,7 +71,7 @@
             @if (_testForm.VisualType == VisualType.OneToManyGrid)
             {
                 <RadzenCard>
-                    <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.DisplayH5">Similarty to <span style="font-weight: bold; font-size:120%"> @_testForm.Input</span></RadzenText>
+                    <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.DisplayH5">Similarty to <span style="color: black !important;font-weight: bold; font-size:120%"> @_testForm.Input</span></RadzenText>
                     <RadzenDataGrid Data="_scores" TItem="SimScore" AllowSorting="true" Density="Density.Compact">
                         <Columns>
                             <RadzenDataGridColumn TItem="SimScore" Property="Prompt" Title="Prompt"></RadzenDataGridColumn>

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using Microsoft.SemanticKernel.ChatCompletion;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
 namespace ChatComponents
@@ -8,29 +9,41 @@ namespace ChatComponents
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
-        public List<Message> ChatMessages { get; } = new();
-
+        public List<Message> ChatMessages { get; } = [];
+        public ChatHistory ChatHistory { get; set; } = [];
+        public int MessageCount => ChatMessages.Count;
         public void Reset()
         {
             ChatMessages.Clear();
-            OnPropertyChanged(nameof(ChatMessages));
+            ChatHistory.Clear();
+            MessagePropertyChanged();
         }
-        public void AddUserMessage(string message, int order)
+        public void AddUserMessage(string message, int? order = null)
         {
-            ChatMessages.Add(Message.UserMessage(message, order));
-            OnPropertyChanged(nameof(ChatMessages));
+            order ??= MessageCount + 1;
+            ChatMessages.Add(Message.UserMessage(message, order.Value));
+            ChatHistory.AddUserMessage(message);
+            MessagePropertyChanged();
         }
 
-        public void AddAssistantMessage(string message, int order)
+        public void AddAssistantMessage(string message, int? order = null)
         {
-            ChatMessages.Add(Message.AssistantMessage(message, order));
-            OnPropertyChanged(nameof(ChatMessages));
+            order ??= MessageCount + 1;
+            ChatMessages.Add(Message.AssistantMessage(message, order.Value));
+            ChatHistory.AddAssistantMessage(message);
+            MessagePropertyChanged();
         }
 
         public void UpdateAssistantMessage(string token)
         {
             var message = ChatMessages.Last(x => x.Role == Role.Assistant).Content += token;
+            ChatHistory.Last(x => x.Role == AuthorRole.Assistant).Content += token;
+            MessagePropertyChanged();
+        }
+        private void MessagePropertyChanged()
+        {
             OnPropertyChanged(nameof(ChatMessages));
+            OnPropertyChanged(nameof(ChatHistory));
         }
         protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {

@@ -1,0 +1,26 @@
+description: Translate the input into a language of your choice
+execution_settings:
+  default:
+    max_tokens: 256
+    temperature: 0.7
+    top_p: 0.0
+    presence_penalty: 0.0
+    frequency_penalty: 0.0
+    stop_sequences:
+    - '[done]'
+input_variables: []
+name: Translate
+template: |
+  Translate the input below into {{$language}}
+
+
+
+  MAKE SURE YOU ONLY USE {{$language}}.
+
+
+
+  {{$input}}
+
+
+
+  Translation:

@@ -1,0 +1,45 @@
+description: Generate a list of chapter synopsis for a novel or novella
+execution_settings:
+  default:
+    max_tokens: 2048
+    temperature: 0.1
+    top_p: 0.5
+    presence_penalty: 0.0
+    frequency_penalty: 0.0
+input_variables:
+- name: input
+  description: What the novel should be about.
+  default: ''
+- name: chapterCount
+  description: The number of chapters to generate.
+  default: ''
+- name: endMarker
+  description: The marker to use to end each chapter.
+  default: ===ENDPART===
+name: NovelOutline
+template: |
+  I want to write a {{$chapterCount}} chapter novella about:
+
+
+  {{$input}}
+
+
+
+  There MUST BE {{$chapterCount}} CHAPTERS.
+
+
+
+  INVENT CHARACTERS AS YOU SEE FIT. BE HIGHLY CREATIVE AND/OR FUNNY.
+
+
+  WRITE SYNOPSIS FOR EACH CHAPTER. INCLUDE INFORMATION ABOUT CHARACTERS ETC. SINCE EACH
+
+
+  CHAPTER WILL BE WRITTEN BY A DIFFERENT WRITER, YOU MUST INCLUDE ALL PERTINENT INFORMATION
+
+
+  IN EACH SYNOPSIS
+
+
+
+  YOU MUST END EACH SYNOPSIS WITH {{$endMarker}}

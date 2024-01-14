@@ -16,6 +16,11 @@ namespace BlazorWithSematicKernel.Pages
         private bool _isBusy;
         private bool _isChartRendered = true;
         private MemoryStoreType _memoryStoreType = MemoryStoreType.None;
+        private class MemoryStoreForm
+        {
+            public MemoryStoreType MemoryStoreType { get; set; }
+        }
+        private MemoryStoreForm _memoryStoreForm = new();
         private readonly Dictionary<MemoryStoreType, string> _memoryStoreTypes = typeof(MemoryStoreType).GetEnumsWithDescriptions<MemoryStoreType>();
         private int _currentStep;
         private async Task GetVectors()
@@ -39,7 +44,25 @@ namespace BlazorWithSematicKernel.Pages
         {
             return OrderedListStartRegex().Replace(input, "");
         }
-
+        private bool ValidateConfig(MemoryStoreType memoryStoreType)
+        {
+            return memoryStoreType switch
+            {
+                MemoryStoreType.Redis when string.IsNullOrEmpty(TestConfiguration.Redis?.Configuration) => false,
+                MemoryStoreType.Redis => true,
+                MemoryStoreType.Qdrant when string.IsNullOrEmpty(TestConfiguration.Qdrant?.Endpoint) => false,
+                MemoryStoreType.Qdrant => true,
+                MemoryStoreType.Weaviate when TestConfiguration.Weaviate?.IsValid() == false => false,
+                MemoryStoreType.Weaviate => true,
+                _ => true
+            };
+        }
+        private void Submit(MemoryStoreForm memoryStoreForm)
+        {
+            _memoryStoreType = memoryStoreForm.MemoryStoreType;
+            _currentStep++;
+            StateHasChanged();
+        }
         private class TestForm
         {
             [Required]

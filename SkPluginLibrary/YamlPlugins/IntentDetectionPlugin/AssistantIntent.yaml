@@ -1,0 +1,50 @@
+description: Given a query and a list of possible intents, detect which intent the input matches
+execution_settings:
+  default:
+    max_tokens: 100
+    temperature: 0.1
+    top_p: 1.0
+    presence_penalty: 0.0
+    frequency_penalty: 0.0
+input_variables: []
+name: AssistantIntent
+template: |
+  These are available intents that one might query:
+
+      AutoSummarize,
+      DeleteAlerts,
+      DeleteInsights,
+      DeleteLastAlert,
+      HideEmails,
+      HideTeamsMessages,
+      RefreshInsights,
+      ShowAlerts,
+      ShowAlertRules,
+      ShowContacts,
+      ShowEmails,
+      ShowOnlyEmails,
+      ShowTeamsMessages,
+      ShowOnlyTeamsMessages,
+      ShowCalendarEvents,
+      TellAJoke,
+      AlertForPerson,
+      AlertForTopic,
+      FindContentAboutX,
+      FindSimilarConversations,
+      WhatTimeIsIt,
+      Help,
+      EnableAlerting,
+      DisableAlerting,
+      OnDemandSummary,
+      OnDemandNotes,
+      TellMeMore
+
+  Which intent is this query asking for? If none match, respond with Unknown.
+
+
+
+  {{$input}}
+
+
+
+  Intent:

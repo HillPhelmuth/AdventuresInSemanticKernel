@@ -1,0 +1,46 @@
+﻿<RadzenCard>
+    <RadzenText Text="Create Agent" TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Center"></RadzenText>
+    <RadzenTemplateForm Data="_agentForm" TItem="AgentForm" Submit="GenerateAgent">
+        <RadzenFormField Text="Name" Style="width:100%">
+            <ChildContent>
+                <RadzenTextBox Name="Name" Style="width:100%" @bind-Value=_agentForm.Name></RadzenTextBox>
+            </ChildContent>
+        </RadzenFormField>
+        <RadzenFormField Text="Persona" Style="width:100%">
+            <ChildContent>
+                <RadzenTextArea Style="width:100%;height:4rem;" @bind-Value=_agentForm.Description></RadzenTextArea>
+            </ChildContent>
+            <Helper>A brief description of your agent's primary personality and purpose</Helper>
+        </RadzenFormField>
+        <RadzenFormField Text="Instructions" Style="width:100%">
+            <ChildContent>
+                <RadzenTextArea Style="width:100%;height:9rem;" @bind-Value=_agentForm.Instructions></RadzenTextArea>
+            </ChildContent>
+            <Helper>
+                <RadzenText TextStyle="TextStyle.Caption" Text="Add general instructions for agent to follow throughout the interaction"></RadzenText>
+            </Helper>
+        </RadzenFormField>
+        <RadzenFormField Text="Plugins" Style="width:100%">
+            <ChildContent>
+                <RadzenDropDownDataGrid Data="@_allPlugins.AsEnumerable()" Chips="true" AllowFilteringByAllStringColumns=true AllowSorting=true PageSize=10 MaxSelectedLabels=5 AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowClear="true" @bind-Value=@_agentForm.Plugins TextProperty="Name" Multiple="true" Density="Density.Compact">
+
+                    <Columns>
+                        <RadzenDropDownDataGridColumn Property="KernelPlugin.Name" Title="Name" Width="50%"></RadzenDropDownDataGridColumn>
+                        <RadzenDropDownDataGridColumn Property="@(nameof(PluginData.PluginType))" Title="Type" Width="30%"></RadzenDropDownDataGridColumn>
+                        <RadzenDropDownDataGridColumn Width="30%">
+                            <Template Context="plugin">
+                                @{var kernelPlugin = (plugin as PluginData).KernelPlugin;}
+                                <RadzenButton Size=ButtonSize.ExtraSmall Text="Functions" Icon="functions" Click="@(() => ShowFunctions(kernelPlugin))"></RadzenButton>
+                            </Template>
+                        </RadzenDropDownDataGridColumn>
+                    </Columns>
+                </RadzenDropDownDataGrid>
+            </ChildContent>
+            <Helper>
+                <RadzenText TextStyle="TextStyle.Caption" Text="Add plugins as avaialable Agent tools"></RadzenText>
+            </Helper>
+        </RadzenFormField>
+        <br />
+        <RadzenButton Size=ButtonSize.Small ButtonType="ButtonType.Submit" Text="Generate Agent"></RadzenButton>
+    </RadzenTemplateForm>
+</RadzenCard>

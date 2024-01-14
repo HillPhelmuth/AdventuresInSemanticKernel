@@ -1,14 +1,11 @@
-﻿using AI.Dev.OpenAI.GPT;
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Connectors.AI.OpenAI;
-using Microsoft.SemanticKernel.Connectors.Memory.Sqlite;
+﻿using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Memory;
-using Microsoft.SemanticKernel.Orchestration;
 using Microsoft.SemanticKernel.Text;
 using SkPluginLibrary.Services;
 using System.Text;
-using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.SemanticKernel.Connectors.OpenAI;
+using Microsoft.SemanticKernel.Connectors.Sqlite;
 using UglyToad.PdfPig;
 
 namespace SkPluginLibrary;
@@ -55,17 +52,16 @@ public partial class CoreKernelService
     public async Task<List<MemoryQueryResult>> SearchKernelMemory(string query, string collection, int topN = 3,
           double minThreshold = 0.0)
     {
-        var records = _playgroundTextMemory.SearchAsync(collection, query, topN, minThreshold);
-
+        var records = _playgroundTextMemory.SearchAsync(collection, query, topN, minThreshold);     
         return await records.ToListAsync();
     }
 
     public async Task<List<string>> GenerateRandomSentances(int count = 10)
     {
         var kernel = CreateKernel();
-        var randoSkill = kernel.CreateSemanticFunction(
-            $"Generate {count} random and distinct sentances or math equations that are each 30 to 60 characters long. Each sentance and equation should be on its own line. Do not label the lines", requestSettings: new OpenAIRequestSettings { MaxTokens = 250, Temperature = 1.2, TopP = 1.0 });
-        var randomSentances = await kernel.RunAsync(randoSkill);
+        var randoSkill = kernel.CreateFunctionFromPrompt(
+            $"Generate {count} random and distinct sentences or math equations that are each 30 to 60 characters long. Each sentence and equation should be on its own line. Do not label the lines", executionSettings: new OpenAIPromptExecutionSettings { MaxTokens = 250, Temperature = 1.2, TopP = 1.0 });
+        var randomSentances = await kernel.InvokeAsync(randoSkill);
         var sentances = randomSentances.GetValue<string>()?.Split("\n").ToList() ?? new List<string>();
         return sentances;
     }
@@ -97,26 +93,17 @@ public partial class CoreKernelService
             dedupeCount, itemCount);
 
         var result = _hdbscanService.ClusterAsync(itemList, minpoints, minCluster, distanceFunction);
-        var writerPlugin = kernel.ImportSemanticFunctionsFromDirectory(RepoFiles.PluginDirectoryPath, "WriterPlugin");
-        var summarySkill = kernel.ImportSemanticFunctionsFromDirectory(RepoFiles.PluginDirectoryPath, "SummarizePlugin");
+        var writerPlugin = kernel.ImportPluginFromPromptDirectory(Path.Combine(RepoFiles.PluginDirectoryPath, "WriterPlugin"), "WriterPlugin");
+        var summarySkill = kernel.ImportPluginFromPromptDirectory(Path.Combine(RepoFiles.PluginDirectoryPath, "SummarizePlugin"), "SummarizePlugin");
 
-        var context = kernel.CreateNewContext();
+        var context = new KernelArguments();
         var clusterTitles = await AddClusterTitles(result, context, writerPlugin["TitleGen"], summarySkill["Summarize"], kernel);
 
         foreach (var item in result)
         {
             item.ClusterTitle = clusterTitles[item.Cluster].Item1;
             var itemTagString = clusterTitles[item.Cluster].Item2;
-            //try
-            //{
-            //    var topicList = JsonSerializer.Deserialize<Topic>(itemTagString);
-            //    itemTagString = string.Join(", ", topicList.Topics);
-            //}
-            //catch (Exception ex)
-            //{
-            //    _loggerFactory.LogInformation("Failed to deserialize topics: {ex}", ex.Message);
-            //}
-
+          
             item.ClusterSummary = itemTagString;
         }
 
@@ -129,7 +116,7 @@ public partial class CoreKernelService
     }
 
     private async Task<Dictionary<int, (string, string)>> AddClusterTitles(IEnumerable<MemoryResult> result,
-        SKContext context, ISKFunction titleGen, ISKFunction summarize, IKernel kernel)
+        KernelArguments context, KernelFunction titleGen, KernelFunction summarize, Kernel kernel)
     {
         var clusterTitles = new Dictionary<int, (string, string)>();
         var clusterGroups = result.GroupBy(x => x.Cluster);
@@ -151,14 +138,13 @@ public partial class CoreKernelService
                 _loggerFactory.LogInformation("Cluster {groupTitle} token reduced to {count2}", groupTitle, count2);
             }
 
-            context.Variables["articles"] = documents;
-            context.Variables["input"] = documents;
-            var tagResult = await kernel.RunAsync(context.Variables, summarize) /*await summarize.InvokeAsync(context)*/;
-            context.Variables["input"] = documents;
-            var titleResult = await kernel.RunAsync(context.Variables, titleGen)/* await titleGen.InvokeAsync(context)*/;
+            context["articles"] = documents;
+            context["input"] = documents;
+            var tagResult = await kernel.InvokeAsync(summarize, context) /*await summarize.InvokeAsync(context)*/;
+            context["input"] = documents;
+            var titleResult = await kernel.InvokeAsync(titleGen, context)/* await titleGen.InvokeAsync(context)*/;
             var groupKey = group.Key;
             _valueTuple.titleResultValue = titleResult.GetValue<string>() ?? "";
-            var summarize2 = kernel.CreateSemanticFunction("Summarize", requestSettings: new OpenAIRequestSettings { MaxTokens = 250, Temperature = 1.2, TopP = 1.0 });
            
             var summaryValue = tagResult.GetValue<string>() ?? "";
             _valueTuple.summaryValue = summaryValue;
@@ -216,7 +202,7 @@ public partial class CoreKernelService
 
         var textString = sb.ToString();
         var lines = TextChunker.SplitPlainTextLines(textString, 128, StringHelpers.GetTokens);
-        var paragraphs = TextChunker.SplitPlainTextParagraphs(lines, 512, 128, filename, StringHelpers.GetTokens);
+        var paragraphs = TextChunker.SplitPlainTextParagraphs(lines, 512, 96, filename, StringHelpers.GetTokens);
         return paragraphs;
     }
     

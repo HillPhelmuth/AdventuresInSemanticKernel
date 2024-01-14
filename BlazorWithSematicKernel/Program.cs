@@ -59,8 +59,8 @@ services.AddLogging(config =>
 services.AddCascadingAuthenticationState();
 services.AddSingleton<ActivityLogging>();
 
-
 var app = builder.Build();
+
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

@@ -12,9 +12,19 @@
                             <RadzenTemplateForm TItem="ConfigurationSection" Data="configSection.ConfigurationSection" Submit="SetConfigSection">
                                 @foreach (var item in configSection.ConfigurationSection.ConfigurationProperties)
                                 {
-                                    <RadzenFormField Text="@item.Name">
-                                        <RadzenPassword @bind-Value="@item.Value" AutoComplete="false"></RadzenPassword>
-                                    </RadzenFormField>
+                                    if (item.Name.Contains("Key") || item.Name.Contains("Connection") || item.Name.Contains("pat", StringComparison.InvariantCultureIgnoreCase))
+                                    {
+                                        <RadzenFormField Text="@item.Name">
+                                            <RadzenPassword @bind-Value="@item.Value" AutoComplete="false"></RadzenPassword>
+                                        </RadzenFormField>
+                                    }
+                                    else
+                                    {
+                                        <RadzenFormField Text="@item.Name">
+                                            <RadzenTextBox @bind-Value="@item.Value"></RadzenTextBox>
+                                        </RadzenFormField>
+                                    }
+
                                 }
                                 <br/>
                                 <RadzenButton ButtonType="ButtonType.Submit" Icon="save" Text="Save"></RadzenButton>

@@ -17,7 +17,7 @@
         max-width: 90vw;
         overflow: auto;
         background-color: white;
-        padding: 1rem 2rem;
+        padding: .5rem 1rem;
         border-radius: 15px;
         z-index: 1000;
     }
@@ -73,5 +73,6 @@
 
 .title {
     /*width:80%;*/
-    font-size: 1.1rem;
+    font-size: 14px;
+    line-height:18px;
 }

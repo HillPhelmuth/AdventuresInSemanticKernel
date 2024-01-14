@@ -1,8 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using System.Security.Cryptography;
 using Microsoft.SemanticKernel;
 

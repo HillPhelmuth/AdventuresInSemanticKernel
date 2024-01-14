@@ -36,10 +36,17 @@
                         </Items>
                     </RadzenRadioButtonList>
                 </RadzenFormField><br/>
+               
                 @if (!_clusterForm.UseDefaultContent)
                 {
-                    <RadzenFileInput Error="HandleError" MaxFileSize="FileUploadData.MaxFileSize" Name="File" ChooseText="Upload pdf, txt or docx file" @bind-FileName="@_clusterForm.FileUpload.FileName" TValue="string" @bind-Value="@_clusterForm.FileUpload.FileBase64" @bind-FileSize="_clusterForm.FileUpload.FileSize" Accept="text/plain,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"></RadzenFileInput>
-                    <RadzenRequiredValidator Component="File" Text="Upload a file" Popup=true Style="position:absolute"></RadzenRequiredValidator>
+                    <RadzenFormField>
+                        <ChildContent><RadzenFileInput Error="HandleError" MaxFileSize="FileUploadData.MaxFileSize" ChooseText="Upload pdf, txt or docx file" @bind-FileName="@_clusterForm.FileUpload.FileName" TValue="string" @bind-Value="@_clusterForm.FileUpload.FileBase64" @bind-FileSize="_clusterForm.FileUpload.FileSize" Accept="text/plain,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"></RadzenFileInput></ChildContent>
+                        <Helper>
+                            <RadzenText TextStyle="TextStyle.Caption" Text="Upload a file to chunk, vectorize and cluster"></RadzenText>
+                            @* <RadzenRequiredValidator Component="File" Text="Upload a file" Popup=true Style="position:absolute"></RadzenRequiredValidator> *@
+                        </Helper>
+                    </RadzenFormField>
+                    
                     <br/>
                 }
                 

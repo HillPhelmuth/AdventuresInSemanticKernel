@@ -1,0 +1,8 @@
+﻿<RadzenCard>
+    <RadzenDataGrid Data="@(Plugin?.GetFunctionsMetadata())" TItem="KernelFunctionMetadata" Density="Density.Compact" AllowSorting="true" AllowFiltering="true" AllowPaging="true" PageSize="5" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+        <Columns>
+            <RadzenDataGridColumn TItem="KernelFunctionMetadata" Property="@nameof(KernelFunctionMetadata.Name)" Title="Name" Width="25%"></RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="KernelFunctionMetadata" Property="@nameof(KernelFunctionMetadata.Description)" Title="Description" Width="75%"></RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+</RadzenCard>

@@ -1,0 +1,77 @@
+description: Given a single word or acronym, generate the expanded form matching the acronym letters.
+execution_settings:
+  default:
+    max_tokens: 256
+    temperature: 0.5
+    top_p: 1.0
+    presence_penalty: 0.8
+    frequency_penalty: 0.0
+    stop_sequences:
+    - '#END#'
+input_variables: []
+name: AcronymReverse
+template: |
+  # acronym: Devis
+
+
+  Sentences matching the acronym:
+
+
+  1. Dragons Eat Very Interesting Snacks
+
+
+  2. Develop Empathy and Vision to Increase Success
+
+
+  3. Don't Expect Vampires In Supermarkets
+
+
+  #END#
+
+
+
+  # acronym: Christmas
+
+
+  Sentences matching the acronym:
+
+
+  1. Celebrating Harmony and Respect in a Season of Togetherness, Merriment, and Superior joy
+
+
+  2. Children Have Real Interest Since The Mystery And Surprises
+
+
+  3. Christmas Helps Reduce Inner Stress Through Mistletoe And Sleigh excursions
+
+
+  #END#
+
+
+
+  # acronym: noWare
+
+
+  Sentences matching the acronym:
+
+
+  1. No One Wants an App that Randomly Erases everything
+
+
+  2. Nourishing Oatmeal With Almond, Raisin, and Egg toppings
+
+
+  3. Notice Opportunity When Available and React Enthusiastically
+
+
+  #END#
+
+
+
+  Reverse the following acronym back to a funny sentence. Provide 3 examples.
+
+
+  # acronym: {{$INPUT}}
+
+
+  Sentences matching the acronym:

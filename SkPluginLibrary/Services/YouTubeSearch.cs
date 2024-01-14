@@ -70,6 +70,7 @@ internal class GenericTypeConverter<T> : TypeConverter
     }
     public override object? ConvertTo(ITypeDescriptorContext? context, CultureInfo? culture, object? value, Type destinationType)
     {
+        Console.WriteLine($"Converting {typeof(T)} to {value}");
         return JsonSerializer.Serialize(value, new JsonSerializerOptions{WriteIndented =true});
     }
 }   

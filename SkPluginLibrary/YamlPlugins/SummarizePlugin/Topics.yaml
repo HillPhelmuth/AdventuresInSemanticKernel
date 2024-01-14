@@ -1,0 +1,74 @@
+description: Analyze given text or document and extract key topics worth remembering
+execution_settings:
+  default:
+    max_tokens: 512
+    temperature: 0.0
+    top_p: 0.0
+    presence_penalty: 0.0
+    frequency_penalty: 0.0
+input_variables: []
+name: Topics
+template: |
+  Analyze the following extract taken from a document and extract key topics.
+
+
+  - Topics only worth remembering.
+
+
+  - Be brief. Short phrases.
+
+
+  - Can use broken English.
+
+
+  - Conciseness is very important.
+
+
+  - Topics can include names of memories you want to recall.
+
+
+  - NO LONG SENTENCES. SHORT PHRASES.
+
+
+  - Return in JSON
+
+
+  - No Prose
+
+
+  [Input]
+
+
+  My name is Macbeth. I used to be King of Scotland, but I died. My wife's name is Lady Macbeth and we were married for 15 years. We had no children. Our beloved dog Toby McDuff was a famous hunter of rats in the forest.
+
+
+  My tragic story was immortalized by Shakespeare in a play.
+
+
+  [Output]
+
+
+  {
+    "topics": [
+      "Macbeth",
+      "King of Scotland",
+      "Lady Macbeth",
+      "Dog",
+      "Toby McDuff",
+      "Shakespeare",
+      "Play",
+      "Tragedy"
+    ]
+  }
+
+
+  +++++
+
+
+  [Input]
+
+
+  {{$input}}
+
+
+  [Output]

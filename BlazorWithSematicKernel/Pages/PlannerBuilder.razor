@@ -1,0 +1,70 @@
+﻿@page "/planBuilder"
+<PageTitle>Plan Builder</PageTitle>
+@using SkPluginLibrary.Models.Helpers
+
+<RadzenSteps @bind-SelectedIndex="_currentStep">
+    <Steps>
+        <RadzenStepsItem Text="Select Execution Type">
+            <RadzenText Text="Semantic Kernel Planners" TextAlign="TextAlign.Center" TextStyle="TextStyle.H6"></RadzenText>
+            <RadzenText Text="Provide the LLM with Kernel Plugins to Plan and Execute Complex, Multi-step Tasks" TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle1"></RadzenText>
+            
+            <RadzenRow>
+                <RadzenColumn Offset="3" Size="6">
+                    <RadzenTemplateForm Data="_executionTypeForm" TItem="ExecutionTypeForm" Submit="SetExecutionType">
+                        <RadzenFormField Text="Execution Type" Style="width: 100%">
+                            <ChildContent>
+                                <RadzenDropDown Style="font-size:95%" Data="ExecutionTypeDescriptions" TValue="ExecutionType" @bind-Value="_executionTypeForm.ExecutionType" ValueProperty="Key" TextProperty="Value"></RadzenDropDown>
+                            </ChildContent>
+                            <Helper>
+                                <RadzenCompareValidator Text="Select an execution type" Operator="CompareOperator.NotEqual" Value="ExecutionType.None" Popup="true" Style="position:absolute"></RadzenCompareValidator>
+                            </Helper>
+                        </RadzenFormField>
+                        <RadzenButton ButtonType="ButtonType.Submit" Text="Go To 'Select Plugins'" Icon="start"></RadzenButton>
+                    </RadzenTemplateForm>
+                    <RadzenCard>
+                        @_executionTypeForm.ExecutionType.GetLongDescription()
+                    </RadzenCard>
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenStepsItem>
+        <RadzenStepsItem Text="Select Plugins" Disabled="@(_requestModel.ExecutionType == ExecutionType.None)">
+            <RadzenRow>
+                
+                <RadzenColumn Size="10">
+                    <RadzenDataGrid Data="_allPlugins" TItem="PluginForm" Density="Density.Compact" AllowSorting="true" AllowFiltering="true" AllowPaging="true" PageSize="15" ShowPagingSummary=true FilterMode="FilterMode.Advanced" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+                        <Template Context="plugin">
+                            <RadzenDataGrid Data="@(plugin.KernelPlugin.GetFunctionsMetadata())" TItem="KernelFunctionMetadata" Density="Density.Compact" AllowSorting="true" AllowFiltering="true" AllowPaging="true" PageSize="5" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+                                <Columns>
+                                    <RadzenDataGridColumn TItem="KernelFunctionMetadata" Property="@nameof(KernelFunctionMetadata.Name)" Title="Name" Width="25%"></RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="KernelFunctionMetadata" Property="@nameof(KernelFunctionMetadata.Description)" Title="Description" Width="75%"></RadzenDataGridColumn>
+                                </Columns>
+                            </RadzenDataGrid>
+                        </Template>
+                        <Columns>
+                            <RadzenDataGridColumn TItem="PluginForm" Title="">
+                                <HeaderTemplate>
+                                    <RadzenIcon Icon="arrow_downward" IconStyle="IconStyle.Success"></RadzenIcon>
+                                </HeaderTemplate>
+                                <Template Context="pluginFunc">
+                                    <RadzenSwitch @bind-Value=pluginFunc.IsSelected Style=""></RadzenSwitch>
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="PluginForm" Property="KernelPlugin.Name" Title="Name" Width="45%"></RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="PluginForm" Property="@(nameof(PluginForm.PluginType))" Title="Type" Width="45%"></RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                   
+                </RadzenColumn>
+                <RadzenColumn Size="2">
+                    <RadzenButton Click="SelectPlugins" Text="Select Plugins"></RadzenButton>
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenStepsItem>
+        <RadzenStepsItem Text="View Functions" Disabled="@(!_allFunctions.Any())">
+            <SkFunctionViewer Functions="_allFunctions" ExecutionType="_requestModel.ExecutionType" @bind-ExcludedFunctions="_excludedFunctions" @bind-RequiredFunctions="_requiredFunctions" @bind-PluginFunctions="_selectedFunctions" @bind-ContextVariables="_contextVariables" SelectionComplete="HandleFunctionComplete" FunctionInputsAdded="HandleExecuteSingle"></SkFunctionViewer>
+        </RadzenStepsItem>
+        <RadzenStepsItem Text="@ChatStepName()" Disabled="!_isReady">
+            <Chat ChatRequestModel="_requestModel"></Chat>
+        </RadzenStepsItem>
+    </Steps>
+</RadzenSteps>

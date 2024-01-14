@@ -1,0 +1,24 @@
+description: Given a topic description generate a number of children's book ideas with short descriptions
+execution_settings:
+  default:
+    max_tokens: 2000
+    temperature: 0.5
+    top_p: 1.0
+    presence_penalty: 0.0
+    frequency_penalty: 0.0
+input_variables:
+- name: input
+  description: book topic description
+  default: ''
+- name: numIdeas
+  description: Number of book ideas
+  default: ''
+name: BookIdeas
+template: |
+  based on a topic about {{$input}}, 
+
+  create a list of {{$numIdeas}} ideas for a children's book 
+
+  the book title and a short description,
+
+  represented as a valid json string, as an array of [{ "title": "the title", "description":"the short description" }]

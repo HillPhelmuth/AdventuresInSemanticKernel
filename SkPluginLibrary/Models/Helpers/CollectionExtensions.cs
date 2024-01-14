@@ -55,5 +55,24 @@
 
             return dictionary;
         }
+        public static IEnumerable<List<T>> SplitIntoChunks<T>(this List<T> source, int chunkSize)
+        {
+            for (int i = 0; i < source.Count; i += chunkSize)
+            {
+                yield return source.GetRange(i, Math.Min(chunkSize, source.Count - i));
+            }
+        }
+        public static void Move<T>(this List<T> list, int oldIndex, int newIndex)
+        {
+            if (oldIndex < 0 || oldIndex >= list.Count)
+                throw new ArgumentOutOfRangeException(nameof(oldIndex), "Old index is out of range.");
+
+            if (newIndex < 0 || newIndex >= list.Count)
+                throw new ArgumentOutOfRangeException(nameof(newIndex), "New index is out of range.");
+
+            T item = list[oldIndex];
+            list.RemoveAt(oldIndex);
+            list.Insert(newIndex, item);
+        }
     }
 }

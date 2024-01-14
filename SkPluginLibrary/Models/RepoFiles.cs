@@ -17,6 +17,7 @@ public static class RepoFiles
 
 
     }
+    public static string PathToYamlPlugins => Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? Directory.GetCurrentDirectory(), "YamlPlugins");
     public static string PluginDirectoryPath => Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? Directory.GetCurrentDirectory(), "SemanticPlugins");
     public static string ApiPluginDirectoryPath => Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? Directory.GetCurrentDirectory(), "ApiPlugins");
     public static string CodeTextDirectoryPath => Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? Directory.GetCurrentDirectory(), "Data", "CodeFiles");

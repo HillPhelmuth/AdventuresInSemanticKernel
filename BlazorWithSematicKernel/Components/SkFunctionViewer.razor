@@ -10,7 +10,7 @@
         <RadzenRow>
             @foreach (var function in Functions)
             {
-                var functionview = function.Value.Describe();
+                var functionview = function.Value.Metadata;
                 <RadzenColumn Size="4">
                     <RadzenCard>
                         <RadzenText TextStyle="TextStyle.Caption">Plugin: @functionview.PluginName</RadzenText>
@@ -33,7 +33,7 @@
                         }
                         @if (ExecutionType == ExecutionType.ChainFunctions)
                         {
-                            <RadzenButton Size="ButtonSize.ExtraSmall" Text="Select Function" Click="@(() => ShowFunctionForm(functionview.PluginName, functionview.Name, function.Value, functionview.Parameters))"></RadzenButton>
+                            <RadzenButton Size="ButtonSize.ExtraSmall" Text="Select Function" Click="@(() => ShowFunctionForm(functionview.PluginName, functionview.Name, function.Value, function.Value.Metadata.Parameters))"></RadzenButton>
                         }
                         @if (functionview.Parameters?.Count > 0 && functionview.Parameters?.All(x => x.Name.Equals("input", StringComparison.InvariantCultureIgnoreCase)) != true && ExecutionType != ExecutionType.ChainFunctions)
                         {

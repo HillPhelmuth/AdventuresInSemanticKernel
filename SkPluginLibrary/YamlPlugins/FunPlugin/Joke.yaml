@@ -1,0 +1,42 @@
+description: Generate a funny joke
+execution_settings:
+  default:
+    max_tokens: 1000
+    temperature: 0.9
+    top_p: 0.0
+    presence_penalty: 0.0
+    frequency_penalty: 0.0
+input_variables: []
+name: Joke
+template: |
+  WRITE EXACTLY ONE JOKE or HUMOROUS STORY ABOUT THE TOPIC BELOW
+
+
+
+  JOKE MUST BE:
+
+
+  - G RATED
+
+
+  - WORKPLACE/FAMILY SAFE
+
+
+  NO SEXISM, RACISM OR OTHER BIAS/BIGOTRY
+
+
+
+  BE CREATIVE AND FUNNY. I WANT TO LAUGH.
+
+
+  {{$style}}
+
+
+  +++++
+
+
+
+  {{$input}}
+
+
+  +++++

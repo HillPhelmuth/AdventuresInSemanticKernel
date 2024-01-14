@@ -1,0 +1,38 @@
+﻿@page "/simpleAgent"
+@using BlazorWithSematicKernel.Components.AgentComponents
+
+<RadzenSteps>
+    <Steps>
+        <RadzenStepsItem Selected="@(_sectionSelector.SectionSelected(Section.Intro))" Text="Intro" NextText="Build Agent">
+            <RadzenRow>
+                <RadzenColumn Size="8" Offset="2">
+                    <RadzenCard>
+                        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle1">The core building blocks of an agent are <em>plugins</em>, <em>planners</em>, and a <em>persona</em>.</RadzenText>
+                        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle2">Plugins</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2">Plugins are the skills of your agent. For example, you can create a plugin that sends emails, retrieves information from the web, asks for help, or even saves and retrieves memories from previous conversations. The <strong>Agent Builder</strong> allows you to select from a large list of built-in and pre-made plugins.</RadzenText>
+                        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle2">Planners</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2">Planners are the brains of your agent. They allow your agent to generate a plan to complete a task. The <strong>Agent Builder</strong> uses OpenAI's function calling feature as it's planner, allowing the agent to determine which plugins are required to complete a task. For more advanced planners, you can ask an LLM to generate code that can be executed to complete a task (Handlebars Planner).</RadzenText>
+                        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle2">Persona</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2">Persona is the personality of your agent. It is a prompt that is used to influence how the agent responds to stimuli. For example, you can use the persona to change its personality, such as friendly, sarcastic, or helpful. You can also use the persona to influence how the agent responds to certain situations, such as asking for help, being more verbose, or following the rules.</RadzenText>
+                        <RadzenLink Path="https://learn.microsoft.com/en-us/semantic-kernel/agents/" Target="_blank" Text="Read More about Agents"></RadzenLink><br />
+                        <RadzenButton Style="margin-left:45%" Text="Get Started" Click="GetStarted"></RadzenButton>
+                    </RadzenCard>
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenStepsItem>
+        <RadzenStepsItem Selected="@(_sectionSelector.SectionSelected(Section.Build))" Text="Build Agent" NextText="Start Agent Chat">
+            <RadzenRow>
+                <RadzenColumn Size="10" Offset="1">
+                    <CreateAgentForm AgentChanged="HandleAgentProxy"></CreateAgentForm>
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenStepsItem>
+        <RadzenStepsItem PreviousText="Modify Agent" Selected="@(_sectionSelector.SectionSelected(Section.Execute))" Text="Execute Agent">
+            <RadzenButton Text="Reset" Size="ButtonSize.ExtraSmall" Click="Reset"></RadzenButton>
+            <RadzenCard>
+                <ChatView @ref=_chatView ViewId="simpleagentchat"></ChatView>
+            </RadzenCard>
+            <UserInput UserInputSubmit="HandleUserInput" ButtonLabel="Send" HelperText="User Input" IsBusy=_isBusy CancelRequest="Cancel"></UserInput>
+        </RadzenStepsItem>
+    </Steps>
+</RadzenSteps>

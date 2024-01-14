@@ -1,13 +1,13 @@
 ﻿using Microsoft.SemanticKernel;
 using System.ComponentModel;
-using Microsoft.SemanticKernel.Connectors.AI.OpenAI;
+using Microsoft.SemanticKernel.Connectors.OpenAI;
 
 namespace SkPluginLibrary.Plugins
 {
     public class InstructPlugin
     {
-        private readonly IKernel _kernel;
-        public InstructPlugin(IKernel kernel)
+        private readonly Kernel _kernel;
+        public InstructPlugin(Kernel kernel)
         {
             _kernel = kernel;
         }
@@ -25,14 +25,16 @@ namespace SkPluginLibrary.Plugins
             [related content]
             {{$related}}
             """;
-        [SKFunction, Description("Generates an instruction prompt that semantically bridges the gap between user input and relevant content")]
+        [KernelFunction, Description("Generates an instruction prompt that semantically bridges the gap between user input and relevant content")]
         public async Task<string> Bridge(string input, string related)
         {
-            var ctx = _kernel.CreateNewContext();
-            ctx.Variables["input"] = input;
-            ctx.Variables["related"] = related;
-            var function = _kernel.CreateSemanticFunction(FunctionPrompt, requestSettings: new OpenAIRequestSettings { Temperature = 0.0, TopP = 0.0, MaxTokens = 256 });
-            var kernelResult = await _kernel.RunAsync(ctx.Variables, function);
+            var ctx = new KernelArguments
+            {
+                ["input"] = input,
+                ["related"] = related
+            };
+            var function = _kernel.CreateFunctionFromPrompt(FunctionPrompt, executionSettings: new OpenAIPromptExecutionSettings { Temperature = 0.0, TopP = 0.0, MaxTokens = 256 });
+            var kernelResult = await _kernel.InvokeAsync(function, ctx);
             var result = kernelResult.Result();
             Console.WriteLine($"Bridge function generated instruction: '{result}'");
             return result;
