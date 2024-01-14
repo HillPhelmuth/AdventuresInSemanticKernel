@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using System.Text.Json;
 using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.SemanticKernel.Plugins.OpenApi;
 
 namespace SkPluginLibrary.Models.Helpers
@@ -29,6 +30,7 @@ namespace SkPluginLibrary.Models.Helpers
             return value switch
             {
                 RestApiOperationResponse apiOperationResponse => apiOperationResponse.Content.ToString() ?? "",
+                ChatMessageContent chatMessageContent => chatMessageContent.Content ?? "",
                 string stringResult => stringResult,
                 _ => JsonSerializer.Serialize(value)
             };

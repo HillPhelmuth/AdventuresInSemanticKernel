@@ -52,6 +52,7 @@ namespace SkPluginLibrary.Plugins
                 ["existingCode"] = existingCode
             };
             var code = await _kernel.InvokeAsync(_generateCodeFunction, args);
+            Console.WriteLine($"Result Type = {code.ValueType?.Name}");
             var currentCode = existingCode;
             var codeResult = code.Result().Replace("```csharp", "").Replace("```", "").TrimStart('\n');
             var combinedCode = $"{currentCode}\n{codeResult}";
@@ -76,8 +77,9 @@ namespace SkPluginLibrary.Plugins
             //var existingCode = combinedCode.TrimStart('\n');
             var refs = CompileResources.PortableExecutableReferences;
             var result = await _compilerService.SubmitCode(codeResult, refs);
+            var scriptResult = await _scriptService.EvaluateAsync(codeResult);
             //context.Variables["existingCode"] = existingCode;
-            return new CodeOutputModel { Output = result, Code = codeResult, ExistingCode = combinedCode };
+            return new CodeOutputModel { Output = scriptResult, Code = codeResult, ExistingCode = combinedCode };
         }
 
         [KernelFunction, Description("Execute the provided c# code. The code must be complete and compilable")]
