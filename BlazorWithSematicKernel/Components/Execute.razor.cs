@@ -19,10 +19,10 @@ namespace BlazorWithSematicKernel.Components
         private IJSRuntime JsRuntime { get; set; } = default!;
         [Inject]
         private NotificationService NotificationService { get; set; } = default!;
-        private record FunctionParameterField(string Name, string Description, string DefaultValue, string Type)
+        private record FunctionParameterField(string Name, string Description, object? DefaultValue, string Type)
         {
-            public string Value { get; set; } = DefaultValue;
-            public int NumValue { get; set; } = int.TryParse(DefaultValue, out var num) ? num : 0;
+            public string? Value { get; set; } = DefaultValue?.ToString();
+            public int NumValue { get; set; } = int.TryParse(DefaultValue?.ToString(), out var num) ? num : 0;
             public bool BoolValue { get; set; }
         }
         private enum DisplayType { PlainText, Markdown, Json }
@@ -67,8 +67,8 @@ namespace BlazorWithSematicKernel.Components
         private string? _output;
         protected override Task OnParametersSetAsync()
         {
-            var funcView = Function.SkFunction.Describe();
-            var fields = funcView.Parameters.Select(x => new FunctionParameterField(x.Name, x.Description ?? "", x.DefaultValue ?? "", x.Type?.ToString() ?? "string")).ToList();
+            var funcView = Function.SkFunction.Metadata;
+            var fields = funcView.Parameters.Select(x => new FunctionParameterField(x.Name, x.Description ?? "", x.DefaultValue ?? "", x.ParameterType?.ToString() ?? "string")).ToList();
             if (!fields.Any(x => x.Name.Equals("input", StringComparison.InvariantCultureIgnoreCase)))
             {
                 fields.Add(new FunctionParameterField("Input", "Basic input for the function", "", "string"));
@@ -77,11 +77,9 @@ namespace BlazorWithSematicKernel.Components
             _promptText = PromptText(Function.SkFunction);
             return base.OnParametersSetAsync();
         }
-        private static string? PromptText(ISKFunction function)
+        private static string? PromptText(KernelFunction function)
         {
-            if (!function.IsSemantic) return null;
-            var promptPath = Path.Combine(RepoFiles.PluginDirectoryPath, function.PluginName,
-                function.Name, "skprompt.txt");
+            var promptPath = Path.Combine(RepoFiles.PluginDirectoryPath, function.Metadata?.PluginName ?? "", function.Name, "skprompt.txt");
             if (!File.Exists(promptPath)) return null;
             var prompt = File.ReadAllText(promptPath);
             return prompt;
@@ -110,11 +108,11 @@ namespace BlazorWithSematicKernel.Components
                         var value = JsonSerializer.Serialize(values);
                         newVariables.Add(field.Name, value);
                     }
-                    else if (field.Type.Equals("string", StringComparison.InvariantCultureIgnoreCase))
+                    else if (field.Type.Contains("string", StringComparison.InvariantCultureIgnoreCase))
                     {
                         newVariables.Add(field.Name, field.Value);
                     }
-                    else if (field.Type.Equals("boolean", StringComparison.InvariantCultureIgnoreCase))
+                    else if (field.Type.Contains("boolean", StringComparison.InvariantCultureIgnoreCase))
                     {
                         newVariables.Add(field.Name, field.BoolValue ? "true" : "false");
                     }
@@ -167,8 +165,8 @@ namespace BlazorWithSematicKernel.Components
                 sw.Stop();
                 var notificationMessage = new NotificationMessage
                 {
-                    Style = "top:10px;width:30rem;height:10rem;overflow:auto; right:25vw", 
-                    Severity = NotificationSeverity.Error, 
+                    Style = "top:10px;width:30rem;height:10rem;overflow:auto; right:25vw",
+                    Severity = NotificationSeverity.Error,
                     Duration = int.MaxValue,
                     Summary = $"Error Executing Function after {sw.ElapsedMilliseconds}ms",
                     Detail = $"{ex.Message}\n{ex.StackTrace}"

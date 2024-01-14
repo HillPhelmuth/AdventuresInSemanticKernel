@@ -4,7 +4,7 @@ public class CodeSampleTemplate
 {
     public static string GetCodeFromTemplate(string className, string fileCode)
     {
-        var text = $$""""
+        var text = $$"""
                 //using statements for Semantic Kernel will be added dynamically. Others you need to use can be added here.
 
                 public static class Program
@@ -16,97 +16,78 @@ public class CodeSampleTemplate
 
                 }
                 {{fileCode}}
-                """";
+                """;
         return text;
     }
-
-    public const string UsingStatements = @"using Microsoft.SemanticKernel.Plugins.Core;
-using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Orchestration;
-using System.Globalization;
-using SkPluginLibrary.Plugins;
-using Microsoft.SemanticKernel.Plugins.Web;
-using Microsoft.SemanticKernel.Plugins.Web.Bing;
-using Microsoft.SemanticKernel.Connectors.AI.OpenAI;
-using Microsoft.SemanticKernel.Plugins.Web.Google;
-using System.Net;
-using Microsoft.SemanticKernel.Http;
-using Microsoft.SemanticKernel.Reliability.Basic;
-using Polly;
-using System.Diagnostics;
-using Microsoft.SemanticKernel.Connectors.AI.OpenAI.TextEmbedding;
-using Microsoft.SemanticKernel.Diagnostics;
-using Microsoft.SemanticKernel.Memory;
-using Microsoft.SemanticKernel.Planners;
-using Microsoft.SemanticKernel.Planning;
-using Microsoft.SemanticKernel.Plugins.Memory;
-using Microsoft.SemanticKernel.Connectors.Memory.AzureCognitiveSearch;
-using Microsoft.SemanticKernel.Connectors.Memory.Chroma;
-using Microsoft.SemanticKernel.Connectors.Memory.Kusto;
-using Microsoft.SemanticKernel.Connectors.Memory.Pinecone;
-using Microsoft.SemanticKernel.Connectors.Memory.Postgres;
-using Microsoft.SemanticKernel.Connectors.Memory.Qdrant;
-using Microsoft.SemanticKernel.Connectors.Memory.Redis;
-using Microsoft.SemanticKernel.Connectors.Memory.Sqlite;
-using Microsoft.SemanticKernel.Connectors.Memory.Weaviate;
-using Npgsql;
-using Pgvector.Npgsql;
-using StackExchange.Redis;
-using System.Runtime.CompilerServices;
-using System.Text.Json;
-using Microsoft.SemanticKernel.AI;
-using Microsoft.SemanticKernel.AI.TextCompletion;
-using Microsoft.SemanticKernel.AI.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.AI.OpenAI.ChatCompletion;
-using Microsoft.SemanticKernel.AI.ImageGeneration;
-using Microsoft.SemanticKernel.Functions.OpenAPI.Extensions;
-using Microsoft.SemanticKernel.Functions.OpenAPI.Model;
-using Microsoft.SemanticKernel.Functions.OpenAPI.Authentication;
-using Microsoft.SemanticKernel.Functions.OpenAPI.Plugins;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics.Tensors;
-using System.Runtime.InteropServices;
-using System.Threading;
-using System.Threading.Tasks;
-using Azure.Identity;
-using SkPluginLibrary.Resources;
-using System.ComponentModel;
-using System.Xml;
-using System.Xml.XPath;
-using Microsoft.SemanticKernel.Connectors.AI.OpenAI.TextCompletion;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.SemanticKernel.Services;
-using Microsoft.SemanticKernel.TemplateEngine;
-using Microsoft.SemanticKernel.TemplateEngine.Basic;
-using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.SemanticKernel.Reliability.Polly;
-using Polly.Retry;
-using NCalcPlugins;
-using Azure.AI.OpenAI;
-using Azure.Core;
-using Azure.Core.Pipeline;
-using Microsoft.SemanticKernel.Connectors.AI.OpenAI.ChatCompletionWithData;
-using Microsoft.SemanticKernel.Text;
-using System.IO;
-using Microsoft.DeepDev;
-using Microsoft.ML.Tokenizers;
-using SharpToken;
-using static Microsoft.SemanticKernel.Text.TextChunker;
-using System.Text.RegularExpressions;
-using Microsoft.SemanticKernel.Events;
-using Microsoft.SemanticKernel.Connectors.AI.OpenAI.AzureSdk;
-using SkPluginLibrary.Models;
-using SkPluginLibrary.Models.Helpers;
-using SkPluginLibrary.Plugins;
-using System.Net.Http;
-using Microsoft.SemanticKernel.TemplateEngine.Handlebars;
-using System.Security.Cryptography;
-using Microsoft.SemanticKernel.Planners.Handlebars;
-using Microsoft.SemanticKernel.Experimental.Orchestration;
-using JsonSerializer = System.Text.Json.JsonSerializer;";
+   
+    public const string PragmaCodes = "CA1050,CA1707,CA2007,VSTHRD111,CS1591,SKEXP0001,SKEXP0004,SKEXP0042,SKEXP0002,SKEXP0003,SKEXP0010,SKEXP0011,SKEXP0012,SKEXP0020,SKEXP0021,SKEXP0022,SKEXP0023,SKEXP0024,SKEXP0025,SKEXP0026,SKEXP0027,SKEXP0028,SKEXP0029,SKEXP0030,SKEXP0031,SKEXP0032,SKEXP0040,SKEXP0041,SKEXP0050,SKEXP0051,SKEXP0052,SKEXP0053,SKEXP0054,SKEXP0055,SKEXP0060,SKEXP0061,SKEXP0101,SKEXP0102";
+    public const string DisableWarning = $"#pragma warning disable {PragmaCodes}";
+    public const string UsingStatements = """
+                                          using Microsoft.SemanticKernel.Plugins.Core;
+                                          using System.Globalization;
+                                          using Microsoft.SemanticKernel;
+                                          using SkPluginLibrary.Plugins;
+                                          using Microsoft.SemanticKernel.Connectors.OpenAI;
+                                          using Microsoft.SemanticKernel.Plugins.Web;
+                                          using Microsoft.SemanticKernel.Plugins.Web.Bing;
+                                          using Microsoft.SemanticKernel.Plugins.Web.Google;
+                                          using System.Net;
+                                          using Microsoft.Extensions.DependencyInjection;
+                                          using Microsoft.Extensions.Http.Resilience;
+                                          using Microsoft.Extensions.Logging;
+                                          using Microsoft.SemanticKernel.Connectors.AzureAISearch;
+                                          using Microsoft.SemanticKernel.Memory;
+                                          using Microsoft.SemanticKernel.Connectors.Chroma;
+                                          using Microsoft.SemanticKernel.Connectors.Pinecone;
+                                          using Microsoft.SemanticKernel.Connectors.Qdrant;
+                                          using Microsoft.SemanticKernel.Connectors.Redis;
+                                          using Microsoft.SemanticKernel.Connectors.Sqlite;
+                                          using Microsoft.SemanticKernel.Connectors.Weaviate;
+                                          using Microsoft.SemanticKernel.Plugins.Memory;
+                                          using StackExchange.Redis;
+                                          using System.Runtime.CompilerServices;
+                                          using Microsoft.SemanticKernel.TextGeneration;
+                                          using Microsoft.SemanticKernel.ChatCompletion;
+                                          using Microsoft.SemanticKernel.TextToImage;
+                                          using Microsoft.SemanticKernel.Plugins.OpenApi;
+                                          using System.Net.Http.Headers;
+                                          using System.Net.Mime;
+                                          using System.Text;
+                                          using System.Text.Json;
+                                          using System.Text.Json.Serialization;
+                                          using SkPluginLibrary.Resources;
+                                          using Microsoft.Identity.Client;
+                                          using System.Numerics.Tensors;
+                                          using System.Runtime.InteropServices;
+                                          using Azure.Identity;
+                                          using Microsoft.SemanticKernel.Plugins.Grpc;
+                                          using System.Diagnostics;
+                                          using Microsoft.SemanticKernel.Planning.Handlebars;
+                                          using Azure.AI.OpenAI;
+                                          using Azure.Core;
+                                          using Azure.Core.Pipeline;
+                                          using Microsoft.DeepDev;
+                                          using Microsoft.ML.Tokenizers;
+                                          using Microsoft.SemanticKernel.Text;
+                                          using SharpToken;
+                                          using static Microsoft.SemanticKernel.Text.TextChunker;
+                                          using System.Text.RegularExpressions;
+                                          using System.ComponentModel;
+                                          using System.Diagnostics.CodeAnalysis;
+                                          using Microsoft.SemanticKernel.Services;
+                                          using Microsoft.SemanticKernel.PromptTemplates.Handlebars;
+                                          using SkPluginLibrary.Examples.DictionaryPlugin;
+                                          using Microsoft.SemanticKernel.Planning;
+                                          using Microsoft.SemanticKernel.Experimental.Agents;
+                                          using SkPluginLibrary.Models;
+                                          using SkPluginLibrary.Models.Helpers;
+                                          using System;
+                                          using System.Collections.Generic;
+                                          using System.IO;
+                                          using System.Linq;
+                                          using System.Net.Http;
+                                          using System.Threading;
+                                          using System.Threading.Tasks;
+                                          using JsonSerializer = System.Text.Json.JsonSerializer;
+                                          """;
 }

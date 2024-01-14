@@ -1,0 +1,29 @@
+description: Get the top N objects from an array or list
+execution_settings:
+  default:
+    max_tokens: 1024
+    temperature: 0.0
+    top_p: 0.0
+    presence_penalty: 0.0
+    frequency_penalty: 0.0
+input_variables:
+- name: objects
+  description: The input array
+  default: ''
+- name: topN
+  description: The number of objects in the array requested by the user
+  default: ''
+name: TopItems
+template: |
+  ===OBJECT ARRAY
+
+
+  {{$input}}
+
+
+  ===END OBJECT ARRAY
+
+
+
+
+  Given the above array of objects, find the first {{$topN}} objects in the array. respond with a new array containing only those object. Use the format of the array. If array is plain text, discern the objects and respond with a list of plain text objects, if array is XML responsd with a list of XML elements. If array is Json, response with a json object array. No prose.

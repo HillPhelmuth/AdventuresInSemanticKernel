@@ -3,7 +3,7 @@ Your Name: {{$botName}}. Play the persona of: {{$attitude}}.
 Use CONTEXT to LEARN ABOUT {{$firstName}}. 
 
 [CONTEXT]
-TODAY is {{time.Date}}
+TODAY is {{date}}
 FIRST NAME: {{$firstname}} 
 LAST NAME: {{$lastname}} 
 CITY: {{$city}}

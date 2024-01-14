@@ -1,11 +1,9 @@
 ﻿using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.AI.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.AI.OpenAI;
-using Microsoft.SemanticKernel.Orchestration;
-using Microsoft.SemanticKernel.TemplateEngine.Basic;
 using SkPluginLibrary.Plugins;
 using System.Text.Json;
-using Microsoft.SemanticKernel.TemplateEngine;
+using Microsoft.SemanticKernel.ChatCompletion;
+using Microsoft.SemanticKernel.Connectors.OpenAI;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace SkPluginLibrary;
 
@@ -17,17 +15,17 @@ public partial class CoreKernelService
         ReplType replType = ReplType.ReplConsole)
     {
         var kernel = await ChatWithSkKernal();
+        var chatService = kernel.Services.GetRequiredService<IChatCompletionService>();
         var replSkill = new ReplCsharpPlugin(kernel, _scriptService, _compilerService);
-        var repl = kernel.ImportFunctions(replSkill);
-        var ctx = kernel.CreateNewContext();
-        ctx.Variables["existingCode"] = code;
-        ctx.Variables["input"] = input;
-        if (!ctx.Variables.ContainsKey("sessionId"))
+        var repl = kernel.ImportPluginFromObject(replSkill);
+        var kernelArgs = new KernelArguments
         {
-            ctx.Variables["sessionId"] = Guid.NewGuid().ToString();
-        }
+            ["existingCode"] = code,
+            ["input"] = input
+        };
+        kernelArgs["sessionId"] = Guid.NewGuid().ToString();
 
-        KernelResult kernelResult = await kernel.RunAsync(ctx.Variables, repl[replType.ToString()]);
+        FunctionResult kernelResult = await kernel.InvokeAsync(repl[replType.ToString()], kernelArgs);
         Console.WriteLine(kernelResult.ToString());
        
         var codeResult = JsonSerializer.Deserialize<CodeOutputModel>(kernelResult.Result());
@@ -41,26 +39,26 @@ public partial class CoreKernelService
         var kernel = CreateKernel();
         var memory = CreateSemanticMemory(MemoryStoreType.InMemory);
         var webPlugin = new WebCrawlPlugin(kernel, _bingSearchService, memory);
-        var webPluginInstance = kernel.ImportFunctions(webPlugin);
-        var chatService = kernel.GetService<IChatCompletion>();
+        var webPluginInstance = kernel.ImportPluginFromObject(webPlugin);
+        var chatService = kernel.GetRequiredService<IChatCompletionService>();
         var sysPromptTemplate =
             "Answer the user's query using the web search results below. Always include CITATIONS in your response.\n\n[Web Search Results]\n{{$memory_context}}";
         yield return "Searching web for information...\n\n";
-        var webResult = await kernel.RunAsync(query, webPluginInstance["ExtractWebSearchQuery"],
-            webPluginInstance["SearchAndCiteWeb"]);
-        var context = kernel.CreateNewContext();
-        //var memoryContextItems = await memory.SearchAsync("websaveCollection", query, 10, .75).ToListAsync();
-        //var memoryContext = string.Join("\n", memoryContextItems.Select(x => x.Metadata.Text));
-        //Console.WriteLine($"Memory Context: {memoryContext}");
-        context.Variables["memory_context"] = webResult.Result();
-        var templateEngine = new BasicPromptTemplateFactory(_loggerFactory).Create(sysPromptTemplate, new PromptTemplateConfig());
-        var sysPrompt = await templateEngine.RenderAsync(context);
-        var chat = chatService.CreateNewChat(sysPrompt);
-        chat.AddUserMessage(query);
-        await foreach (var token in chatService.GenerateMessageStreamAsync(chat,
-                           new OpenAIRequestSettings { MaxTokens = 1500, Temperature = 1.0 }))
+        var webResult = await kernel.InvokeAsync(webPluginInstance["ExtractWebSearchQuery"], new KernelArguments { ["input"] = query});
+        var queryResult = await kernel.InvokeAsync(webPluginInstance["SearchAndCiteWeb"], new KernelArguments { ["input"] = webResult.ToString() });
+        var context = new KernelArguments
         {
-            yield return token;
+            ["memory_context"] = queryResult.Result()
+        };
+
+        var templateEngine = new KernelPromptTemplateFactory(_loggerFactory).Create(new PromptTemplateConfig() { Template = sysPromptTemplate});
+        var sysPrompt = await templateEngine.RenderAsync(kernel, context);
+        var chat = new ChatHistory(sysPrompt);
+        chat.AddUserMessage(query);
+        await foreach (var token in chatService.GetStreamingChatMessageContentsAsync(chat,
+                           new OpenAIPromptExecutionSettings { MaxTokens = 1500, Temperature = 1.0 }))
+        {
+            yield return token.Content;
         }
     }
 
@@ -68,9 +66,14 @@ public partial class CoreKernelService
     {
         var kernel = CreateKernel();
         var wikiPlugin = new WikiChatPlugin(kernel);
-        var wiki = kernel.ImportFunctions(wikiPlugin);
-        var kernelResult = await kernel.RunAsync(query, wiki["WikiSearchAndChat"]);
-        await foreach (var result in kernelResult.ResultStream<string>())
+        var wiki = kernel.ImportPluginFromObject(wikiPlugin);
+        var args = new KernelArguments
+        {
+            ["input"] = query
+        };
+        var streamingKernel = await kernel.InvokeAsync<IAsyncEnumerable<string>>(wiki["WikiSearchAndChat"], args);
+        var kernelResult = streamingKernel;
+        await foreach (var result in kernelResult)
         {
             yield return result;
         }

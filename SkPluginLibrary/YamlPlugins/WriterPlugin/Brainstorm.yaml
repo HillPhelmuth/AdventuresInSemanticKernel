@@ -1,0 +1,38 @@
+description: Given a goal or topic description generate a list of ideas
+execution_settings:
+  default:
+    max_tokens: 2000
+    temperature: 0.5
+    top_p: 1.0
+    presence_penalty: 0.0
+    frequency_penalty: 0.0
+    stop_sequences:
+    - '##END##'
+input_variables:
+- name: topic
+  description: A topic description or goal.
+  default: ''
+name: Brainstorm
+template: |
+  Must: brainstorm ideas and create a list.
+
+
+  Must: use a numbered list.
+
+
+  Must: only one list.
+
+
+  Must: end list with ##END##
+
+
+  Should: no more than 10 items.
+
+
+  Should: at least 3 items.
+
+
+  Topic: {{$topic}}
+
+
+  Start.

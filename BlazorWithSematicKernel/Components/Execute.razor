@@ -13,7 +13,7 @@
                 <RadzenRow>
                     @foreach (var input in _functionInputsForm.FunctionParameterFields)
                     {
-                        if (input.Type.Equals("string", StringComparison.InvariantCultureIgnoreCase))
+                        if (input.Type.Contains("string", StringComparison.InvariantCultureIgnoreCase))
                         {
                             <RadzenColumn Size="6">
                                 <RadzenFormField Text="@input.Name" Style="width:100%">
@@ -39,7 +39,7 @@
                                 </RadzenFormField>
                             </RadzenColumn>
                         }
-                        else if (input.Type.Equals("number", StringComparison.InvariantCultureIgnoreCase) || input.Type.Equals("integer", StringComparison.InvariantCultureIgnoreCase))
+                        else if (input.Type.Contains("number", StringComparison.InvariantCultureIgnoreCase) || input.Type.Contains("integer", StringComparison.InvariantCultureIgnoreCase) || input.Type.Contains("double", StringComparison.InvariantCultureIgnoreCase))
                         {
                             <RadzenColumn Size="6">
                                 <RadzenFormField Text="@input.Name">
@@ -52,7 +52,7 @@
                                 </RadzenFormField>
                             </RadzenColumn>
                         }
-                        else if (input.Type.Equals("boolean", StringComparison.InvariantCultureIgnoreCase))
+                        else if (input.Type.Contains("boolean", StringComparison.InvariantCultureIgnoreCase))
                         {
                             <RadzenColumn Size="6">
                                 <RadzenFormField Text="@input.Name">
@@ -70,7 +70,7 @@
                             <RadzenColumn Size="6">
                                 <RadzenFormField Text="@input.Name">
                                     <ChildContent>
-                                        <RadzenTextBox @bind-Value="input.Value"></RadzenTextBox>
+                                        <RadzenTextArea @bind-Value="input.Value"></RadzenTextArea>
                                     </ChildContent>
                                     <Helper>
                                         @input.Description

@@ -9,7 +9,7 @@ namespace BlazorWithSematicKernel.Components.ModalDialogComponents
         private ChatView? _chatView;
         private bool _isBusy;
         private string? _history;
-
+        private CancellationTokenSource _cancellationTokenSource = new();
         private void ClearChat()
         {
             _chatView?.ChatState.Reset();
@@ -27,24 +27,25 @@ namespace BlazorWithSematicKernel.Components.ModalDialogComponents
         private async Task InitiateChat()
         {
             _isBusy = true;
-            _chatView!.ChatState.Reset();
+            _chatView!.ChatState?.Reset();
             StateHasChanged();
             await Task.Delay(1);
+            var token = _cancellationTokenSource.Token;
             var hasStarted = false;
-            await foreach (var response in ChatWithSkDocs.ExecuteChatWithSkStream("Quickly Introduce yourself and Semantic Kernel", _history))
+            await foreach (var response in ChatWithSkDocs.ExecuteChatWithSkStream("Quickly Introduce yourself and Semantic Kernel", _history, token))
             {
                 if (!hasStarted)
                 {
                     hasStarted = true;
-                    _chatView.ChatState.AddAssistantMessage(response, _chatView.ChatState.ChatMessages.Count + 1);
+                    _chatView.ChatState!.AddAssistantMessage(response);
                     _chatView.ChatState.ChatMessages.LastOrDefault(x => x.Role == Role.Assistant)!.IsActiveStreaming = true;
                     continue;
                 }
 
-                _chatView.ChatState.UpdateAssistantMessage(response);
+                _chatView.ChatState?.UpdateAssistantMessage(response);
             }
 
-            var lastAsstMessage = _chatView.ChatState.ChatMessages.LastOrDefault(x => x.Role == Role.Assistant);
+            var lastAsstMessage = _chatView.ChatState?.ChatMessages.LastOrDefault(x => x.Role == Role.Assistant);
             if (lastAsstMessage is not null)
                 lastAsstMessage.IsActiveStreaming = false;
             _isBusy = false;
@@ -56,14 +57,15 @@ namespace BlazorWithSematicKernel.Components.ModalDialogComponents
         private async void HandleInput(string input)
         {
             _isBusy = true;
-            _chatView.ChatState.AddUserMessage(input, _chatView.ChatState.ChatMessages.Count + 1);
+            _chatView.ChatState.AddUserMessage(input);
             var hasStarted = false;
-            await foreach (var response in ChatWithSkDocs.ExecuteChatWithSkStream(input, _history))
+            var token = _cancellationTokenSource.Token;
+            await foreach (var response in ChatWithSkDocs.ExecuteChatWithSkStream(input, _history, token))
             {
                 if (!hasStarted)
                 {
                     hasStarted = true;
-                    _chatView.ChatState.AddAssistantMessage(response, _chatView.ChatState.ChatMessages.Count + 1);
+                    _chatView.ChatState.AddAssistantMessage(response);
                     _chatView.ChatState.ChatMessages.LastOrDefault(x => x.Role == Role.Assistant)!.IsActiveStreaming = true;
                     continue;
                 }

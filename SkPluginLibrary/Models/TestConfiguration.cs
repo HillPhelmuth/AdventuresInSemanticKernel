@@ -41,10 +41,10 @@ public sealed class TestConfiguration
         set => _azureOpenAIEmbeddings = value;
     }
 
-    private static ACSConfig? _acs;
-    public static ACSConfig? ACS
+    private static AzureAISearchConfig? _acs;
+    public static AzureAISearchConfig? AzureAISearch
     {
-        get => _acs ?? LoadSection<ACSConfig>();
+        get => _acs ?? LoadSection<AzureAISearchConfig>();
         set => _acs = value;
     }
 
@@ -172,6 +172,7 @@ public sealed class TestConfiguration
         public string ChatModelId { get; set; }
         public string EmbeddingModelId { get; set; }
         public string ApiKey { get; set; }
+        public string ImageModelId { get; set; }
     }
 
     public class AzureOpenAIConfig
@@ -181,6 +182,9 @@ public sealed class TestConfiguration
         public string ChatDeploymentName { get; set; }
         public string Endpoint { get; set; }
         public string ApiKey { get; set; }
+        public string ModelId { get; set; }
+        public string ChatModelId { get; set; }
+        public string ImageModelId { get; set; }
     }
 
     public class AzureOpenAIEmbeddingsConfig
@@ -190,7 +194,7 @@ public sealed class TestConfiguration
         public string ApiKey { get; set; }
     }
 
-    public class ACSConfig
+    public class AzureAISearchConfig
     {
         public string Endpoint { get; set; }
         public string ApiKey { get; set; }
@@ -211,12 +215,12 @@ public sealed class TestConfiguration
         public string ApiKey { get; set; }
         public string Version { get; set; }
     }
-
+    
     public class KeyVaultConfig
     {
         public string Endpoint { get; set; }
         public string ClientId { get; set; }
-        public string TenantId { get; set; }
+        public string ClientSecret { get; set; }
     }
 
     public class HuggingFaceConfig
@@ -280,4 +284,11 @@ public sealed class TestConfiguration
         public string ChatContentConnectionString { get; set; }
     }
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor.
+}
+public static class Validations
+{
+    public static bool IsValid(this TestConfiguration.WeaviateConfig weaviateConfig)
+    {
+        return !string.IsNullOrEmpty(weaviateConfig.Scheme) && !string.IsNullOrEmpty(weaviateConfig.Endpoint) && !string.IsNullOrEmpty(weaviateConfig.ApiKey);
+    }
 }

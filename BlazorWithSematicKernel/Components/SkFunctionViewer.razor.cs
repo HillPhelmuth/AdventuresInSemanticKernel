@@ -1,12 +1,13 @@
 ﻿using Microsoft.AspNetCore.Components;
-using ParameterView = Microsoft.SemanticKernel.ParameterView;
+using ParameterView = Microsoft.SemanticKernel.KernelParameterMetadata;
 
 namespace BlazorWithSematicKernel.Components
 {
     public partial class SkFunctionViewer : ComponentBase
     {
         [Parameter]
-        public Dictionary<string, ISKFunction> Functions { get; set; } = new();
+        public Dictionary<string, KernelFunction> Functions { get; set; } = new();
+        
         [Parameter]
         public ExecutionType ExecutionType { get; set; }
 
@@ -30,10 +31,10 @@ namespace BlazorWithSematicKernel.Components
         [Parameter]
         public EventCallback<List<Function>> PluginFunctionsChanged { get; set; }
         [Parameter]
-        public EventCallback<KeyValuePair<string, ISKFunction>> FunctionSelected { get; set; }
+        public EventCallback<KeyValuePair<string, KernelFunction>> FunctionSelected { get; set; }
         private bool IsSequential => ExecutionType is ExecutionType.SequentialPlanner or ExecutionType.SequentialPlannerChat;
         private bool IsStepwise => ExecutionType is ExecutionType.StepwisePlanner or ExecutionType.StepwisePlannerChat;
-        private bool IsAction => ExecutionType is ExecutionType.ActionPlanner or ExecutionType.ActionPlannerChat;
+        private bool IsAction => ExecutionType is ExecutionType.AutoFunctionCalling or ExecutionType.AutoFunctionCallingChat;
         private bool IsPlanner => IsSequential || IsStepwise || IsAction;
         [Inject]
         private TooltipService TooltipService { get; set; } = default!;
@@ -52,7 +53,7 @@ namespace BlazorWithSematicKernel.Components
                 {
                     ExecutionType.ChainFunctions => "Select Functions to Chain",
                     ExecutionType.SingleFunction => "Select Function to Execute",
-                    ExecutionType.ActionPlanner or ExecutionType.ActionPlannerChat => "Execute Action Plan",
+                    ExecutionType.AutoFunctionCalling or ExecutionType.AutoFunctionCallingChat => "Execute Action Plan",
                     ExecutionType.SequentialPlanner or ExecutionType.SequentialPlannerChat =>
                         "Exclude or Require Functions to Execute",
                     _ => "View Functions"
@@ -67,9 +68,9 @@ namespace BlazorWithSematicKernel.Components
             public List<ParamViewField> Fields { get; set; } = new();
         }
         private ParamViewForm _paramForm = new();
-        private record ParamViewField(string Name, string Description, string DefaultValue)
+        private record ParamViewField(string Name, string Description, object? DefaultValue)
         {
-            public string Value { get; set; } = DefaultValue;
+            public string? Value { get; set; } = DefaultValue?.ToString();
         }
 
         private void ExcludeFunction(string functionName)
@@ -86,23 +87,23 @@ namespace BlazorWithSematicKernel.Components
             RequiredFunctionsChanged.InvokeAsync(RequiredFunctions);
         }
 
-        private async void ShowPrompt(ISKFunction function)
+        private async void ShowPrompt(KernelFunction function)
         {
             //if (!function.IsSemantic) return;
-            var promptPath = Path.Combine(RepoFiles.PluginDirectoryPath, function.PluginName,
+            var promptPath = Path.Combine(RepoFiles.PluginDirectoryPath, function.Metadata?.PluginName??"",
                 function.Name, "skprompt.txt");
             if (File.Exists(promptPath))
             {
                 var prompt = await File.ReadAllTextAsync(promptPath);
                 DialogService.Open<ShowSkPrompt>("",
                     new Dictionary<string, object>()
-                        {{"Title", $"{function.PluginName} {function.Name}"}, {"Prompt", prompt}});
+                        {{"Title", $"{function.Metadata.PluginName} {function.Name}"}, {"Prompt", prompt}});
             }
         }
 
-        private bool HasPrompt(ISKFunction function)
+        private bool HasPrompt(KernelFunction function)
         {
-            var promptPath = Path.Combine(RepoFiles.PluginDirectoryPath, function.PluginName,
+            var promptPath = Path.Combine(RepoFiles.PluginDirectoryPath, function.Metadata?.PluginName ?? "",
                 function.Name, "skprompt.txt");
             return File.Exists(promptPath);
         }
@@ -120,18 +121,18 @@ namespace BlazorWithSematicKernel.Components
         private class FunctionForm
         {
             public int Order { get; set; } = 0;
-            public KeyValuePair<string, ISKFunction> Function { get; set; }
+            public KeyValuePair<string, KernelFunction> Function { get; set; }
             public List<ParamViewField> Fields { get; set; } = new();
         }
 
         private FunctionForm _functionForm = new();
         private string _visibleFunctionForm = "";
 
-        private void ShowFunctionForm(string skillName, string functionName, ISKFunction function, IEnumerable<ParameterView> parameterView)
+        private void ShowFunctionForm(string skillName, string functionName, KernelFunction function, IEnumerable<ParameterView> parameterView)
         {
             _visibleFunctionForm = $"{skillName}-{functionName}";
 
-            _functionForm.Function = new KeyValuePair<string, ISKFunction>(functionName, function);
+            _functionForm.Function = new KeyValuePair<string, KernelFunction>(functionName, function);
             _functionForm.Fields = parameterView.Select(p => new ParamViewField(p.Name, p.Description ?? "", p.DefaultValue ?? "")).ToList();
             StateHasChanged();
         }
@@ -159,7 +160,7 @@ namespace BlazorWithSematicKernel.Components
             _paramForm = new ParamViewForm();
         }
 
-        private void SelectFunction(KeyValuePair<string, ISKFunction> sKFunction)
+        private void SelectFunction(KeyValuePair<string, KernelFunction> sKFunction)
         {
             FunctionSelected.InvokeAsync(sKFunction);
         }

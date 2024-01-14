@@ -1,0 +1,63 @@
+description: Write a complete short story
+execution_settings:
+  default:
+    max_tokens: 4096
+    temperature: 1.0
+    top_p: 1.0
+    presence_penalty: 0.0
+    frequency_penalty: 0.0
+input_variables:
+- name: synopsis
+  description: A synopsis of what the short story should be about.
+  default: ''
+- name: theme
+  description: The theme or topic of this short story.
+  default: ''
+- name: character
+  description: The main character and primary protagonist or antihero
+  default: ''
+- name: monster
+  description: The monster or primary antagonist
+  default: ''
+- name: alignment
+  description: The alignment of the main character
+  default: ''
+name: ShortStory
+template: |
+  [CONTEXT]
+
+  THEME OF STORY:
+  {{$theme}}
+
+  MAIN CHARACTER:
+  {{$character}}
+
+  MAIN CHARACTER ALIGNMENT:
+  {{$alignment}}
+
+  MONSTER:
+  {{$monster}}
+
+  [END CONTEXT]
+
+  Write a complete short story using [CONTEXT] AND
+
+  Story Synopsis. Be sure the the MAIN CHARACTER behaves in accordance with the MAIN CHARACTER ALIGNMENT. 
+
+  If the MAIN CHARACTER ALIGNMENT is evil, make the story very dark with the character as antihero and remaining evil. 
+
+  If MAIN CHARACTER ALIGNMENT is good, make the story heroic. 
+
+  If MAIN CHARACTER ALIGNMENT is neutral. make the story harrowing. 
+
+  DO NOT REPEAT SYNOPSIS IN THE STORY.
+
+  DO NOT STATE THE MAIN CHARACTER ALIGNMENT VERBATIM IN THE STORY. For example if the alignment is chaotic-neutral, never say 'chaotic-neutral' or 'chaotic-neutral alignment'. Always use non-d&d terms to describe the alignment.
+
+  The Story should be comprised of 3 distinct chapters, each 300-500 words long and each representing a meaningful part of the story.
+
+  Story Synopsis:
+
+  {{$synopsis}}
+
+  complete short story:

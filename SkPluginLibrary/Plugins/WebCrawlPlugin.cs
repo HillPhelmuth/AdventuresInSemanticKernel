@@ -1,74 +1,73 @@
 ﻿using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Connectors.AI.OpenAI;
-using Microsoft.SemanticKernel.Functions.OpenAPI.Extensions;
 using Microsoft.SemanticKernel.Memory;
-using Microsoft.SemanticKernel.Orchestration;
 using Microsoft.SemanticKernel.Text;
 using SkPluginLibrary.Services;
 using System.ComponentModel;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.SemanticKernel.Connectors.OpenAI;
+using Microsoft.SemanticKernel.Plugins.OpenApi;
 
 namespace SkPluginLibrary.Plugins;
 
 public class WebCrawlPlugin
 {
 
-    private readonly ISKFunction _summarizeWebContent;
+    private readonly KernelFunction _summarizeWebContent;
     private const int MaxTokens = 1024;
     private const string Collection = "WikiCrawlCollection";
-    private readonly IKernel _kernel;
+    private readonly Kernel _kernel;
     private readonly BingWebSearchService? _searchService;
     private ISemanticTextMemory? _semanticTextMemory;
-    public WebCrawlPlugin(IKernel kernel)
+    public WebCrawlPlugin(Kernel kernel)
     {
-        _summarizeWebContent = kernel.ImportSemanticFunctionsFromDirectory(
-                       RepoFiles.PluginDirectoryPath,
-                                  "SummarizePlugin")["QueryNoteGen"];
+        var tryis = kernel.ImportPluginFromPromptDirectory(RepoFiles.PluginDirectoryPath, "SummarizePlugin").TryGetFunction("QueryNoteGen", out _summarizeWebContent);
         _kernel = kernel;
     }
 
-    public WebCrawlPlugin(IKernel kernel, BingWebSearchService bingWebSearchService)
+    public WebCrawlPlugin(Kernel kernel, BingWebSearchService bingWebSearchService)
     {
-        _summarizeWebContent = kernel.ImportSemanticFunctionsFromDirectory(RepoFiles.PluginDirectoryPath, "SummarizePlugin")["Summarize"];
+        var tryis = kernel.ImportPluginFromPromptDirectory(RepoFiles.PluginDirectoryPath, "SummarizePlugin").TryGetFunction("Summarize", out _summarizeWebContent);
+        Console.WriteLine($"SummarizePlugin loaded:{tryis}");
         _kernel = kernel;
         _searchService = bingWebSearchService;
 
     }
 
-    public WebCrawlPlugin(IKernel kernel, BingWebSearchService bingWebSearchService,
+    public WebCrawlPlugin(Kernel kernel, BingWebSearchService bingWebSearchService,
         ISemanticTextMemory? semanticTextMemory)
     {
-        _summarizeWebContent = kernel.ImportSemanticFunctionsFromDirectory(RepoFiles.PluginDirectoryPath, "SummarizePlugin")["Summarize"];
+        var tryit = kernel.ImportPluginFromPromptDirectory(RepoFiles.PluginDirectoryPath, "SummarizePlugin").TryGetFunction("Summarize", out _summarizeWebContent);
+        Console.WriteLine($"SummarizePlugin loaded:{tryit}");
         _kernel = kernel;
         _searchService = bingWebSearchService;
         _semanticTextMemory = semanticTextMemory;
     }
-    [SKFunction, Description("Crawl Web url and summarize the content found")]
+    [KernelFunction, Description("Crawl Web url and summarize the content found")]
     public async Task<string> CrawlAndSummarize([Description("Url to crawl")] string url, SKContext context)
     {
 
         var crawlService = new CrawlService();
         var text = await crawlService.CrawlAsync(url);
         Console.WriteLine($"------------------Crawl Text--------------\n{text}");
-        var output = await _kernel.RunAsync(text, _summarizeWebContent);
+        var output = await _kernel.InvokeAsync(_summarizeWebContent, new KernelArguments() { { "input", text } });
         return output.Result();
 
 
     }
-    [SKFunction, Description("Search Web url and summarize the content found")]
+    [KernelFunction, Description("Search Web url and summarize the content found")]
     public async Task<string> SearchAndSummarize([Description("Web search query")] string input, [Description("Number of web search results to use")] int resultCount = 1)
     {
         return await SearchAndCiteWeb(input, resultCount);
     }
-    [SKFunction, Description("Extract a web search query from a question")]
+    [KernelFunction, Description("Extract a web search query from a question")]
     public async Task<string> ExtractWebSearchQuery(string input)
     {
-        var extractPlugin = _kernel.CreateSemanticFunction("Extract terms for a simple web search query from a question. Include no other content\nquestion:{{$input}}", requestSettings: new OpenAIRequestSettings { MaxTokens = 128, Temperature = 0.0, TopP = 0 });
-        var result = await _kernel.RunAsync(input, extractPlugin);
+        var extractPlugin = _kernel.CreateFunctionFromPrompt("Extract terms for a simple web search query from a question. Include no other content\nquestion:{{$input}}", executionSettings: new OpenAIPromptExecutionSettings { MaxTokens = 128, Temperature = 0.0, TopP = 0 });
+        var result = await _kernel.InvokeAsync(extractPlugin, new KernelArguments() { { "input", input } });
         return result.Result();
     }
-    [SKFunction, Description("Search Web, summarize the content of each result and generate citations. Result facilitates citations by including url, title, and content properties")]
+    [KernelFunction, Description("Search Web, summarize the content of each result and generate citations. Result facilitates citations by including url, title, and content properties")]
     public async Task<string> SearchAndCiteWeb([Description("Web search query")] string input, [Description("Number of web search results to use")] int resultCount = 2)
     {
         var results = await _searchService!.SearchAsync(input, resultCount) ?? new List<BingSearchResult>();
@@ -123,29 +122,24 @@ public class WebCrawlPlugin
         return paragraphs;
 
     }
-    private IDictionary<string, ISKFunction>? _scraperPlugin;
+    private KernelPlugin? _scraperPlugin;
     private async Task<List<SearchResultItem>> ScrapeChunkAndSummarize(string url, string title, string input)
     {
 
         try
         {
-            _scraperPlugin ??= await _kernel.ImportOpenApiPluginFunctionsAsync("ScraperPlugin",
+            _scraperPlugin ??= await _kernel.ImportPluginFromOpenApiAsync("ScraperPlugin",
                 Path.Combine(RepoFiles.ApiPluginDirectoryPath,"ScraperApiPlugin", "openapi.json"),
                 new OpenApiFunctionExecutionParameters { EnableDynamicPayload = true, IgnoreNonCompliantErrors = true });
-            var context = _kernel.CreateNewContext();
-            context.Variables["url"] = url;
-            var kernelResult = await _kernel.RunAsync(context.Variables, _scraperPlugin["scrape"]);
+            var args = new KernelArguments
+            {
+                ["url"] = url
+            };
+            var kernelResult = await _kernel.InvokeAsync(_scraperPlugin["scrape"], args);
             var tokens = StringHelpers.GetTokens(kernelResult.Result());
             var count = tokens / 2048;
             var segments = ChunkIntoSegments(kernelResult.Result(), count, 2048, title, false);
-            var summaryTasks = new List<Task<KernelResult>>();
-            foreach (var segment in segments)
-            {
-                var ctx = _kernel.CreateNewContext();
-                ctx.Variables["input"] = segment;
-                ctx.Variables["query"] = input;
-                summaryTasks.Add(_kernel.RunAsync(ctx.Variables, _summarizeWebContent));
-            }
+            var summaryTasks = segments.Select(segment => new KernelArguments {["input"] = segment, ["query"] = input}).Select(segmentArgs => _kernel.InvokeAsync(_summarizeWebContent, segmentArgs)).ToList();
 
             var summaryResults = await Task.WhenAll(summaryTasks);
             return summaryResults.Select(x => new SearchResultItem(url){Title = title, Content = x.Result()}).ToList();

@@ -1,6 +1,5 @@
 Rewrite my bullet points into an email featuring complete sentences. Use a polite and inclusive tone.  
 
-[EXAMPLE]
 [Input]
 Toby,
 
@@ -23,10 +22,9 @@ Thanks,
 Dexter
 
 +++++
-[END EXAMPLE]
 [Input]
 {{$to}}
-{{$bullets}}
+{{$input}}
 
 Thanks,
 {{$sender}}

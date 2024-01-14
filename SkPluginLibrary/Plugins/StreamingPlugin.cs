@@ -1,14 +1,14 @@
 ﻿using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.AI.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.AI.OpenAI;
 using System.ComponentModel;
 using System.Text.Json;
+using Microsoft.SemanticKernel.ChatCompletion;
+using Microsoft.SemanticKernel.Connectors.OpenAI;
 
 namespace SkPluginLibrary.Plugins
 {
     public class StreamingPlugin
     {
-        [SKFunction, Description("Temp to see what can be returned from an SKFunction")]
+        [KernelFunction, Description("Temp to see what can be returned from an SKFunction")]
         public async IAsyncEnumerable<string> TryStreamFunction(string input)
         {
             for (var i = 0; i < 100; i++)
@@ -18,17 +18,17 @@ namespace SkPluginLibrary.Plugins
             }
         }
 
-        [SKFunction, Description("Generates a streaming chat response")]
+        [KernelFunction, Description("Generates a streaming chat response")]
         public async IAsyncEnumerable<string> ExecuteChatStreamResponse([Description("User's latest input")] string input,
             [Description("System prompt Instructions for chat model")] string systemPrompt = "",
             [Description(HistoryDescription)] string history = "")
         {
             var chatKernel = CoreKernelService.ChatCompletionKernel("gpt-3.5-turbo-1106");
-            var chatContext = chatKernel.CreateNewContext();
+            
 
 
-            var chatService = chatKernel.GetService<IChatCompletion>();
-            var chatHistory = chatService.CreateNewChat(systemPrompt);
+            var chatService = chatKernel.GetRequiredService<IChatCompletionService>();
+            var chatHistory = new ChatHistory(systemPrompt);
             try
             {
                 var template = new[]
@@ -52,10 +52,10 @@ namespace SkPluginLibrary.Plugins
             }
 
             chatHistory.AddUserMessage(input);
-            await foreach (var token in chatService.GenerateMessageStreamAsync(chatHistory,
-                               new OpenAIRequestSettings { Temperature = 1.0, TopP = 1.0 }))
+            await foreach (var token in chatService.GetStreamingChatMessageContentsAsync(chatHistory,
+                               new OpenAIPromptExecutionSettings { Temperature = 1.0, TopP = 1.0 }))
             {
-                yield return token;
+                yield return token.ToString();
             }
         }
 

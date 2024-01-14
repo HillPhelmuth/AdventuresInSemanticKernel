@@ -1,0 +1,23 @@
+description: Generate a list of synopsis for a novel or novella with sub-chapters
+execution_settings:
+  default:
+    max_tokens: 250
+    temperature: 0.0
+    top_p: 0.0
+    presence_penalty: 0.0
+    frequency_penalty: 0.0
+input_variables: []
+name: StoryGen
+template: |
+  ONLY USE XML TAGS IN THIS LIST: 
+
+  [XML TAG LIST]
+  list: Surround any lists with this tag
+
+  synopsis: An outline of the chapter to write 
+
+  [END LIST]
+
+  EMIT WELL FORMED XML ALWAYS. Code should be CDATA. 
+
+  {{$input}}

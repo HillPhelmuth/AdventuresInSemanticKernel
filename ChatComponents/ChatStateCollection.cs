@@ -7,15 +7,11 @@ using System.Threading.Tasks;
 
 namespace ChatComponents
 {
-    public class ChatStateCollection
+    public class ChatStateCollection(ILoggerFactory loggerFactory)
     {
-        private readonly ILogger<ChatStateCollection> _logger;
+        private readonly ILogger<ChatStateCollection> _logger = loggerFactory.CreateLogger<ChatStateCollection>();
 
-        public ChatStateCollection(ILoggerFactory loggerFactory)
-        {
-            _logger = loggerFactory.CreateLogger<ChatStateCollection>();
-        }
-        public Dictionary<string, ChatState> ChatStates { get; } = new();
+        public Dictionary<string, ChatState> ChatStates { get; } = [];
 
         public ChatState CreateChatState(string viewId)
         {
@@ -26,12 +22,13 @@ namespace ChatComponents
 
         public ChatState GetChatState(string viewId)
         {
-            if (!ChatStates.ContainsKey(viewId))
+            if (ChatStates.TryGetValue(viewId, out var value))
             {
-                _logger.LogError("ChatState for viewId {viewId} not found", viewId);
-                throw new ArgumentException($"ChatState for viewId {viewId} not found");
+                return value;
             }
-            return ChatStates[viewId];
+
+            _logger.LogError("ChatState for viewId {viewId} not found", viewId);
+            throw new ArgumentException($"ChatState for viewId {viewId} not found");
         }
 
         public bool TryGetChatState(string viewId, out ChatState? chatState)

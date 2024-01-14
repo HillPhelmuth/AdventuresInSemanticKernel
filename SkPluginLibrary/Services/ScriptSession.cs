@@ -8,15 +8,10 @@ public record ScriptCommand(string Code, ScriptState<object>? State);
 
 public class ScriptSession
 {
-    private readonly ScriptOptions _options;
+    private readonly ScriptOptions _options = ScriptOptions.Default
+        .AddReferences(CompileResources.PortableExecutableReferences)
+        .AddImports("System", "System.IO", "System.Collections.Generic", "System.Collections", "System.Console", "System.Diagnostics", "System.Dynamic", "System.Linq", "System.Linq.Expressions", "System.Net.Http", "System.Text", "System.Text.Json", "System.Net", "System.Threading.Tasks", "System.Numerics", "Microsoft.CodeAnalysis", "Microsoft.CodeAnalysis.CSharp");
     private readonly List<ScriptCommand> _history = new();
-
-    public ScriptSession()
-    {
-        _options = ScriptOptions.Default
-            .AddReferences(CompileResources.PortableExecutableReferences)
-            .AddImports("System", "System.IO", "System.Collections.Generic", "System.Collections", "System.Console", "System.Diagnostics", "System.Dynamic", "System.Linq", "System.Linq.Expressions", "System.Net.Http", "System.Text", "System.Text.Json", "System.Net", "System.Threading.Tasks", "System.Numerics", "Microsoft.CodeAnalysis", "Microsoft.CodeAnalysis.CSharp");
-    }
 
     public async Task<string> EvaluateAsync(string code)
     {

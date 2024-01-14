@@ -9,7 +9,7 @@
 }
 
 .assistant {
-    background: radial-gradient(circle, #704214, #3c2206, #181000, #000000);
+    background: radial-gradient(circle, black, #3c2206, #181000, #000000);
     background-size: 50% 50%;
     color: white;
     width: 93%;

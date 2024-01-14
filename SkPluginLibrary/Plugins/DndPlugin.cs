@@ -1,49 +1,48 @@
 ﻿using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Connectors.AI.OpenAI;
-using Microsoft.SemanticKernel.Functions.OpenAPI.Extensions;
-using Microsoft.SemanticKernel.Functions.OpenAPI.Model;
-using Microsoft.SemanticKernel.Orchestration;
+using Microsoft.SemanticKernel.Plugins.OpenApi;
 using System.ComponentModel;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
+using Microsoft.SemanticKernel.Connectors.OpenAI;
 
 namespace SkPluginLibrary.Plugins
 {
     public class DndPlugin
     {
-        private readonly IKernel _kernel;
-        private readonly ISKFunction? _summarizeMonsterFunction;
+        private readonly Kernel _kernel;
+        private readonly KernelFunction? _summarizeMonsterFunction;
 
 
-        public DndPlugin(IKernel kernel)
+        public DndPlugin(Kernel kernel)
         {
             _kernel = kernel;
-            _summarizeMonsterFunction =
-                kernel.ImportSemanticFunctionsFromDirectory(RepoFiles.PluginDirectoryPath, "WriterPlugin")["MonsterGen"];
+            
         }
 
         public DndPlugin()
         {
             _kernel = CoreKernelService.ChatCompletionKernel("gpt-3.5-turbo-1106");
-            _summarizeMonsterFunction =
-                _kernel.ImportSemanticFunctionsFromDirectory(RepoFiles.PluginDirectoryPath, "WriterPlugin")["MonsterGen"];
+           
         }
-        [SKFunction, SKName("RollDice"),
+        [KernelFunction("RollDice"),
          Description(
              "Roll dice using [count]D[value]+[bonus] where [count] is number of rolls, and [value] is sides on the die. (examples: 3D6, 2D4, 1D20, etc.)")]
         public string RollDice([Description("must be in nDv format like 3D6 or 3D6+1")] string countDValue)
         {
             if (!countDValue.Contains('d', StringComparison.InvariantCultureIgnoreCase))
                 throw new ArgumentException("Invalid dice format");
+            countDValue = countDValue.Trim('"');
             var dValue = countDValue.Contains('+') ? countDValue.Split('+')[0] : countDValue;
             var bValue = countDValue.Contains('+') ? countDValue.Split('+')[1] : "0";
-            var countValueArray = dValue.ToLower().Split('d');
+            var countValueArray = dValue.ToLower().Split('d','D');
+            Console.WriteLine($"Count and Value:\n{string.Join("\n", countValueArray)}");
             var hasCount = int.TryParse(countValueArray[0], out var count);
             count = hasCount ? count : 1;
             var hasValue = int.TryParse(countValueArray[1], out var value);
             value = hasValue ? value : 6;
             var total = 0;
+            Console.WriteLine($"Count: {count}, Value: {value}");
             for (var i = 0; i < count; i++)
             {
                 var random = new Random();
@@ -59,25 +58,27 @@ namespace SkPluginLibrary.Plugins
             return total.ToString();
         }
 
-        [SKFunction, SKName("GenerateMonsterDescription"),
+        [KernelFunction("GenerateMonsterDescription"),
          Description("Generate a random monster from the Dungeons and Dragons 5e Monster Manual")]
-        public async Task<string> GenerateMonsterDescription(string input, SKContext context)
+        public async Task<string> GenerateMonsterDescription(string input, KernelArguments arguments)
         {
             Console.WriteLine("Starting generate monster");
             var dndApiSkill =
-                await _kernel.ImportOpenApiPluginFunctionsAsync("DndApiPlugin", Path.Combine(RepoFiles.ApiPluginDirectoryPath, "DndApiPlugin", "openapi.json"));
+                await _kernel.ImportPluginFromOpenApiAsync("DndApiPlugin", Path.Combine(RepoFiles.ApiPluginDirectoryPath, "DndApiPlugin", "openapi.json"));
             var random = new Random();
-            if (!context.Variables.ContainsKey("challenge_rating"))
+            if (!arguments.ContainsName("challenge_rating"))
             {
                 var rating = random.Next(3, 12);
-                context.Variables.Set("challenge_rating", JsonSerializer.Serialize(new List<string> { rating.ToString() }.ToArray()));
+                arguments["challenge_rating"] = JsonSerializer.Serialize(new List<string> { rating.ToString() }.ToArray());
             }
 
-            var monstersResult = await _kernel.RunAsync(context.Variables, dndApiSkill["Monsters"]);
+            var monstersResult = await _kernel.InvokeAsync(dndApiSkill["Monsters"], arguments);
             try
             {
                 var result = monstersResult.GetValue<object>();
-                var monsterList = new MonsterList() { Count = 1, Monsters = new List<Monster> { new() { Index = "young-black-dragon", Name = "Young Black Dragon" } } };
+                var monsterList = new MonsterList() { Count = 1, Monsters =
+                    [new Monster {Index = "young-black-dragon", Name = "Young Black Dragon"}]
+                };
                 if (result is RestApiOperationResponse restApiResponse)
                 {
                     var content = restApiResponse.Content.ToString();
@@ -85,7 +86,7 @@ namespace SkPluginLibrary.Plugins
                 }
                 var index = random.Next(0, monsterList.Monsters.Count);
                 var monsterResult = monsterList.Monsters[index];
-                var summary = await _kernel.RunAsync(monsterResult.Name, _summarizeMonsterFunction);
+                var summary = await _kernel.InvokeAsync(_summarizeMonsterFunction, new KernelArguments() { { "input", monsterResult} });
                 //var summary = await _summarizeMonsterFunction.InvokeAsync(monsterResult.Name, context);
                 return summary.Result();
             }
@@ -98,14 +99,16 @@ namespace SkPluginLibrary.Plugins
         }
         
 
-        [SKFunction, SKName("StorySynopsis"),
+        [KernelFunction("StorySynopsis"),
          Description("Generate a brief 1-2 sentance summary of the character details to aid in story creation")]
         public async Task<string> StorySynopsisAsync([Description("Race, class, alignment and other character details")]string characterDetails)
         {
-            var context = _kernel.CreateNewContext();
-            context.Variables["characterDetails"] = characterDetails;
-            var synopsisFunction = _kernel.CreateSemanticFunction(StorySynopsisPrompt, requestSettings:new OpenAIRequestSettings {ChatSystemPrompt = "You are a story synopsis generator", Temperature = 1.0, TopP = 1.0, MaxTokens = 256});
-            var result = await _kernel.RunAsync(context.Variables, synopsisFunction);
+            var args = new KernelArguments
+            {
+                ["characterDetails"] = characterDetails
+            };
+            var synopsisFunction = _kernel.CreateFunctionFromPrompt(StorySynopsisPrompt, executionSettings:new OpenAIPromptExecutionSettings {ChatSystemPrompt = "You are a story synopsis generator", Temperature = 1.0, TopP = 1.0, MaxTokens = 256});
+            var result = await _kernel.InvokeAsync(synopsisFunction, args);
             return result.Result();
         }
 

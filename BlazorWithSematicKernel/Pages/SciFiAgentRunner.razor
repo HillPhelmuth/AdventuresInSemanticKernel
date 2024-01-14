@@ -1,0 +1,36 @@
+﻿@page "/agentRunner"
+<RadzenTabs>
+    <Tabs>
+        <RadzenTabsItem Text="Agents Chat">
+            <RadzenRow>
+                <RadzenColumn>
+                    <RadzenButton Text="Run Agent" Size="ButtonSize.ExtraSmall" Click="StartChat" IsBusy=_isRunning BusyText="Running..." />
+                    <RadzenButton Text="Cancel" Size="ButtonSize.ExtraSmall" Click="Cancel"></RadzenButton>
+                    <RadzenButton Text="Reset" Size="ButtonSize.ExtraSmall" Click="Reset"></RadzenButton>
+                    <RadzenCard>
+                        <ChatView @ref=_chatView ViewId="agentchat"></ChatView>
+                    </RadzenCard>
+                    <UserInput UserInputSubmit="HandleUserInput" ButtonLabel="Send" HelperText="User Input" IsBusy=_isBusy></UserInput>
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenTabsItem>
+        <RadzenTabsItem Text="Agents Thread">
+            <RadzenRow>
+                <RadzenColumn Size="8" Offset="2">
+                    <RadzenButton Text="Run Agent" Click="RunAgent" IsBusy=_isBusy BusyText="Running..." />
+                    <RadzenButton Text="Cancel" Size="ButtonSize.ExtraSmall" Click="Cancel"></RadzenButton>
+                    <RadzenCard Style="height:75vh; overflow:auto">
+                        @foreach (var message in _agentMessages)
+                        {
+                        <RadzenCard>
+                            <RadzenText TextStyle="TextStyle.Subtitle1">@message.Name</RadzenText>
+                            <br />
+                            <RadzenText TextStyle="TextStyle.Body2">@message.Content</RadzenText>
+                        </RadzenCard>
+                        }
+                    </RadzenCard>
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenTabsItem>
+    </Tabs>
+</RadzenTabs>

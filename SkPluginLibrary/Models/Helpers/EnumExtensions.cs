@@ -41,10 +41,10 @@ namespace SkPluginLibrary.Models.Helpers
                 if (field.GetCustomAttributes(typeof(DescriptionAttribute), false)
                         .FirstOrDefault() is DescriptionAttribute attribute && attribute.Description == description)
                 {
-                    return (TEnum)field.GetValue(null);
+                    return (TEnum)field.GetValue(null)!;
                 }
             }
-            return default;
+            return default!;
         }
     }
 }

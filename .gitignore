@@ -369,3 +369,10 @@ FodyWeavers.xsd
 /BlazorWithSematicKernel/PostBuildCopyCode.log
 /BlazorWithSematicKernel/ChatGptPluginManifests.json
 /SkPluginLibrary/Models/TimeoutRetryHandler.cs
+/BlazorWithSematicKernel/Pages/AgentBuilderPage.razor
+/BlazorWithSematicKernel/Pages/AgentBuilderPage.razor.cs
+/BlazorWithSematicKernel/Components/AgentComponents/AgentOrganizer.razor
+/BlazorWithSematicKernel/Components/AgentComponents/AgentOrganizer.razor.cs
+/BlazorWithSematicKernel/Components/AgentComponents/AgentRunner.razor
+/BlazorWithSematicKernel/Components/AgentComponents/AgentRunner.razor.cs
+/BlazorWithSematicKernel/usings.txt

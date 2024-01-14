@@ -17,6 +17,7 @@ namespace BlazorWithSematicKernel.Components
         private bool AskPlusChatInput => ChatRequestModel.ExecutionType.ToString().Contains("Chat");
         private bool AskOnlyInput => ChatRequestModel.ExecutionType.ToString().Contains("Plan") && !AskPlusChatInput;
         private UserInputType _userInputType;
+        private CancellationTokenSource _cancellationTokenSource = new();
         protected override Task OnAfterRenderAsync(bool firstRender)
         {
             if (firstRender)
@@ -35,15 +36,18 @@ namespace BlazorWithSematicKernel.Components
         private string? _chatInput;
         private void HandleYieldReturn(string text)
         {
-            if (_chatView!.ChatState.ChatMessages.LastOrDefault(x => x.Role == Role.Assistant)!
-                .IsActiveStreaming)
+            if (_chatView!.ChatState.ChatMessages.LastOrDefault(x => x.Role != Role.User)?
+                .IsActiveStreaming == true)
             {
                 _chatView!.ChatState.UpdateAssistantMessage(text);
             }
             else
-                _chatView!.ChatState.AddAssistantMessage(text, _chatView!.ChatState.ChatMessages.Count + 1);
+                _chatView!.ChatState.AddAssistantMessage(text);
         }
-
+        private void Cancel()
+        {
+            _cancellationTokenSource.Cancel();
+        }
 
         private async void HandleChatInput(UserInputRequest requestInput)
         {
@@ -68,12 +72,12 @@ namespace BlazorWithSematicKernel.Components
             {
                 switch (ChatRequestModel.ExecutionType)
                 {
-                    case ExecutionType.ActionPlanner:
+                    case ExecutionType.AutoFunctionCalling:
                         {
                             await ExecuteActionChatSequence(input, false);
                             break;
                         }
-                    case ExecutionType.ActionPlannerChat:
+                    case ExecutionType.AutoFunctionCallingChat:
                         {
                             await ExecuteActionChatSequence(input, true);
                             break;
@@ -87,21 +91,6 @@ namespace BlazorWithSematicKernel.Components
                         {
                             await ExecuteSequentialChatSequence(input, true);
                             break;
-                        }
-                    case ExecutionType.ChainFunctions:
-                        {
-                            var funcs = ChatRequestModel.SelectedFunctions;
-                            var funcFlow = string.Join("-->", funcs.Select(x => x.Name));
-                            var message = $"### Function Chain:\n\n{funcFlow}\n\nStarting input: {input}";
-                            _chatView!.ChatState.AddUserMessage(message, _chatView!.ChatState.ChatMessages.Count + 1);
-                            if (ChatRequestModel.Variables != null)
-                                ChatRequestModel.Variables["input"] = input;
-                            else
-                                ChatRequestModel.Variables = new Dictionary<string, string> { { "input", input } };
-                            var result = await CoreKernelService.ExecuteFunctionChain(ChatRequestModel);
-                            _chatView!.ChatState.AddAssistantMessage(result, _chatView!.ChatState.ChatMessages.Count + 1);
-                            break;
-
                         }
                     case ExecutionType.StepwisePlanner:
                         {
@@ -140,33 +129,35 @@ namespace BlazorWithSematicKernel.Components
 
         private async Task ExecuteActionChatSequence(string input, bool runAsChat)
         {
-            _chatView!.ChatState.AddUserMessage(input, _chatView!.ChatState.ChatMessages.Count + 1);
-            var chatWithActionPlanner = CoreKernelService.ChatWithActionPlanner(input,
-                ChatRequestModel, runAsChat, _askInput);
-            await ExecuteChatSequence(chatWithActionPlanner);            
+            var token = _cancellationTokenSource.Token;
+            _chatView!.ChatState.AddUserMessage(input);
+            var chatWithActionPlanner = CoreKernelService.ChatWithAutoFunctionCalling(input,
+                ChatRequestModel, runAsChat, _askInput, token);
+            await ExecuteChatSequence(chatWithActionPlanner);
         }
 
         private async Task ExecuteSequentialChatSequence(string input, bool runAsChat)
         {
-            _chatView!.ChatState.AddUserMessage(input, _chatView!.ChatState.ChatMessages.Count + 1);
+            var token = _cancellationTokenSource.Token;
+            _chatView!.ChatState.AddUserMessage(input);
             var chatWithPlanner = CoreKernelService.ChatWithSequentialPlanner(input,
-                ChatRequestModel, runAsChat, _askInput);
-            await ExecuteChatSequence(chatWithPlanner);            
+                ChatRequestModel, runAsChat, _askInput, token);
+            await ExecuteChatSequence(chatWithPlanner);
         }
 
         private async Task ExecuteStepwiseChatSequence(string input, bool runAsChat)
         {
-            _chatView!.ChatState.AddUserMessage(input, _chatView!.ChatState.ChatMessages.Count + 1);
-
-            var chatWithPlanner = CoreKernelService.ChatWithStepwisePlanner(input,
-                ChatRequestModel, runAsChat, _askInput);
+            var token = _cancellationTokenSource.Token;
+            _chatView!.ChatState.AddUserMessage(input);
+            var chatWithPlanner = CoreKernelService.ChatWithStepwisePlanner(input, ChatRequestModel, runAsChat, _askInput, token);
             await ExecuteChatSequence(chatWithPlanner);
         }
         private async Task ExecuteHandlebarsChatSequence(string input, bool runAsChat)
         {
-            _chatView!.ChatState.AddUserMessage(input, _chatView!.ChatState.ChatMessages.Count + 1);
+            var token = _cancellationTokenSource.Token;
+            _chatView!.ChatState.AddUserMessage(input);
             var chatWithPlanner = CoreKernelService.ChatWithHandlebarsPlanner(input,
-                               ChatRequestModel, runAsChat, _askInput);
+                               ChatRequestModel, runAsChat, _askInput, token);
             await ExecuteChatSequence(chatWithPlanner);
         }
 

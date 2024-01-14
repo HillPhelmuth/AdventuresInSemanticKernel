@@ -1,0 +1,31 @@
+description: Summarize given text or any text document
+execution_settings:
+  default:
+    max_tokens: 500
+    temperature: 0.0
+    top_p: 0.0
+    presence_penalty: 0.0
+    frequency_penalty: 0.0
+input_variables:
+- name: conversationtype
+  description: A synopsis of what the short story should be about.
+  default: ''
+- name: focusarea
+  description: The theme or topic of this short story.
+  default: ''
+- name: previousresults
+  description: The main character and primary protagonist or antihero
+  default: ''
+- name: input
+  description: The monster or primary antagonist
+  default: ''
+name: TellMeMore
+template: |
+  >>>>>The following is part of a {{$conversationtype}}.
+  {{$input}}
+
+  >>>>>The following is an overview of a previous part of the {{$conversationtype}}, focusing on "{{$focusarea}}".
+
+  {{$previousresults}}
+
+  >>>>>In 250 words or less, write a verbose and detailed overview of the {{$conversationtype}} focusing solely on "{{$focusarea}}".

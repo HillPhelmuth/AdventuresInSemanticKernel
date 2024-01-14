@@ -1,0 +1,75 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "External Tax Service API",
+    "version": "1.0.0",
+    "description": "API for accessing tax refund information"
+  },
+  "servers": [
+    {
+      "url": "https://externaltaxserviceexample.azurewebsites.net/api"
+    }
+  ],
+  "paths": {
+    "/RefundAmount/{userName}": {
+      "get": {
+        "summary": "Get Refund Amount",
+        "operationId": "getRefundAmount",
+        "description": "Get the user's current tax refund amount",
+        "parameters": [
+          {
+            "name": "userName",
+            "in": "path",
+            "description": "The user name to find refund info",
+            "required": true,
+            "schema": {
+              "type": "string"              
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/RefundStatus/{userName}": {
+      "get": {
+        "summary": "Get Refund Status",
+        "operationId": "getRefundStatus",
+        "description": "Get the user's current tax refund status.",
+        "parameters": [
+          {
+            "name": "userName",
+            "in": "path",
+            "description": "The user name to find refund info",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

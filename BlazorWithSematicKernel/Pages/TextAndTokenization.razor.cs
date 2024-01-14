@@ -30,7 +30,9 @@ namespace BlazorWithSematicKernel.Pages
         private ChunkForm _chunkForm = new();
         private bool _isBusy;
         private int _tabIndex;
+#pragma warning disable SKEXP0003
         private List<MemoryQueryResult> _memoryQueryResults = new();
+#pragma warning restore SKEXP0003
         private void HandleToggle(TokenizedChunk tokenizedChunk)
         {
             var chunk = _tokenizedChunks.FirstOrDefault(x => x.ChunkNumber == tokenizedChunk.ChunkNumber);

@@ -1,0 +1,62 @@
+description: Automatically generate query specific notes for any text or text document.
+execution_settings:
+  default:
+    max_tokens: 1024
+    temperature: 0.5
+    top_p: 1.0
+    presence_penalty: 0.0
+    frequency_penalty: 0.0
+input_variables:
+- name: input
+  description: the text that should be used for to generate notes
+  default: ''
+- name: query
+  description: The user's query. Notes will be geared towards this query
+  default: ''
+name: QueryNoteGen
+template: |
+  Analyze the following extract taken from a document. Use the [Query] as context when analyzing and summarizing the document. Response should be in xml format with a <notes> section and a <summary> section.
+
+
+  - Produce key points for memory. 
+
+
+  - Give memory a name. 
+
+
+  - Extract only points worth remembering. 
+
+
+  - Be brief. Conciseness is very important.  
+
+
+  - Use broken English. 
+
+
+  - If the document includes a list relevant to the [Query], include the entire list.
+
+
+  You will use this memory to analyze the rest of this document, and for other relevant tasks. 
+
+
+  The result of this task should be contained in the <notes> section.
+
+
+
+  After you've completed this task, generate a full summary of the results in the <summmary> section.
+
+
+
+  [Input]
+
+
+  {{$input}}
+
+
+  [Query]
+
+
+  {{$query}}
+
+
+  +++++

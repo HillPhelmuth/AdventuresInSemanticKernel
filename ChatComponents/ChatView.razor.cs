@@ -10,6 +10,7 @@ namespace ChatComponents
     public partial class ChatView : ComponentBase, IDisposable
     {
         private RadzenColumn? _column;
+        private ElementReference _chatColumn;
         public ChatState? ChatState { get; set; }
         [Inject]
         private ChatStateCollection ChatStateCollection {get; set; } = default!;
@@ -20,7 +21,7 @@ namespace ChatComponents
 
         /// <summary>
         /// Unique Identifier for ChatView instance. If you have multiple ChatView components in your application,
-        /// you need to provide unique ViewId for each of them. If left empty, ChatState will not persist component disposal.
+        /// you need to provide unique ViewId for each of them. If left empty, ChatState will not persist when component is disposed.
         /// </summary>
         [Parameter]
         public string ViewId { get; set; } = "";
@@ -29,11 +30,6 @@ namespace ChatComponents
 
         [Inject] private IJSRuntime JsRuntime { get; set; } = default!;
 
-        protected override void OnInitialized()
-        {
-            
-            base.OnInitialized();
-        }
         protected override Task OnParametersSetAsync()
         {
             if (string.IsNullOrEmpty(ViewId))
@@ -78,7 +74,7 @@ namespace ChatComponents
                 ChatStateCollection.ChatStates[ViewId] = ChatState!;
                 await InvokeAsync(StateHasChanged);
                 AppJsInterop = new AppJsInterop(JsRuntime);
-                await AppJsInterop.ScrollDown(_column!.Element);
+                await AppJsInterop.ScrollDown(_chatColumn);
             }
         }
 

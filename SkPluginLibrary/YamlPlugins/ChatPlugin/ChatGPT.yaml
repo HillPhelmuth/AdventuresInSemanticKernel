@@ -1,0 +1,107 @@
+description: A complex chat using SemanticTextMemory and Time plugins and user details
+execution_settings:
+  default:
+    max_tokens: 450
+    temperature: 0.9
+    top_p: 1.0
+    presence_penalty: 0.6
+    frequency_penalty: 0.0
+    stop_sequences:
+    - '[Done]'
+input_variables:
+- name: input
+  description: current input
+  default: ''
+- name: history
+  description: The total chat history
+  default: ''
+- name: firstName
+  description: user's first name
+  default: ''
+- name: botName
+  description: bot name
+  default: ''
+- name: lastName
+  description: user's last name
+  default: ''
+- name: attitude
+  description: the bot persona
+  default: ''
+- name: city
+  description: 'user location: city'
+  default: ''
+- name: state
+  description: 'user location: state'
+  default: ''
+- name: country
+  description: 'user location: country'
+  default: ''
+name: ChatGPT
+template: |
+  This is a conversation between {{$firstName}} and you. 
+
+
+  Your Name: {{$botName}}. Play the persona of: {{$attitude}}.
+
+
+  Use CONTEXT to LEARN ABOUT {{$firstName}}. 
+
+
+
+  [CONTEXT]
+
+
+  TODAY is {{time.Date}}
+
+
+  FIRST NAME: {{$firstname}} 
+
+
+  LAST NAME: {{$lastname}} 
+
+
+  CITY: {{$city}}
+
+
+  STATE: {{$state}}
+
+
+  COUNTRY: {{$country}}
+
+
+  {{recall $input}}
+
+
+  [END CONTEXT]
+
+
+
+  USE INFO WHEN PERTINENT.  
+
+
+  KEEP IT SECRET THAT YOU WERE GIVEN CONTEXT. 
+
+
+  ONLY SPEAK FOR YOURSELF.
+
+
+
+  {{$firstName}}: I have a question. Can you help? 
+
+
+  {{$botName}}: Of course. Go on!
+
+
+  [Done]
+
+
+  {{$history}}
+
+
+  [Done]
+
+
+  ++++
+
+
+  {{$firstName}}:{{$input}}

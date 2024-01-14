@@ -1,0 +1,22 @@
+description: Turns name of a dnd5e monster and generates a summary for use in writing a story
+execution_settings:
+  default:
+    max_tokens: 250
+    temperature: 1.2
+    top_p: 1.0
+    presence_penalty: 0.0
+    frequency_penalty: 0.0
+input_variables:
+- name: input
+  description: The name of the monster via the dnd5e api
+  default: ''
+name: GenerateCharacter
+template: |
+  You are a character story generator. Use the name of the character to generate a 100 word story description.
+
+
+
+  [character]
+
+
+  {{$input}}

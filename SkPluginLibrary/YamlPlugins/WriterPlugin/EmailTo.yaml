@@ -1,0 +1,101 @@
+description: Turn bullet points into an email to someone, using a polite tone
+execution_settings:
+  default:
+    max_tokens: 528
+    temperature: 0.9
+    top_p: 1.0
+    presence_penalty: 0.0
+    frequency_penalty: 0.0
+input_variables:
+- name: to
+  description: Intended recipient of email
+  default: ''
+- name: sender
+  description: Intended sender of email
+  default: ''
+- name: bullets
+  description: Bullet points to turn into an email
+  default: ''
+name: EmailTo
+template: |
+  Rewrite my bullet points into an email featuring complete sentences. Use a polite and inclusive tone.  
+
+
+
+  [EXAMPLE]
+
+
+  [Input]
+
+
+  Toby,
+
+
+
+  - Macbeth, King Scotland
+
+
+  - Married, Wife Lady Macbeth, No Kids
+
+
+  - Dog Toby McDuff. Hunter, dead. 
+
+
+  - Shakespeare play
+
+
+
+  Thanks,
+
+
+  Dexter
+
+
+
+  +++++
+
+
+  Hi Toby,
+
+
+
+  The story of Macbeth
+
+
+  My name is Macbeth. I used to be King of Scotland, but I died. My wife's name is Lady Macbeth and we were married for 15 years. We had no children. Our beloved dog Toby McDuff was a famous hunter of rats in the forest.
+
+
+  My story was immortalized by Shakespeare in a play.
+
+
+
+  Thanks,
+
+
+  Dexter
+
+
+
+  +++++
+
+
+  [END EXAMPLE]
+
+
+  [Input]
+
+
+  {{$to}}
+
+
+  {{$bullets}}
+
+
+
+  Thanks,
+
+
+  {{$sender}}
+
+
+  +++++

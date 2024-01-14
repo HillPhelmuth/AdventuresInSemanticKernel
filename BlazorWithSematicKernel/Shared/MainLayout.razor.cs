@@ -1,5 +1,6 @@
 using BlazorWithSematicKernel.Components;
 using Microsoft.AspNetCore.Components;
+using SkPluginLibrary.Services;
 
 namespace BlazorWithSematicKernel.Shared
 {
@@ -12,6 +13,14 @@ namespace BlazorWithSematicKernel.Shared
 
         [CascadingParameter(Name = "PageTitle")]
         public string PageTitle { get; set; } = default!;
+        protected override Task OnAfterRenderAsync(bool firstRender)
+        {
+            if (firstRender)
+            {
+                var resource = CompileResources.PortableExecutableReferences;
+            }
+            return base.OnAfterRenderAsync(firstRender);
+        }
         private bool _sidebar1Expanded = true;
         private void ShowChat()
         {

@@ -1,0 +1,13 @@
+description: ''
+execution_settings:
+  default:
+    max_tokens: 256
+    temperature: 0.0
+    top_p: 0.0
+    presence_penalty: 0.0
+    frequency_penalty: 0.0
+    stop_sequences:
+    - '[done]'
+input_variables: []
+name: Form
+template: "ACT LIKE A WEB SERVER, GIVING YOUR RESPONSES IN XML\n\nONLY USE XML TAGS IN THIS LIST.\n[XML TAG LIST]\nresponse: root node for your responses.\nform: a container for questions you want me to answer \noutput: Output you are returning to me\nquestion: questions I should ANSWER to clarify things.Can ask multiple.\nsubmit: End form with submit IF YOU WANT answers sent back to you, LIKE in a CONVERSATION\n[END LIST]\n\nEMIT WELL FORMED XML ALWAYS. WHEN YOU NEED MORE INFORMATION, ASK. \nWHEN YOU ALREADY KNOW, USE OUTPUT\n\nSubmit is always <submit promptName=\"{{$promptName}}\"/>\nAfter </response> write [done]\n\nContinue the conversation below, but always respond with a form.\n{{$input}}\n "

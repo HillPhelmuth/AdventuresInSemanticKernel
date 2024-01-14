@@ -20,14 +20,16 @@
     <RadzenSidebar @bind-Expanded="@_sidebar1Expanded">
         <RadzenPanelMenu>
             <RadzenPanelMenuItem Text="Home" Icon="home" Path="" />
-            <RadzenPanelMenuItem Text="Samples" MouseEnter="@((args) => ShowTooltip(args, "View, modify, and execute dotnet examples from the Semantic Kernel Repo"))" Icon="shopping_cart" Path="samples" />
-            <RadzenPanelMenuItem Text="Execute Function" MouseEnter="@((args) => ShowTooltip(args, "Select a single plugin function to execute"))" Icon="playlist_add_check" Path="executeFunction"></RadzenPanelMenuItem>
-            <RadzenPanelMenuItem Text="Build Planner" MouseEnter="@((args) => ShowTooltip(args, "Select plugins and functions to build and execute your own:<ul><li>Action planner</li><li>Sequential planner</li><li>Stepwise planner</li><li>or Kernel execution chain</li></ul>"))" Icon="foundation" Path="planBuilder"></RadzenPanelMenuItem>
+            <RadzenPanelMenuItem Text="SK Samples" MouseEnter="@((args) => ShowTooltip(args, "View, modify, and execute dotnet examples from the Semantic Kernel Repo"))" Icon="shopping_cart" Path="samples" />
+            <RadzenPanelMenuItem Text="Execute A Function" MouseEnter="@((args) => ShowTooltip(args, "Select a single plugin function. Add required inputs and  execute"))" Icon="playlist_add_check" Path="executeFunction"></RadzenPanelMenuItem>
+            <RadzenPanelMenuItem Text="Build An Agent" MouseEnter="@((args) => ShowTooltip(args, "Create and interact with a simple Semantic Kernel Agents"))" Path="simpleAgent" Icon="build"></RadzenPanelMenuItem>
+            <RadzenPanelMenuItem Text="Build A Planner" MouseEnter="@((args) => ShowTooltip(args, "Select plugins and functions to build and execute your own:<ul><li>Open AI Function Chat</li><li>Handlebars planner</li><li>or FunctionCalling Stepwise planner</li></ul>"))" Icon="foundation" Path="planBuilder"></RadzenPanelMenuItem>
             <RadzenPanelMenuItem Text="Custom Examples">
-                <RadzenPanelMenuItem Text="Web Chat" MouseEnter="@((args) => ShowTooltip(args, "Chat with the web using <em>Bing</em>"))" Icon="public" Path="web"></RadzenPanelMenuItem>
-                <RadzenPanelMenuItem Text="Wikipedia Chat" MouseEnter="@((args) => ShowTooltip(args, "Chat with the web using <em>Wikipedia</em>"))" Icon="html" Path="wikiChat"></RadzenPanelMenuItem>
-                <RadzenPanelMenuItem Text="C# REPL Plugin" MouseEnter="@((args) => ShowTooltip(args, "Use natural language prompts to generate and execute c# code"))" Icon="code" Path="repl"></RadzenPanelMenuItem>
-                <RadzenPanelMenuItem Text="Dnd Story Gen" MouseEnter="@((args) => ShowTooltip(args, "Example of a Sequential Planner at work. Planner has access to the D&D5e Api plugin and multiple semantic plugins.<br/> It uses these to create and execute a plan to generate a short story."))" Icon="casino" Path="dnd"></RadzenPanelMenuItem>
+                <RadzenPanelMenuItem Text="Web Agent" MouseEnter="@((args) => ShowTooltip(args, "Chat with the web using <em>Bing</em>"))" Icon="public" Path="web"></RadzenPanelMenuItem>
+                <RadzenPanelMenuItem Text="Wikipedia Agent" MouseEnter="@((args) => ShowTooltip(args, "Chat with the web using <em>Wikipedia</em>"))" Icon="html" Path="wikiChat"></RadzenPanelMenuItem>
+                <RadzenPanelMenuItem Text="C# REPL Agent" MouseEnter="@((args) => ShowTooltip(args, "Use natural language prompts to generate, compile and execute c# code"))" Icon="code" Path="repl"></RadzenPanelMenuItem>
+                <RadzenPanelMenuItem Text="Dnd Story Agent" MouseEnter="@((args) => ShowTooltip(args, "Example an Agent that uses the FunctionCalling Stepwise Planner. It has access to the D&D5e Api plugin and multiple semantic plugins.<br/> It uses these tools to create and execute a plan to generate a short story."))" Icon="casino" Path="dnd"></RadzenPanelMenuItem>
+                <RadzenPanelMenuItem Text="Interactive Adventure Agent" MouseEnter="@((args) => ShowTooltip(args, "Example of using OpenAI Assistants as characters in an interactive Sci-fi adventure story"))" Path="agentRunner" Icon="support_agent"></RadzenPanelMenuItem>
             </RadzenPanelMenuItem>
             <RadzenPanelMenuItem Text="SK Memory">
                 <RadzenPanelMenuItem Text="Vector Playground" MouseEnter="@((args) => ShowTooltip(args, "Play around with embeddings and similarities using your own or generated text snippets"))" Icon="polyline" Path="testEmbed"></RadzenPanelMenuItem>
@@ -40,7 +42,7 @@
 
         </RadzenPanelMenu>
         <hr />
-        <RadzenButton Icon="settings_input_component" Variant="Variant.Text" Text="Configuration" Click="ShowConfig"></RadzenButton>
+        <RadzenButton Icon="settings_input_component" Variant="Variant.Text" Text="Configure Services" Click="ShowConfig"></RadzenButton>
        
     </RadzenSidebar>
     <RadzenBody Style="padding:.75rem .5rem">
