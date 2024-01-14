@@ -1,9 +1,12 @@
-﻿using Microsoft.SemanticKernel;
+﻿using System.Net;
+using Microsoft.SemanticKernel;
 using SkPluginLibrary.Plugins;
 using System.Text.Json;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Http.Resilience;
+using Microsoft.Extensions.Logging;
 
 namespace SkPluginLibrary;
 
@@ -36,47 +39,126 @@ public partial class CoreKernelService
 
     public async IAsyncEnumerable<string> RunWebSearchChat(string query)
     {
-        var kernel = CreateKernel();
-        var memory = CreateSemanticMemory(MemoryStoreType.InMemory);
-        var webPlugin = new WebCrawlPlugin(kernel, _bingSearchService, memory);
-        var webPluginInstance = kernel.ImportPluginFromObject(webPlugin);
-        var chatService = kernel.GetRequiredService<IChatCompletionService>();
+        var kernelBuilder = Kernel.CreateBuilder();
+        kernelBuilder.Services.AddLogging(builder => builder.AddConsole());
+        kernelBuilder.Services.ConfigureHttpClientDefaults(c =>
+        {
+            // Use a standard resiliency policy, augmented to retry on 401 Unauthorized for this example
+            c.AddStandardResilienceHandler().Configure(o =>
+            {
+                o.Retry.ShouldHandle = args => ValueTask.FromResult(args.Outcome.Result?.StatusCode is HttpStatusCode.TooManyRequests);
+            });
+        });
+        var kernel = kernelBuilder
+            .AddOpenAIChatCompletion(TestConfiguration.OpenAI.ChatModelId, TestConfiguration.OpenAI!.ApiKey)
+            .Build();
+        var webPlugin = new WebCrawlPlugin(_bingSearchService);
+        var webPluginInstance = kernel.ImportPluginFromObject(webPlugin, "WebSearchPlugin");
         var sysPromptTemplate =
-            "Answer the user's query using the web search results below. Always include CITATIONS in your response.\n\n[Web Search Results]\n{{$memory_context}}";
-        yield return "Searching web for information...\n\n";
-        var webResult = await kernel.InvokeAsync(webPluginInstance["ExtractWebSearchQuery"], new KernelArguments { ["input"] = query});
-        var queryResult = await kernel.InvokeAsync(webPluginInstance["SearchAndCiteWeb"], new KernelArguments { ["input"] = webResult.ToString() });
-        var context = new KernelArguments
+            """
+            Answer the user's query using the web search results below. 
+            Always search the web before responding. 
+            Always include CITATIONS in your response.
+            """;
+        
+        kernel.FunctionInvoking += (_, e) =>
         {
-            ["memory_context"] = queryResult.Result()
+            var soemthing = e.Function;
+            if (e.Function.Name.StartsWith("func")) return;
+            AdditionalAgentText?.Invoke($"\n<h4> Executing {soemthing.Name} {soemthing.Metadata.PluginName}</h4>\n\n");
         };
+        kernel.FunctionInvoked += HandleCustomFunctionInvoked;
+        query = $"""
+                 Find the answer to the user question on the web
 
-        var templateEngine = new KernelPromptTemplateFactory(_loggerFactory).Create(new PromptTemplateConfig() { Template = sysPromptTemplate});
-        var sysPrompt = await templateEngine.RenderAsync(kernel, context);
-        var chat = new ChatHistory(sysPrompt);
-        chat.AddUserMessage(query);
-        await foreach (var token in chatService.GetStreamingChatMessageContentsAsync(chat,
-                           new OpenAIPromptExecutionSettings { MaxTokens = 1500, Temperature = 1.0 }))
+                 [User Question]
+
+                 {query}
+
+                 Include web page links
+                 """;
+        await foreach (var update in kernel.InvokePromptStreamingAsync(query, new KernelArguments(new OpenAIPromptExecutionSettings { MaxTokens = 1500, Temperature = 1.0, ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions, ChatSystemPrompt = sysPromptTemplate })))
         {
-            yield return token.Content;
+            var content = update.ToString();
+            
+            yield return content;
         }
+        
     }
-
+    public event Action<string>? AdditionalAgentText;
     public async IAsyncEnumerable<string> RunWikiSearchChat(string query)
     {
-        var kernel = CreateKernel();
-        var wikiPlugin = new WikiChatPlugin(kernel);
+        var kernelBuilder = Kernel.CreateBuilder();
+        kernelBuilder.Services.AddLogging(builder => builder.AddConsole());
+        kernelBuilder.Services.ConfigureHttpClientDefaults(c =>
+        {
+            // Use a standard resiliency policy, augmented to retry on 401 Unauthorized for this example
+            c.AddStandardResilienceHandler().Configure(o =>
+            {
+                o.Retry.ShouldHandle = args => ValueTask.FromResult(args.Outcome.Result?.StatusCode is HttpStatusCode.TooManyRequests);
+            });
+        });
+        var kernel = kernelBuilder
+            .AddOpenAIChatCompletion(TestConfiguration.OpenAI.ChatModelId, TestConfiguration.OpenAI!.ApiKey)
+            .Build();
+        kernel.FunctionInvoking += (_, e) =>
+        {
+            var soemthing = e.Function;
+            AdditionalAgentText?.Invoke($"\n<h4> Executing {soemthing.Name} {soemthing.Metadata.PluginName}</h4>\n\n");
+        };
+        kernel.FunctionInvoked += HandleCustomFunctionInvoked;
+        var wikiPlugin = new WikiChatPlugin();
         var wiki = kernel.ImportPluginFromObject(wikiPlugin);
-        var args = new KernelArguments
+        var systemPrompt =
+            """
+            Answer the user's query using Wikipedia search results. 
+            Always search the Wikipedia before responding. 
+            Always end your response with a list of ## Citations that include links to relevant Wikipedia pages.
+            """;
+        var settings = new OpenAIPromptExecutionSettings { MaxTokens = 1500, Temperature = 1.0, ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions, ChatSystemPrompt = systemPrompt };
+        query = $"""
+                 Find the answer to the user question on Wikipedia
+
+                 [User Question]
+
+                 {query}
+
+                 Include page links
+                 """;
+        var args = new KernelArguments(settings)
         {
             ["input"] = query
         };
-        var streamingKernel = await kernel.InvokeAsync<IAsyncEnumerable<string>>(wiki["WikiSearchAndChat"], args);
-        var kernelResult = streamingKernel;
-        await foreach (var result in kernelResult)
+        
+        var streamingKernel = kernel.InvokePromptStreamingAsync(query, args);
+       
+        //var kernelResult = streamingKernel;
+        await foreach (var result in streamingKernel)
         {
-            yield return result;
+            yield return result.ToString();
         }
+    }
+    private void HandleCustomFunctionInvoked(object? sender, FunctionInvokedEventArgs invokedArgs)
+    {
+        var function = invokedArgs.Function;
+        if (invokedArgs.Function.Name.StartsWith("func")) return;
+        AdditionalAgentText?.Invoke($"\n<h4> {function.Name} {function.Metadata.PluginName} Completed</h4>\n\n");
+        var result = $"<p>{invokedArgs.Result}</p>";
+        var resultsExpando = $"""
+
+                              <details>
+                                <summary>See Results</summary>
+                                
+                                <h5>Results</h5>
+                                <p>
+                                {result}
+                                </p>
+                                <br/>
+                              </details>
+                              """;
+
+        AdditionalAgentText?.Invoke(resultsExpando);
+        
     }
     #endregion
 }

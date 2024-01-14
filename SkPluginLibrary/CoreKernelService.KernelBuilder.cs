@@ -123,7 +123,7 @@ public partial class CoreKernelService
         _customNativePlugins.TryAdd(nameof(LanguageCalculatorPlugin), languageCalcPlugin);
         var csharpPlugin = new ReplCsharpPlugin(kernel);
         _customNativePlugins.TryAdd(nameof(ReplCsharpPlugin), csharpPlugin);
-        var webCrawlPlugin = new WebCrawlPlugin(kernel, _bingSearchService);
+        var webCrawlPlugin = new WebCrawlPlugin(_bingSearchService);
         _customNativePlugins.TryAdd(nameof(WebCrawlPlugin), webCrawlPlugin);
         var dndPlugin = new DndPlugin();
         _customNativePlugins.TryAdd(nameof(DndPlugin), dndPlugin);
@@ -131,7 +131,7 @@ public partial class CoreKernelService
         _customNativePlugins.TryAdd(nameof(HandleJsonPlugin), jsonPlugin);
         var streamPlugin = new StreamingPlugin();
         _customNativePlugins.TryAdd(nameof(StreamingPlugin), streamPlugin);
-        var wikiPlugin = new WikiChatPlugin(kernel);
+        var wikiPlugin = new WikiChatPlugin();
         _customNativePlugins.TryAdd(nameof(WikiChatPlugin), wikiPlugin);
         var youtubePlugin = new YouTubePlugin(kernel, _configuration["YouTubeSearch:ApiKey"]!);
         _customNativePlugins.TryAdd(nameof(YouTubePlugin), youtubePlugin);

@@ -1,12 +1,13 @@
-﻿using Abot2.Crawler;
+﻿using System.Diagnostics;
+using System.Net;
+using System.Text;
+using System.Text.RegularExpressions;
+using Abot2.Crawler;
 using AbotX2.Crawler;
 using AbotX2.Poco;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
-using System.Diagnostics;
-using System.Net;
-using System.Text;
-using System.Text.RegularExpressions;
+using ReverseMarkdown;
 
 namespace SkPluginLibrary.Services
 {
@@ -22,7 +23,7 @@ namespace SkPluginLibrary.Services
         {
             _loggerFactory = loggerFactory ?? ConsoleLogger.LogBuilder();
             _logger = _loggerFactory.CreateLogger<CrawlService>();
-            var crawlConfigurationX = new CrawlConfigurationX()
+            var crawlConfigurationX = new CrawlConfigurationX
             {
                 MaxPagesToCrawl = 1,
                 MaxCrawlDepth = 0,
@@ -43,7 +44,7 @@ namespace SkPluginLibrary.Services
 
         public CrawlService(int maxPages, int maxDepth)
         {
-            var crawlConfigurationX = new CrawlConfigurationX()
+            var crawlConfigurationX = new CrawlConfigurationX
             {
                 MaxPagesToCrawl = maxPages,
                 MaxCrawlDepth = maxDepth,
@@ -59,9 +60,11 @@ namespace SkPluginLibrary.Services
             _crawlerX.PageCrawlCompleted += ProcessPageCrawlCompleted;
             _crawlerX.PageCrawlDisallowed += PageCrawlDisallowed;
         }
+        private bool _convertToMarkdown;
 
-        public async Task<string> CrawlAsync(string url)
+        public async Task<string> CrawlAsync(string url, bool convertToMarkdown = true)
         {
+            _convertToMarkdown = convertToMarkdown;
             Console.WriteLine($"Crawling url {url}");
             var response = await _crawlerX.CrawlAsync(new Uri(url));
             if (response.ErrorOccurred)
@@ -69,8 +72,8 @@ namespace SkPluginLibrary.Services
                 Console.WriteLine($"Crawl of {url} completed with error: {response.ErrorException.Message}");
                 throw new Exception($"Crawl of {url} completed with error: {response.ErrorException.Message}");
             }
-            else
-                Console.WriteLine($"Crawl of {url} completed without error.");
+
+            Console.WriteLine($"Crawl of {url} completed without error.");
             return await _taskCompletionSource.Task;
 
         }
@@ -103,6 +106,26 @@ namespace SkPluginLibrary.Services
             var doc = new HtmlDocument();
             doc.LoadHtml(html);
             string text = "";
+            if (_convertToMarkdown)
+            {
+                var config = new Config
+                {
+                    // Include the unknown tag completely in the result (default as well)
+                    UnknownTags = Config.UnknownTagsOption.Drop,
+                    // generate GitHub flavoured markdown, supported for BR, PRE and table tags
+                    GithubFlavored = true,
+                    // will ignore all comments
+                    RemoveComments = true,
+                    // remove markdown output for links where appropriate
+                    SmartHrefHandling = true
+                };
+
+                var converter = new Converter(config);
+                var tidyHtml = Cleaner.PreTidy(html, true);
+                var mkdwnText = converter.Convert(tidyHtml);
+                _taskCompletionSource.SetResult(CleanUpContent(mkdwnText));
+                return;
+            }
             if (crawledPage.Uri.AbsoluteUri.EndsWith("/html"))
                 text = html;
             else if (crawledPage.Uri.AbsoluteUri.Contains("wikipedia.org"))
@@ -229,7 +252,7 @@ namespace SkPluginLibrary.Services
 
         private static string ParseGenericHtmlToText(HtmlDocument doc)
         {
-            var pTags = doc?.DocumentNode?.DescendantsAndSelf()?.Where(x => x.Name?.ToLower() == "p" || x.Attributes?["class"]?.Value?.Contains("content") == true || (x.Name.ToLower() != "script" && x.Name.ToLower() != "style"))?.Select(x => x.OuterHtml);
+            var pTags = doc?.DocumentNode?.DescendantsAndSelf()?.Where(x => x.Name?.ToLower() == "p" || x.Attributes?["class"]?.Value?.Contains("content") == true)?.Select(x => x.InnerText);
             var sb = new StringBuilder();
             foreach (var tag in pTags)
             {

@@ -53,8 +53,8 @@ builder.Logging.AddApplicationInsights(
 builder.Logging.AddFilter<ApplicationInsightsLoggerProvider>("Default", LogLevel.Debug);
 services.AddLogging(config =>
 {
-    config.AddProvider(new StringEventWriterLoggerProvider(stringEventWriter));
-    config.AddApplicationInsights();
+    config.AddProvider(new StringEventWriterLoggerProvider(stringEventWriter));    
+    config.Services.AddSingleton<ILoggerProvider, CustomApplicationInsightsLoggerProvider>();
 });
 services.AddCascadingAuthenticationState();
 services.AddSingleton<ActivityLogging>();

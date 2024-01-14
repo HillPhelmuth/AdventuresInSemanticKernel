@@ -6,4 +6,5 @@ public interface ICustomNativePlugins
     IAsyncEnumerable<string> RunWebSearchChat(string query);
     event EventHandler<string>? StringWritten;
     IAsyncEnumerable<string> RunWikiSearchChat(string query);
+    event Action<string>? AdditionalAgentText;
 }

@@ -7,51 +7,75 @@ using System.Text.Json.Serialization;
 using Microsoft.SemanticKernel.Plugins.OpenApi;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
+using SkPluginLibrary.Services;
+using System.Collections.Concurrent;
+using DocumentFormat.OpenXml.Wordprocessing;
+using System.Text.Json;
 
 namespace SkPluginLibrary.Plugins;
 
 public class WikiChatPlugin
 {
     private Kernel _kernel;
-    public WikiChatPlugin(Kernel kernel)
+    private readonly KernelFunction _summarizeWebContent;
+    public WikiChatPlugin()
     {
-        _kernel = kernel;
+        _kernel = Kernel.CreateBuilder().AddOpenAIChatCompletion("gpt-3.5-turbo-1106", TestConfiguration.OpenAI.ApiKey).Build();
+        var summarizePlugin = _kernel.ImportPluginFromPromptDirectory(Path.Combine(RepoFiles.PluginDirectoryPath, "SummarizePlugin"), "SummarizePlugin");
+        _summarizeWebContent = summarizePlugin["Summarize"];
     }
-    [KernelFunction, Description("Chat with wikipedia as source. Streaming response.")]
-    public async IAsyncEnumerable<string> WikiSearchAndChat(string input)
+    [KernelFunction, Description("Search Wikipedia, summarize the content of each result and generate citations.")]
+    [return: Description("A json collection of objects designed to facilitate Wikipedia citations including url, title, and content")]
+    public async Task<string> SearchAndCiteWikipedia([Description("Wikipedia search query")] string input, [Description("Number of Wikipedia search results to use")] int resultCount = 2)
     {
-        yield return "Searching Wikipedia...\n\n";
-        var searchUrl = SearchRequestString(input, 3);
+        var searchUrl = SearchRequestString(input, resultCount);
         var client = new HttpClient();
         var pages = await client.GetFromJsonAsync<WikiSearchResult>(searchUrl);
-        yield return "Parsing Wikipedia pages...\n\n";
-        var tasks = pages.Pages.Select(page => SummarizeTextFromScraperPlugin(PageRequestString(page.Key), input)).ToList();
-        var sb = new StringBuilder();
-        var index = 1;
-        foreach (var page in pages.Pages)
+        var searchAndScrapeTasks = pages.Pages.Select(page => ScrapeChunkAndSummarize(page.PageRequestString, page.Title, input, $"{page.Description}\n{page.Excerpt}")).ToList();
+        var results = new ConcurrentBag<List<SearchResultItem>>();
+        await Parallel.ForEachAsync(searchAndScrapeTasks, new ParallelOptions { MaxDegreeOfParallelism = 2 }, async (task, _) =>
         {
-            sb.AppendLine($"{index++}. [{page.Title}](https://en.wikipedia.org/wiki/{page.Key})");
-        }
-
-        var sources = sb.ToString();
-        var results = await Task.WhenAll(tasks);
-        yield return "Wikipedia plugin complete...\n\n";
-        var systemPrompt =
-            $"You are a friendly, talkative and helpful AI with knowledge of all things on Wikipedia. Answer the user's query using the [Context] below. The Context is a summary of current wikipedia pages.\n[Context]\n{string.Join("\n", results)}";
-        Console.WriteLine($"\n-------------\n{systemPrompt}\n---------------\n");
-        var chatService = _kernel.GetRequiredService<IChatCompletionService>();
-        var chatHistory = new ChatHistory(systemPrompt);
-        chatHistory.AddUserMessage(input);
-        await foreach (var token in chatService.GetStreamingChatMessageContentsAsync(chatHistory,
-                           new OpenAIPromptExecutionSettings { MaxTokens = 1500, Temperature = 1.0 }))
-        {
-            yield return token.Content;
-        }
-        yield return "\n\n-----------------\n\n";
-        yield return "\n\n### Sources:\n\n";
-
-        yield return sources;
+            var result = await task;
+            Console.WriteLine($"Scraped {result.Count} segments");
+            results.Add(result);
+            await Task.Delay(500);
+        });
+        var searchCiteJson = JsonSerializer.Serialize(results.SelectMany(x => x), new JsonSerializerOptions { WriteIndented = true });
+        return searchCiteJson;
     }
+    private async Task<List<SearchResultItem>> ScrapeChunkAndSummarize(string url, string title, string input, string summary)
+    {
+
+        try
+        {
+            var crawler = new CrawlService();
+            var text = await crawler.CrawlAsync(url);
+            var tokens = StringHelpers.GetTokens(text);
+            var count = tokens / 2048;
+            var segments = ChunkIntoSegments(text, Math.Max(count,1), 2048, title, false);
+            var summaryTasks = segments.Select(segment => new KernelArguments { ["input"] = segment, ["query"] = input }).Select(segmentArgs => _kernel.InvokeAsync(_summarizeWebContent, segmentArgs)).ToList();
+
+            var summaryResults = new ConcurrentBag<FunctionResult>()/* await Task.WhenAll(summaryTasks)*/;
+
+            await Parallel.ForEachAsync(summaryTasks, new ParallelOptions { MaxDegreeOfParallelism = 2 }, async (task, _) =>
+            {
+                var result = await task;
+                summaryResults.Add(result);
+                // ReSharper disable once MethodSupportsCancellation
+#pragma warning disable CA2016 // Forward the 'CancellationToken' parameter to methods
+                await Task.Delay(500);
+#pragma warning restore CA2016 // Forward the 'CancellationToken' parameter to methods
+            });
+            return summaryResults.Select(x => new SearchResultItem(url) { Title = title, Content = x.Result() }).ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to scrape text from {url}\n\n{ex.Message}\n{ex.StackTrace}");
+            return [new SearchResultItem(url) { Title = title, Content = summary }];
+        }
+
+    }
+    
 
     public static string SearchRequestString(string searchQuery, int maxResults)
     {
@@ -72,12 +96,12 @@ public class WikiChatPlugin
             var scraperPlugin = await _kernel.ImportPluginFromOpenApiAsync("ScraperPlugin",
                 new Uri("https://scraper.gafo.tech/.well-known/ai-plugin.json"),
                 new OpenApiFunctionExecutionParameters { EnableDynamicPayload = true, IgnoreNonCompliantErrors = true });
-            var summarizePlugin = _kernel.ImportPluginFromPromptDirectory(RepoFiles.PluginDirectoryPath, "SummarizePlugin")["Summarize"];
+            var summarizePlugin = _kernel.ImportPluginFromPromptDirectory(Path.Combine(RepoFiles.PluginDirectoryPath, "SummarizePlugin"), "SummarizePlugin")["Summarize"];
             var kernelResult = await _kernel.InvokeAsync(scraperPlugin["scrape"], new KernelArguments { ["url"] = url});
             var scrapedString = kernelResult.Result();
             var segmentCount = StringHelpers.GetTokens(scrapedString) / 4096;
             segmentCount = Math.Min(3, segmentCount);
-            var segments = ChunkIntoSegments(scrapedString, segmentCount, 4096, "", false);
+            var segments = ChunkIntoSegments(scrapedString, Math.Max(segmentCount,1), 4096, "", false);
             var kernelResults = segments.Select(segment => _kernel.InvokeAsync(summarizePlugin, new KernelArguments() {["query"] = input, ["input"] = segment })).ToList();
 
             var summaryResults = await Task.WhenAll(kernelResults);
@@ -93,7 +117,8 @@ public class WikiChatPlugin
     private static IEnumerable<string> ChunkIntoSegments(string text, int segmentCount, int maxPerSegment = 4096, string description = "", bool ismarkdown = true)
     {
         var total = StringHelpers.GetTokens(text);
-        var totalPerSegment = Math.Min(total / segmentCount, maxPerSegment);
+        var perSegment = total/segmentCount;
+        var totalPerSegment = perSegment > maxPerSegment ? maxPerSegment : perSegment;
         List<string> paragraphs;
         if (ismarkdown)
         {
@@ -135,6 +160,7 @@ public class WikiPage
 
     [JsonPropertyName("thumbnail")]
     public Thumbnail? Thumbnail { get; set; }
+    public string? PageRequestString => $"https://en.wikipedia.org/w/rest.php/v1/page/{Key}/html";
 }
 
 public class Thumbnail
