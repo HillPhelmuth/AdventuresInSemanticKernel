@@ -21,12 +21,12 @@
             </RadzenFormField>
             <RadzenButton ButtonType="ButtonType.Submit" Text="Run" IsBusy="_isBusy" BusyText="Running..."></RadzenButton>
         </RadzenTemplateForm>
-        <RadzenCard>
+        <RadzenCard Style="height:15rem; overflow:auto">
             <RadzenTimeline LinePosition="LinePosition.Alternate">
                 <Items>
                     @foreach (var message in _chatMessages)
                     {
-                        <RadzenTimelineItem>
+                        <RadzenTimelineItem Style="font-size:90%">
                             <LabelContent><RadzenBadge>@message.Role</RadzenBadge></LabelContent>
                             <ChildContent>@message.Content</ChildContent>
                         </RadzenTimelineItem>

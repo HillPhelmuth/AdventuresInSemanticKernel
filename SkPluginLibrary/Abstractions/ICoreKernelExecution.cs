@@ -22,5 +22,5 @@ public interface ICoreKernelExecution
     IAsyncEnumerable<string> ChatWithHandlebarsPlanner(string query, ChatRequestModel chatRequestModel,
         bool runAsChat = true, string? askOverride = null, CancellationToken cancellationToken = default);
 
-    event Action<SimpleChatMessage>? DndPlannerFunctionHook;
+    
 }

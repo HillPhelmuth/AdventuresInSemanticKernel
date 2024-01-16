@@ -77,7 +77,7 @@ public partial class CoreKernelService
             _dbScanMemory = await CreateSqliteMemoryAsync();
         }
         collection ??= CollectionName.ClusterCollection;
-        var kernel = await CreateSqliteKernel();
+        var kernel = CreateKernel();
         var memory = _dbScanMemory;
         var items = await memory!.SearchAsync(collection, searchTerm, numberOfItems, 0.0, true).ToListAsync();
         //await _memoryStore.CreateCollectionAsync(collection);

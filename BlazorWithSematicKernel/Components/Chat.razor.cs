@@ -36,13 +36,7 @@ namespace BlazorWithSematicKernel.Components
         private string? _chatInput;
         private void HandleYieldReturn(string text)
         {
-            if (_chatView!.ChatState.ChatMessages.LastOrDefault(x => x.Role != Role.User)?
-                .IsActiveStreaming == true)
-            {
-                _chatView!.ChatState.UpdateAssistantMessage(text);
-            }
-            else
-                _chatView!.ChatState.AddAssistantMessage(text);
+            _chatView!.ChatState!.UpsertAssistantMessage(text);
         }
         private void Cancel()
         {

@@ -38,24 +38,17 @@ public static class Example65_HandlebarsPlanner
 
     private static async Task RunSampleAsync(string goal, bool shouldPrintPrompt = false, params string[] pluginDirectoryNames)
     {
-        string apiKey = TestConfiguration.AzureOpenAI.ApiKey;
-        string chatDeploymentName = TestConfiguration.AzureOpenAI.ChatDeploymentName;
-        string chatModelId = TestConfiguration.AzureOpenAI.ChatModelId;
-        string endpoint = TestConfiguration.AzureOpenAI.Endpoint;
+        var apiKey = TestConfiguration.OpenAI?.ApiKey;
+        var chatModelId = TestConfiguration.OpenAI?.ChatModelId;
 
-        if (apiKey == null || chatDeploymentName == null || chatModelId == null || endpoint == null)
+        if (apiKey == null || chatModelId == null)
         {
-            Console.WriteLine("Azure endpoint, apiKey, deploymentName, or modelId not found. Skipping example.");
+            Console.WriteLine("Open AI Apikey or model not found. Skipping example.");
             return;
         }
 
         var kernel = Kernel.CreateBuilder()
-            .AddAzureOpenAIChatCompletion(
-                deploymentName: chatDeploymentName,
-                endpoint: endpoint,
-                serviceId: "AzureOpenAIChat",
-                apiKey: apiKey,
-                modelId: chatModelId)
+            .AddOpenAIChatCompletion(chatModelId, apiKey)
             .Build();
 
         if (pluginDirectoryNames[0] == StringParamsDictionaryPlugin.PluginName)
@@ -85,7 +78,7 @@ public static class Example65_HandlebarsPlanner
 
         // Use gpt-4 or newer models if you want to test with loops. 
         // Older models like gpt-35-turbo are less recommended. They do handle loops but are more prone to syntax errors.
-        var allowLoopsInPlan = chatDeploymentName.Contains("gpt-4", StringComparison.OrdinalIgnoreCase);
+        var allowLoopsInPlan = chatModelId.Contains("gpt-4", StringComparison.OrdinalIgnoreCase);
         var planner = new HandlebarsPlanner(
             new HandlebarsPlannerOptions()
             {

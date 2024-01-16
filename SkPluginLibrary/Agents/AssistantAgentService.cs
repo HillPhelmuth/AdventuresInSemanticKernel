@@ -81,15 +81,21 @@ public class AssistantAgentService : IAsyncDisposable
             var toolCall = update.ToolCallUpdate as StreamingFunctionToolCallUpdate;
             if (toolCall?.Name is not null)
             {
-                _currentRespondent = toolCall.Name.Replace("_Ask", "");
+                var respondant = toolCall.Name.Replace("_Ask", "");
+                if (!respondant.Equals(_currentRespondent, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    
+                    yield return $"<em>{respondant}</em>:<br/> ";                   
+                    _currentRespondent = respondant;
+                }
             }
             var sb = new StringBuilder();
-            if (!sentRespondant)
-            {
-                sb.AppendLine($"{_currentRespondent}: ");
-                yield return $"<em>{_currentRespondent}</em>:<br/> ";
-                sentRespondant = true;
-            }
+            //if (!sentRespondant)
+            //{
+            //    sb.AppendLine($"{_currentRespondent}: ");
+            //    yield return $"<em>{_currentRespondent}</em>:<br/> ";
+            //    sentRespondant = true;
+            //}
 
             if (update.Content is not null)
             {

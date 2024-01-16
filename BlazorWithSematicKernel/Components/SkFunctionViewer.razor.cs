@@ -6,16 +6,16 @@ namespace BlazorWithSematicKernel.Components
     public partial class SkFunctionViewer : ComponentBase
     {
         [Parameter]
-        public Dictionary<string, KernelFunction> Functions { get; set; } = new();
-        
+        public Dictionary<string, KernelFunction> Functions { get; set; } = [];
+
         [Parameter]
         public ExecutionType ExecutionType { get; set; }
 
-        [Parameter] public List<string> ExcludedFunctions { get; set; } = new();
+        [Parameter] public List<string> ExcludedFunctions { get; set; } = [];
         [Parameter]
         public EventCallback<List<string>> ExcludedFunctionsChanged { get; set; }
 
-        [Parameter] public List<string> RequiredFunctions { get; set; } = new();
+        [Parameter] public List<string> RequiredFunctions { get; set; } = [];
         [Parameter]
         public EventCallback<List<string>> RequiredFunctionsChanged { get; set; }
         [Parameter]
@@ -23,19 +23,19 @@ namespace BlazorWithSematicKernel.Components
         [Parameter]
         public EventCallback<ValueTuple<string, string, Dictionary<string, string>>> FunctionInputsAdded { get; set; }
 
-        [Parameter] public Dictionary<string, string> ContextVariables { get; set; } = new();
+        [Parameter] public Dictionary<string, string> ContextVariables { get; set; } = [];
         [Parameter]
         public EventCallback<Dictionary<string, string>> ContextVariablesChanged { get; set; }
 
-        [Parameter] public List<Function> PluginFunctions { get; set; } = new();
+        [Parameter] public List<Function> PluginFunctions { get; set; } = [];
         [Parameter]
         public EventCallback<List<Function>> PluginFunctionsChanged { get; set; }
         [Parameter]
         public EventCallback<KeyValuePair<string, KernelFunction>> FunctionSelected { get; set; }
-        private bool IsSequential => ExecutionType is ExecutionType.SequentialPlanner or ExecutionType.SequentialPlannerChat;
+        private bool IsHandlebars => ExecutionType is ExecutionType.HandlebarsPlanner or ExecutionType.HandlebarsPlannerChat;
         private bool IsStepwise => ExecutionType is ExecutionType.StepwisePlanner or ExecutionType.StepwisePlannerChat;
-        private bool IsAction => ExecutionType is ExecutionType.AutoFunctionCalling or ExecutionType.AutoFunctionCallingChat;
-        private bool IsPlanner => IsSequential || IsStepwise || IsAction;
+        private bool IsAutoFunctionCall => ExecutionType is ExecutionType.AutoFunctionCalling or ExecutionType.AutoFunctionCallingChat;
+        private bool IsPlanner => IsHandlebars || IsStepwise || IsAutoFunctionCall;
         [Inject]
         private TooltipService TooltipService { get; set; } = default!;
 
@@ -51,7 +51,6 @@ namespace BlazorWithSematicKernel.Components
             {
                 return ExecutionType switch
                 {
-                    ExecutionType.ChainFunctions => "Select Functions to Chain",
                     ExecutionType.SingleFunction => "Select Function to Execute",
                     ExecutionType.AutoFunctionCalling or ExecutionType.AutoFunctionCallingChat => "Execute Action Plan",
                     ExecutionType.SequentialPlanner or ExecutionType.SequentialPlannerChat =>
@@ -65,7 +64,7 @@ namespace BlazorWithSematicKernel.Components
         {
             public string? PluginName { get; set; }
             public string? FunctionName { get; set; }
-            public List<ParamViewField> Fields { get; set; } = new();
+            public List<ParamViewField> Fields { get; set; } = [];
         }
         private ParamViewForm _paramForm = new();
         private record ParamViewField(string Name, string Description, object? DefaultValue)
@@ -122,7 +121,7 @@ namespace BlazorWithSematicKernel.Components
         {
             public int Order { get; set; } = 0;
             public KeyValuePair<string, KernelFunction> Function { get; set; }
-            public List<ParamViewField> Fields { get; set; } = new();
+            public List<ParamViewField> Fields { get; set; } = [];
         }
 
         private FunctionForm _functionForm = new();

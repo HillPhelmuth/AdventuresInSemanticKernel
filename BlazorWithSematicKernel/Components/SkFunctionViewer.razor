@@ -6,7 +6,7 @@
         {
             <RadzenButton Text="Execute" Icon="chat" Click="@(() => SelectionComplete.InvokeAsync())"></RadzenButton>
         }
-        
+
         <RadzenRow>
             @foreach (var function in Functions)
             {
@@ -14,15 +14,15 @@
                 <RadzenColumn Size="4">
                     <RadzenCard>
                         <RadzenText TextStyle="TextStyle.Caption">Plugin: @functionview.PluginName</RadzenText>
-                        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.DisplayH6" Text="@functionview.Name"></RadzenText>
+                            <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.DisplayH6" Text="@functionview.Name"></RadzenText>
 
-                        <RadzenCard>
-                            <RadzenText Text="@functionview.Description" TextStyle="TextStyle.Body1"></RadzenText>
-                            @if (HasPrompt(function.Value))
+                            <RadzenCard>
+                                <RadzenText Text="@functionview.Description" TextStyle="TextStyle.Body1"></RadzenText>
+                                @if (HasPrompt(function.Value))
                             {
                                 <RadzenButton Size="ButtonSize.ExtraSmall" Icon="search" Text="prompt" Click="@(() => ShowPrompt(function.Value))"></RadzenButton>
                             }
-                           
+
                         </RadzenCard>
                         @if (IsPlanner)
                         {
@@ -31,18 +31,14 @@
                                 <RadzenButton Icon="@(RequiredFunctions.Contains(functionview.Name) ? "check_circle" : "")" MouseEnter="@((args) => ShowTooltip(args, "Require inclusion in Plan"))" Size="ButtonSize.ExtraSmall" Text="Require Function" Click="@(() => RequireFunction(functionview.Name))"></RadzenButton>
                             </RadzenCard>
                         }
-                        @if (ExecutionType == ExecutionType.ChainFunctions)
-                        {
-                            <RadzenButton Size="ButtonSize.ExtraSmall" Text="Select Function" Click="@(() => ShowFunctionForm(functionview.PluginName, functionview.Name, function.Value, function.Value.Metadata.Parameters))"></RadzenButton>
-                        }
-                        @if (functionview.Parameters?.Count > 0 && functionview.Parameters?.All(x => x.Name.Equals("input", StringComparison.InvariantCultureIgnoreCase)) != true && ExecutionType != ExecutionType.ChainFunctions)
+                        @if (functionview.Parameters?.Count > 0 && functionview.Parameters?.All(x => x.Name.Equals("input", StringComparison.InvariantCultureIgnoreCase)) != true)
                         {
                             <RadzenButton Size="ButtonSize.ExtraSmall" Text="View Inputs" Click="@(() => ShowParameters(functionview.Parameters, functionview.PluginName, functionview.Name))"></RadzenButton>
                         }
                         @if (ExecutionType == ExecutionType.SingleFunction)
                         {
                             <RadzenButton Size="ButtonSize.ExtraSmall" Text="Select Function" Click="@(() => SelectFunction(function))"></RadzenButton>
-                        
+
                         }
                         @if (_visibleFunctionForm == $"{functionview.PluginName}-{functionview.Name}")
                         {
@@ -58,7 +54,7 @@
                                         </ChildContent>
                                         <Helper>
                                             <RadzenText TextStyle="TextStyle.Caption" Text="@field.Description"></RadzenText>
-                                            <RadzenRequiredValidator Visible="@(!IsSequential && !IsStepwise)"></RadzenRequiredValidator>
+                                            <RadzenRequiredValidator Visible="@(!IsHandlebars && !IsStepwise)"></RadzenRequiredValidator>
                                         </Helper>
                                     </RadzenFormField>
 
@@ -77,7 +73,7 @@
                                         </ChildContent>
                                         <Helper>
                                             <RadzenText TextStyle="TextStyle.Caption" Text="@field.Description"></RadzenText>
-                                            <RadzenRequiredValidator Visible="@(!IsSequential && !IsStepwise)"></RadzenRequiredValidator>
+                                            <RadzenRequiredValidator Visible="@(!IsHandlebars && !IsStepwise)"></RadzenRequiredValidator>
                                         </Helper>
                                     </RadzenFormField>
 

@@ -1,5 +1,5 @@
 ﻿.user {
-    background: radial-gradient(circle, #C19A6B, #9F6C3F, #b45918);
+    background: radial-gradient(ellipse, #C19A6B, #9F6C3F, #b45918);
     background-size: 50% 50%;
     color: black;
     font-weight: bold;
@@ -9,7 +9,7 @@
 }
 
 .assistant {
-    background: radial-gradient(circle, black, #3c2206, #181000, #000000);
+    background: radial-gradient(ellipse, black, #331d00, #181000, #000000);
     background-size: 50% 50%;
     color: white;
     width: 93%;

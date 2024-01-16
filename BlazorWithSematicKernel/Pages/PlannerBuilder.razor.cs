@@ -9,7 +9,7 @@ namespace BlazorWithSematicKernel.Pages
         [Inject] private ICoreKernelExecution CoreKernelService { get; set; } = default!;
         [Inject] private NotificationService NotificationService { get; set; } = default!;
         private int _currentStep;
-        private Dictionary<PluginType, List<KernelPlugin>> _allPluginTypes = new();
+        private Dictionary<PluginType, List<KernelPlugin>> _allPluginTypes = [];
         private List<PluginForm> _allPlugins = [];
         private class PluginForm(PluginType pluginType, KernelPlugin kernelPlugin)
         {
@@ -51,11 +51,11 @@ namespace BlazorWithSematicKernel.Pages
             StateHasChanged();
         }
         private ExecutionTypeForm _executionTypeForm = new();
-        private Dictionary<string, KernelFunction> _allFunctions = new();
+        private Dictionary<string, KernelFunction> _allFunctions = [];
         private List<string> _excludedFunctions = [];
         private List<string> _requiredFunctions = [];
         private List<Function> _selectedFunctions = [];
-        private Dictionary<string, string> _contextVariables = new();
+        private Dictionary<string, string> _contextVariables = [];
 
         [Inject]
         private TooltipService TooltipService { get; set; } = default!;
@@ -75,11 +75,7 @@ namespace BlazorWithSematicKernel.Pages
             {
                 return "Chat with Plan";
             }
-            if (_executionTypeForm.ExecutionType.ToString().Contains("Plan"))
-            {
-                return "Execute Plan";
-            }
-            return _executionTypeForm.ExecutionType == ExecutionType.ChainFunctions ? "Execute Function Chain" : "Execute";
+            return _executionTypeForm.ExecutionType.ToString().Contains("Plan") ? "Execute Plan" : "Execute";
         }
         private ChatRequestModel _requestModel = new();
         private bool _isReady;
@@ -87,7 +83,7 @@ namespace BlazorWithSematicKernel.Pages
         {
             _requestModel.ExcludedFunctions = _excludedFunctions;
             _requestModel.RequredFunctions = _requiredFunctions;
-            _requestModel.SelectedFunctions = _selectedFunctions;
+            //_requestModel.SelectedFunctions = _selectedFunctions;
             _requestModel.Variables = _contextVariables;
             _isReady = true;
             _currentStep = 3;

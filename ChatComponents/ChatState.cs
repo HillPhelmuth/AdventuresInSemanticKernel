@@ -12,6 +12,7 @@ namespace ChatComponents
         public List<Message> ChatMessages { get; } = [];
         public ChatHistory ChatHistory { get; set; } = [];
         public int MessageCount => ChatMessages.Count;
+
         public void Reset()
         {
             ChatMessages.Clear();
@@ -33,12 +34,31 @@ namespace ChatComponents
             ChatHistory.AddAssistantMessage(message);
             MessagePropertyChanged();
         }
-
+        /// <summary>
+        /// Updates the last assistant message with the token.
+        /// </summary>
+        /// <param name="token"></param>
         public void UpdateAssistantMessage(string token)
         {
+            if (ChatMessages.All(x => x.Role != Role.Assistant)) throw new ArgumentOutOfRangeException(nameof(token),"No assistant message found.");
             var message = ChatMessages.Last(x => x.Role == Role.Assistant).Content += token;
             ChatHistory.Last(x => x.Role == AuthorRole.Assistant).Content += token;
             MessagePropertyChanged();
+        }
+        /// <summary>
+        /// Checks if last message is an assistant message and if so, appends the token to the message. Otherwise, adds a new assistant message.
+        /// </summary>
+        /// <param name="message"></param>
+        public void UpsertAssistantMessage(string message)
+        {
+            if (ChatMessages.Last().Role == Role.Assistant)
+            {
+                UpdateAssistantMessage(message);
+            }
+            else
+            {
+                AddAssistantMessage(message);
+            }
         }
         private void MessagePropertyChanged()
         {
@@ -49,13 +69,6 @@ namespace ChatComponents
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
-
-        protected bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
-        {
-            if (EqualityComparer<T>.Default.Equals(field, value)) return false;
-            field = value;
-            OnPropertyChanged(propertyName);
-            return true;
-        }
+       
     }
 }

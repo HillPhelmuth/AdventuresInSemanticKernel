@@ -11,7 +11,6 @@ namespace SkPluginLibrary.Plugins
     {
         private readonly KernelFunction _generateCodeFunction;
         private readonly KernelFunction _generateScriptFunction;
-        //private readonly KernelFunction _generateKernelCodeFunction;
         private readonly CompilerService _compilerService;
         private readonly ScriptService _scriptService;
         private readonly Kernel _kernel;
@@ -23,9 +22,6 @@ namespace SkPluginLibrary.Plugins
             _compilerService = compilerService;
             _generateCodeFunction = kernel.ImportPluginFromPromptDirectoryYaml("CodingPlugin")["CodeCSharp"];
             _generateScriptFunction = kernel.ImportPluginFromPromptDirectoryYaml("CodingPlugin")["CSharpScript"];
-            //_generateKernelCodeFunction =
-            //    kernel.ImportPluginFromPromptDirectory(RepoFiles.PluginDirectoryPath, "CodingPlugin")[
-            //        "CSharpSemanticKernel"];
             _kernel = kernel;
 
         }
@@ -37,9 +33,6 @@ namespace SkPluginLibrary.Plugins
             _generateScriptFunction = codingPlugin["CSharpScript"];
             _scriptService = new ScriptService();
             _compilerService = new CompilerService();
-            //_generateKernelCodeFunction =
-            //    codingPlugin[
-            //        "CSharpSemanticKernel"];
             _kernel = kernel;
         }
         [KernelFunction("ReplConsole"), Description("Describe c# code to both generate and execute")]
@@ -53,13 +46,10 @@ namespace SkPluginLibrary.Plugins
             };
             var code = await _kernel.InvokeAsync(_generateCodeFunction, args);
             Console.WriteLine($"Result Type = {code.ValueType?.Name}");
-            var currentCode = existingCode;
             var codeResult = code.Result().Replace("```csharp", "").Replace("```", "").TrimStart('\n');
-            var combinedCode = $"{currentCode}\n{codeResult}";
-            //var existingCode = combinedCode.TrimStart('\n');
+            var combinedCode = $"{existingCode}\n{codeResult}";
             var refs = CompileResources.PortableExecutableReferences;
             var result = await _compilerService.SubmitCode(codeResult, refs);
-            //context.Variables["existingCode"] = existingCode;
             return new CodeOutputModel { Output = result, Code = codeResult, ExistingCode = combinedCode };
         }
         [KernelFunction("ReplScript"), Description("Describe c# code to generate and execute as a script")]
@@ -76,7 +66,6 @@ namespace SkPluginLibrary.Plugins
             var combinedCode = $"{existingCode}\n{codeResult}";
             //var existingCode = combinedCode.TrimStart('\n');
             var refs = CompileResources.PortableExecutableReferences;
-            var result = await _compilerService.SubmitCode(codeResult, refs);
             var scriptResult = await _scriptService.EvaluateAsync(codeResult);
             //context.Variables["existingCode"] = existingCode;
             return new CodeOutputModel { Output = scriptResult, Code = codeResult, ExistingCode = combinedCode };

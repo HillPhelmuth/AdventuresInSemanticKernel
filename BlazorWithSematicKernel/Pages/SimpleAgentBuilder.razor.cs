@@ -11,21 +11,13 @@ namespace BlazorWithSematicKernel.Pages
     {
         [Inject]
         private AssistantAgentService AgentRunnerService { get; set; } = default!;
-       
-        private enum Section { Intro, Build, Execute }
-        private class SectionSelector
-        {
-            public Section ActiveSection { get; set; }
-            public bool SectionSelected(Section section)
-            {
-                return ActiveSection == section;
-            }
-        }
-        private SectionSelector _sectionSelector = new();
+        private int _step = 0;
         private void GetStarted()
         {
-            _sectionSelector.ActiveSection = Section.Build;
+            Console.WriteLine("Get Started");
+            _step = 1;
             StateHasChanged();
+
         }
         private AgentProxy? _agentProxy;
         private bool _isBusy;
@@ -33,7 +25,7 @@ namespace BlazorWithSematicKernel.Pages
         private void HandleAgentProxy(AgentProxy agentProxy)
         {
             _agentProxy = agentProxy;
-            _sectionSelector.ActiveSection = Section.Execute;
+            _step = 2;
             StateHasChanged();
         }
         private CancellationTokenSource _cancellationTokenSource = new();
@@ -48,6 +40,8 @@ namespace BlazorWithSematicKernel.Pages
         }
         private async void HandleUserInput(UserInputRequest userInputRequest)
         {
+            _isBusy = true;
+            StateHasChanged();
             var input = userInputRequest.ChatInput!;
             _chatView!.ChatState.AddUserMessage(input);
             await ExecuteChatStream(input);

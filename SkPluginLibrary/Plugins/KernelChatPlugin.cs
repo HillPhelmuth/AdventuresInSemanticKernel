@@ -30,7 +30,7 @@ namespace SkPluginLibrary.Plugins
         [return: Description("Chat instructions with relevant content documents to provide additional up-to-date context")]
         public async Task<string> LearnAboutSemanticKernel([Description("Latest user chat query")]string query,[Description("Chat history to include as part of search query")] string? history = null, [Description("Number of most similar items to return from search")] int topN = 5)
         {
-            var kernel = await ChatWithSkKernal();
+            var kernel = CreateKernel();
             var semanticMemory = await ChatWithSkKernelMemory();
             var memoryItems = await semanticMemory.SearchAsync(CollectionName.SkDocsCollection, $"{query} {history}", 10, 0.78).ToListAsync();
             var memory = string.Join("\n", memoryItems.Select(x => x.Metadata.Text));

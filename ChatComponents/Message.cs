@@ -1,18 +1,11 @@
 ﻿namespace ChatComponents
 {
-    public class Message
+    public class Message(Role role, string content, int order)
     {
-        public Message(Role role, string content, int order)
-        {
-            Role = role;
-            Content = content;
-            TimeStamp = DateTime.Now;
-            Order = order;
-        }
-        public int Order { get; set; }
-        public string? Content { get; set; }
-        public Role Role { get; set; }
-        public DateTime TimeStamp { get; set; }
+        public int Order { get; set; } = order;
+        public string? Content { get; set; } = content;
+        public Role Role { get; set; } = role;
+        public DateTime TimeStamp { get; set; } = DateTime.Now;
         public bool IsActiveStreaming { get; set; }
 
         public static Message UserMessage(string content, int order)

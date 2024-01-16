@@ -7,6 +7,7 @@ using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Logging;
+using Polly;
 
 namespace SkPluginLibrary;
 
@@ -17,16 +18,16 @@ public partial class CoreKernelService
     public async Task<CodeOutputModel> GenerateCompileAndExecuteReplPlugin(string input, string code = "",
         ReplType replType = ReplType.ReplConsole)
     {
-        var kernel = await ChatWithSkKernal();
+        var kernel = CreateKernel();
         var chatService = kernel.Services.GetRequiredService<IChatCompletionService>();
         var replSkill = new ReplCsharpPlugin(kernel, _scriptService, _compilerService);
         var repl = kernel.ImportPluginFromObject(replSkill);
         var kernelArgs = new KernelArguments
         {
             ["existingCode"] = code,
-            ["input"] = input
+            ["input"] = input,
+            ["sessionId"] = Guid.NewGuid().ToString()
         };
-        kernelArgs["sessionId"] = Guid.NewGuid().ToString();
 
         FunctionResult kernelResult = await kernel.InvokeAsync(repl[replType.ToString()], kernelArgs);
         Console.WriteLine(kernelResult.ToString());
@@ -43,10 +44,11 @@ public partial class CoreKernelService
         kernelBuilder.Services.AddLogging(builder => builder.AddConsole());
         kernelBuilder.Services.ConfigureHttpClientDefaults(c =>
         {
-            // Use a standard resiliency policy, augmented to retry on 401 Unauthorized for this example
             c.AddStandardResilienceHandler().Configure(o =>
             {
                 o.Retry.ShouldHandle = args => ValueTask.FromResult(args.Outcome.Result?.StatusCode is HttpStatusCode.TooManyRequests);
+                o.Retry.BackoffType = DelayBackoffType.Exponential;
+                o.TotalRequestTimeout = new HttpTimeoutStrategyOptions { Timeout = TimeSpan.FromSeconds(90)};
             });
         });
         var kernel = kernelBuilder
@@ -92,10 +94,11 @@ public partial class CoreKernelService
         kernelBuilder.Services.AddLogging(builder => builder.AddConsole());
         kernelBuilder.Services.ConfigureHttpClientDefaults(c =>
         {
-            // Use a standard resiliency policy, augmented to retry on 401 Unauthorized for this example
             c.AddStandardResilienceHandler().Configure(o =>
             {
                 o.Retry.ShouldHandle = args => ValueTask.FromResult(args.Outcome.Result?.StatusCode is HttpStatusCode.TooManyRequests);
+                o.Retry.BackoffType = DelayBackoffType.Exponential;
+                o.TotalRequestTimeout = new HttpTimeoutStrategyOptions { Timeout = TimeSpan.FromSeconds(90) };
             });
         });
         var kernel = kernelBuilder

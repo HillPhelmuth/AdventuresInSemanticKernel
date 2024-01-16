@@ -1,9 +1,9 @@
 ﻿@page "/simpleAgent"
 @using BlazorWithSematicKernel.Components.AgentComponents
 
-<RadzenSteps>
+<RadzenSteps @bind-SelectedIndex="_step">
     <Steps>
-        <RadzenStepsItem Selected="@(_sectionSelector.SectionSelected(Section.Intro))" Text="Intro" NextText="Build Agent">
+        <RadzenStepsItem  Text="Intro" NextText="Build Agent">
             <RadzenRow>
                 <RadzenColumn Size="8" Offset="2">
                     <RadzenCard>
@@ -20,14 +20,14 @@
                 </RadzenColumn>
             </RadzenRow>
         </RadzenStepsItem>
-        <RadzenStepsItem Selected="@(_sectionSelector.SectionSelected(Section.Build))" Text="Build Agent" NextText="Start Agent Chat">
+        <RadzenStepsItem Text="Build Agent" NextText="Start Agent Chat">
             <RadzenRow>
                 <RadzenColumn Size="10" Offset="1">
                     <CreateAgentForm AgentChanged="HandleAgentProxy"></CreateAgentForm>
                 </RadzenColumn>
             </RadzenRow>
         </RadzenStepsItem>
-        <RadzenStepsItem PreviousText="Modify Agent" Selected="@(_sectionSelector.SectionSelected(Section.Execute))" Text="Execute Agent">
+        <RadzenStepsItem Text="Execute Agent">
             <RadzenButton Text="Reset" Size="ButtonSize.ExtraSmall" Click="Reset"></RadzenButton>
             <RadzenCard>
                 <ChatView @ref=_chatView ViewId="simpleagentchat"></ChatView>

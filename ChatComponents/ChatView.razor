@@ -1,12 +1,4 @@
-﻿@* <RadzenRow>
-    <RadzenColumn @ref=_column Size="12" SizeLG="12" Style="@($"height:{Height}; overflow:auto; width:100%")">
-        @foreach (var message in ChatState.ChatMessages)
-        {
-            <MessageView Message="message"></MessageView>
-        }
-    </RadzenColumn>
-</RadzenRow> *@
-<div @ref=_chatColumn style="@($"height:{Height}; overflow:auto; width:100%")">
+﻿<div @ref=_chatColumn style="@($"height:{Height}; overflow:auto; width:100%")">
     @foreach (var message in ChatState?.ChatMessages ?? [])
     {
         <MessageView Message="message"></MessageView>

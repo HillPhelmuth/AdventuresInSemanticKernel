@@ -31,12 +31,7 @@ public class WebCrawlPlugin
 
     }
 
-
-    //[KernelFunction, Description("Search Web url and summarize the content found")]
-    //public async Task<string> SearchAndSummarize([Description("Web search query")] string input, [Description("Number of web search results to use")] int resultCount = 1)
-    //{
-    //    return await SearchAndCiteWeb(input, resultCount);
-    //}
+   
     [KernelFunction, Description("Extract a web search query from a question")]
     public async Task<string> ExtractWebSearchQuery(string input)
     {
@@ -48,7 +43,7 @@ public class WebCrawlPlugin
     [return: Description("A json collection of objects designed to facilitate web citations including url, title, and content")]
     public async Task<string> SearchAndCiteWeb([Description("Web search query")] string input, [Description("Number of web search results to use")] int resultCount = 2)
     {
-        var results = await _searchService!.SearchAsync(input, resultCount) ?? new List<BingSearchResult>();
+        var results = await _searchService!.SearchAsync(input, resultCount) ?? [];
         var scrapeList = new List<Task<List<SearchResultItem>>>();
         foreach (var result in results.Take(Math.Min(results.Count, 5)))
         {

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
+using Microsoft.SemanticKernel.ChatCompletion;
 using Radzen.Blazor;
 using System.ComponentModel;
 
@@ -36,36 +37,30 @@ namespace ChatComponents
             {
                 ViewId = Guid.NewGuid().ToString();
                 ChatState = ChatStateCollection.CreateChatState(ViewId);
-                ChatState.PropertyChanged += ChatState_OnChatStateChanged;
                 _generatedViewId = true;
             }
             else if (ChatStateCollection.TryGetChatState(ViewId, out var chatState))
             {
                 ChatState = chatState;
-                ChatState!.PropertyChanged += ChatState_OnChatStateChanged;
             }
             else
             {
                 ChatState = ChatStateCollection.CreateChatState(ViewId);
-                ChatState.PropertyChanged += ChatState_OnChatStateChanged;
+                
             }
-
+            ChatState!.PropertyChanged += ChatState_OnChatStateChanged;
             StateHasChanged();
             
             return base.OnParametersSetAsync();
-        }
-        protected override Task OnAfterRenderAsync(bool firstRender)
-        {
-            if (firstRender)
-            {
-                //ChatState.PropertyChanged += ChatState_OnChatStateChanged;
-            }
-            return base.OnAfterRenderAsync(firstRender);
         }
        
         public List<(string role, string? message)> GetMessageHistory()
         {
             return ChatState!.ChatMessages.Select(x => (x.Role.ToString(), x.Content)).ToList();
+        }
+        public ChatHistory GetChatHistory()
+        {
+            return ChatState!.ChatHistory;
         }
         private async void ChatState_OnChatStateChanged(object? sender, PropertyChangedEventArgs args)
         {

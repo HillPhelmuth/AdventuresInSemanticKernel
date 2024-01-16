@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.SemanticKernel.ChatCompletion;
 using SkPluginLibrary.Abstractions;
 
 namespace BlazorWithSematicKernel.Components.ModalDialogComponents
@@ -7,19 +8,20 @@ namespace BlazorWithSematicKernel.Components.ModalDialogComponents
     {
         [Inject] private IChatWithSk ChatWithSkDocs { get; set; } = default!;
         private ChatView? _chatView;
+        private ChatHistory _chatHistory = [];
         private bool _isBusy;
-        private string? _history;
         private CancellationTokenSource _cancellationTokenSource = new();
         private void ClearChat()
         {
-            _chatView?.ChatState.Reset();
+            _chatView?.ChatState?.Reset();
             StateHasChanged();
         }
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             if (firstRender)
             {
-                await InitiateChat();
+                if (_chatView?.ChatState?.ChatMessages.Count == 0)
+                    await InitiateChat();
 
             }
             await base.OnAfterRenderAsync(firstRender);
@@ -32,7 +34,7 @@ namespace BlazorWithSematicKernel.Components.ModalDialogComponents
             await Task.Delay(1);
             var token = _cancellationTokenSource.Token;
             var hasStarted = false;
-            await foreach (var response in ChatWithSkDocs.ExecuteChatWithSkStream("Quickly Introduce yourself and Semantic Kernel", _history, token))
+            await foreach (var response in ChatWithSkDocs.ExecuteChatWithSkStream("Quickly Introduce yourself and Semantic Kernel", null, token))
             {
                 if (!hasStarted)
                 {
@@ -50,8 +52,7 @@ namespace BlazorWithSematicKernel.Components.ModalDialogComponents
                 lastAsstMessage.IsActiveStreaming = false;
             _isBusy = false;
             StateHasChanged();
-            var messages = _chatView.GetMessageHistory().Select(x => $"{x.role}:\n{x.message}");
-            _history = string.Join("\n", messages);
+            _chatHistory = _chatView.GetChatHistory();
 
         }
         private async void HandleInput(string input)
@@ -60,7 +61,7 @@ namespace BlazorWithSematicKernel.Components.ModalDialogComponents
             _chatView.ChatState.AddUserMessage(input);
             var hasStarted = false;
             var token = _cancellationTokenSource.Token;
-            await foreach (var response in ChatWithSkDocs.ExecuteChatWithSkStream(input, _history, token))
+            await foreach (var response in ChatWithSkDocs.ExecuteChatWithSkStream(input, chatHistory: _chatHistory, cancellationToken: token))
             {
                 if (!hasStarted)
                 {
@@ -79,7 +80,8 @@ namespace BlazorWithSematicKernel.Components.ModalDialogComponents
             _isBusy = false;
             StateHasChanged();
             var messages = _chatView.GetMessageHistory().Select(x => $"{x.role}:\n{x.message}");
-            _history = string.Join("\n", messages);
+            _chatHistory = _chatView.GetChatHistory();
+
         }
     }
 }

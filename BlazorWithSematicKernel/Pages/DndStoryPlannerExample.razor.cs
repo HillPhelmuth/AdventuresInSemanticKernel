@@ -85,16 +85,10 @@ namespace BlazorWithSematicKernel.Pages
         }
         private string _planString = "";
         private List<SimpleChatMessage> _chatMessages = [];
-        
+
         protected override Task OnInitializedAsync()
         {
-            CoreKernelExecution.YieldAdditionalText += (text) =>
-            {
-                var message = JsonSerializer.Deserialize<SimpleChatMessage>(text);
-                _chatMessages.Add(message!);
-                StateHasChanged();
-            };
-            CoreKernelExecution.DndPlannerFunctionHook += HandleMessage;
+            CoreKernelService.DndPlannerFunctionHook += HandleMessage;
             return base.OnInitializedAsync();
         }
         private async Task DownloadToFile()
@@ -112,10 +106,11 @@ namespace BlazorWithSematicKernel.Pages
             return result;
 
         }
-        private void HandleMessage(SimpleChatMessage simpleChatMessage)
+        private async void HandleMessage(SimpleChatMessage simpleChatMessage)
         {
+            Console.WriteLine($"HandleMessage trigger in {nameof(DndStoryPlannerExample)}");
             _chatMessages.Add(simpleChatMessage);
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged);
         }
     }
 }

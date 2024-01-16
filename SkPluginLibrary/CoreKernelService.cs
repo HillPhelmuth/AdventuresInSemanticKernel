@@ -22,6 +22,7 @@ using Microsoft.SemanticKernel.Connectors.Sqlite;
 using Microsoft.SemanticKernel.Connectors.Weaviate;
 using SkPluginLibrary.Plugins;
 using System.Runtime.CompilerServices;
+using Microsoft.SemanticKernel.Plugins.Memory;
 
 
 namespace SkPluginLibrary;
@@ -37,8 +38,6 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
     private readonly ILoggerFactory _loggerFactory;
     private readonly BingWebSearchService _bingSearchService;
     private readonly ISemanticTextMemory _semanticTextMemory;
-    private readonly IChatCompletionService _openAiChatCompletionService;
-    //private readonly Kernel _planGenKernel;
     public class CollectionName
     {
         public const string ClusterCollection = "clusterCollection";
@@ -56,8 +55,6 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
         _hdbscanService = hdbscanService;
         _loggerFactory = loggerFactory;
         _bingSearchService = bingSearchService;
-        //_planGenKernel = planGenKernel;
-        //_openAiChatCompletionService = openAiChatCompletionService;
         _modalService = modalService;
 
         _memoryStore = new VolatileMemoryStore();
@@ -76,7 +73,7 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
         return Kernel.CreateBuilder().AddOpenAIChatCompletion(chatModel, TestConfiguration.OpenAI!.ApiKey)
             .Build();
     }
-    private Kernel CreateKernel(string chatModel = "gpt-3.5-turbo-1106")
+    public static Kernel CreateKernel(string chatModel = "gpt-3.5-turbo-1106")
     {
         var kernelBuilder = Kernel.CreateBuilder();
         kernelBuilder.Services.AddLogging(builder => builder.AddConsole());
@@ -109,22 +106,6 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
             .WithOpenAITextEmbeddingGeneration("text-embedding-ada-002", TestConfiguration.OpenAI.ApiKey)
             .WithLoggerFactory(_loggerFactory)
             .Build();
-    }
-    private async Task<Kernel> CreateSqliteKernel(string chatModel = "gpt-3.5-turbo-1106")
-    {
-        var sqliteMemoryStore = await SqliteMemoryStore.ConnectAsync(TestConfiguration.Sqlite!.ConnectionString!);
-
-        _sqliteStore = sqliteMemoryStore;
-        var collections = await _sqliteStore.GetCollectionsAsync().ToListAsync();
-        Console.WriteLine($"Collections: {string.Join((string?)"\n", collections)}");
-        var kernelBuilder = Kernel.CreateBuilder();
-        kernelBuilder.Services.AddLogging(builder => builder.AddConsole());
-        var kernel = kernelBuilder
-            .AddOpenAIChatCompletion(chatModel, TestConfiguration.OpenAI!.ApiKey)
-            .AddOpenAITextEmbeddingGeneration("text-embedding-ada-002", TestConfiguration.OpenAI.ApiKey)
-            .Build();
-
-        return kernel;
     }
 
     private async Task<ISemanticTextMemory> CreateSqliteMemoryAsync(bool isSkChat = false)
@@ -166,12 +147,13 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
         kernelBuilder.Services.AddLogging(builder => builder.AddConsole());
         var kernel = kernelBuilder
             .AddOpenAIChatCompletion(chatModel, TestConfiguration.OpenAI!.ApiKey)
-            .AddOpenAITextEmbeddingGeneration("text-embedding-ada-002", TestConfiguration.OpenAI.ApiKey)
             .Build();
-
+        var semanticMemory = await ChatWithSkKernelMemory();
+        var textMemory = KernelPluginFactory.CreateFromObject(new TextMemoryPlugin(semanticMemory), "TextMemoryPlugin");
+        kernel.Plugins.Add(textMemory);
         return kernel;
     }
-    
+
     internal static async Task<ISemanticTextMemory> ChatWithSkKernelMemory()
     {
         var sqliteMemoryStore = await SqliteMemoryStore.ConnectAsync(TestConfiguration.Sqlite!.ChatContentConnectionString!);
@@ -189,36 +171,39 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
             .Build();
     }
 
-   
-    private const string ChatWithSkSystemPromptTemplate = """
-    You are a Semantic Kernel Expert and a helpful and friendly Instructor. Use the [Semantic Kernel CONTEXT] below to answer the user's questions. 
 
-    [Semantic Kernel CONTEXT]
-    {{$memory_context}}
+    private const string ChatWithSkSystemPromptTemplate = 
+        """
+        You are a Semantic Kernel Expert and a helpful and friendly Instructor. Use the [Semantic Kernel CONTEXT] below to answer the user's questions.
 
-    {{$history}}
-    
-    """;
+        [Semantic Kernel CONTEXT]
+        {{TextMemoryPlugin.Recall input=$input collection=$collection relevance=$relevance limit=$limit}}
+
+        """;
     private Kernel? _skChatKernel;
-    public async IAsyncEnumerable<string> ExecuteChatWithSkStream(string query, string? history = null,
-       [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<string> ExecuteChatWithSkStream(string query, ChatHistory? chatHistory = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         _skChatKernel ??= await ChatWithSkKernal();
-        var semanticMemory = await CreateSqliteMemoryAsync(true);
-        var memoryItems = await semanticMemory.SearchAsync(CollectionName.SkDocsCollection, query, 10, 0.75, cancellationToken: cancellationToken).ToListAsync(cancellationToken: cancellationToken);
-        var memory = string.Join("\n", memoryItems.Select(x => x.Metadata.Text));
-        _loggerFactory.CreateLogger<CoreKernelService>().LogInformation("Memory:\n {memory}", memory);
+
         var context = new KernelArguments
         {
-            ["memory_context"] = memory
+            ["input"] = query,
+            ["limit"] = 10,
+            ["relevance"] = 0.77,
+            ["collection"] = CollectionName.SkDocsCollection
         };
-        if (history is not null)
-            context["history"] = history;
+        
         var promptTemplateFactory = new KernelPromptTemplateFactory();
         var engine = promptTemplateFactory.Create(new PromptTemplateConfig(ChatWithSkSystemPromptTemplate));
         var systemPrompt = await engine.RenderAsync(_skChatKernel, context, cancellationToken);
-        var chatService = new OpenAIChatCompletionService(TestConfiguration.OpenAI.ChatModelId, TestConfiguration.OpenAI.ApiKey);
+        var chatService = new OpenAIChatCompletionService(TestConfiguration.OpenAI.ModelId, TestConfiguration.OpenAI.ApiKey);
         var chat = new ChatHistory(systemPrompt);
+        
+        foreach (var message in chatHistory ?? [])
+        {
+            chat.Add(message);
+        }
+       
         chat.AddUserMessage(query);
         await foreach (var token in chatService.GetStreamingChatMessageContentsAsync(chat, new OpenAIPromptExecutionSettings { MaxTokens = 2000, Temperature = 1 }, cancellationToken: cancellationToken))
         {
@@ -235,27 +220,25 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
         (string? Race, string? Class, string? Alignment) details,
         CancellationToken cancellationToken = default)
     {
-        //var monsterDescription = await GetDndMonsterDescription();
-        var initialDescription = characterDescription;
         var detailString = $" a {details.Race} {details.Class} with a {details.Alignment} alignment";
         characterDescription += detailString;
 
         var kernel = CreateKernel("gpt-4-1106-preview");
-        var dndApiPlugin = await kernel.ImportPluginFromOpenApiAsync("DndApiPlugin", Path.Combine(RepoFiles.ApiPluginDirectoryPath, "DndApiPlugin", "openapi.json"), new OpenApiFunctionExecutionParameters { IgnoreNonCompliantErrors = true}, cancellationToken: cancellationToken);
+        var dndApiPlugin = await kernel.ImportPluginFromOpenApiAsync("DndApiPlugin", Path.Combine(RepoFiles.ApiPluginDirectoryPath, "DndApiPlugin", "openapi.json"), new OpenApiFunctionExecutionParameters { IgnoreNonCompliantErrors = true }, cancellationToken: cancellationToken);
         var writer = kernel.ImportPluginFromPromptDirectoryYaml("WriterPlugin");
         var dndPlugin = new DndPlugin();
         kernel.ImportPluginFromObject(dndPlugin);
         var askUserplugin = new AskUserPlugin(_modalService);
         var askUser = kernel.ImportPluginFromObject(askUserplugin, "AskUserPlugin");
-        
+
         var config = new FunctionCallingStepwisePlannerConfig
         {
-            //ExecutionSettings = new OpenAIPromptExecutionSettings { Temperature = 0.3, TopP = 1.0 },
-            MaxTokens = 7500,
-            MaxIterations = 15, ExecutionSettings = new OpenAIPromptExecutionSettings { Temperature = 0.3, TopP = 1.0, ModelId = TestConfiguration.OpenAI.ChatModelId, ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions },
-            
+            MaxTokens = 9500,
+            MaxIterations = 15,
+            ExecutionSettings = new OpenAIPromptExecutionSettings { Temperature = 0.3, TopP = 1.0, ModelId = TestConfiguration.OpenAI.ModelId, ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions },
+
         };
-      
+
         var included = new List<string> { "ParseCharacterInfo", "Races", "Alignments", "Classes", "ShortStory", "AskUser", "Monster", "Monsters" };
         var excluded = new List<string> { "AbilityScores", "RacesTraits", "GenerateMonsterDescription", "RacesProficiencies" };
         foreach (var include in included)
@@ -275,27 +258,21 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
         kernel.FunctionInvoked += HandleDndFunctionInvoked;
         var stepwisePlanner = new FunctionCallingStepwisePlanner(config);
         var planResult = await stepwisePlanner.ExecuteAsync(kernel, ask, cancellationToken)/*await PlanResult(plan, context)*/;
-        foreach (ChatMessageContent item in planResult.ChatHistory ?? [])
+        foreach (var item in planResult.ChatHistory ?? [])
         {
-            var messageObject = new {Role = item.Role.ToString(), item.Content};
-            YieldAdditionalText?.Invoke(JsonSerializer.Serialize(messageObject));
+            DndPlannerFunctionHook?.Invoke(new SimpleChatMessage(item.Role.ToString(), item.Content ?? ""));
         }
         return planResult.FinalAnswer;
-        
+
 
     }
     private void HandleDndFunctionInvoked(object? sender, FunctionInvokedEventArgs invokedArgs)
     {
         var name = invokedArgs.Function.Name;
         var plugin = invokedArgs.Function.Metadata.PluginName;
-        var result = invokedArgs.Result.GetValue<object>();
-        var resultContent = result is string str ? str : JsonSerializer.Serialize(result);
-        DndPlannerFunctionHook?.Invoke(new SimpleChatMessage($"ToolCall", $"{plugin}_{name}:\n{resultContent}"));
+        DndPlannerFunctionHook?.Invoke(new SimpleChatMessage("ToolCall", $"{plugin}_{name}"));
     }
-    private void HandleDndFunctionInvoking(object? sender, FunctionInvokingEventArgs invokingArgs)
-    {
-
-    }
+    
     #endregion
 
 }
