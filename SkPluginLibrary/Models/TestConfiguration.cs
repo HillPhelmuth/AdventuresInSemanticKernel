@@ -2,6 +2,7 @@
 
 using Microsoft.Extensions.Configuration;
 using System.Runtime.CompilerServices;
+using SkPluginLibrary.Reliability;
 
 namespace SkPluginLibrary.Models;
 
@@ -148,7 +149,7 @@ public sealed class TestConfiguration
 
 
 
-    private static T? LoadSection<T>([CallerMemberName] string? caller = null)
+    private static T LoadSection<T>([CallerMemberName] string? caller = null)
     {
         if (s_instance == null)
         {
@@ -162,7 +163,7 @@ public sealed class TestConfiguration
         }
 
 
-        return s_instance._configRoot.GetSection(caller).Get<T>();
+        return s_instance._configRoot.GetSection(caller).Get<T>() ?? throw new ConfigurationNotFoundException(caller);
     }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor.
@@ -173,6 +174,7 @@ public sealed class TestConfiguration
         public string EmbeddingModelId { get; set; }
         public string ApiKey { get; set; }
         public string ImageModelId { get; set; }
+        public string PlannerModelId { get; set; }
     }
 
     public class AzureOpenAIConfig

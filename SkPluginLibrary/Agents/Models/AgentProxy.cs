@@ -23,8 +23,7 @@ namespace SkPluginLibrary.Agents.Models
             """;
         public List<KernelPlugin> Plugins { get; set; } = [];
         public int Order { get; set; }
-        //public List<AgentProxy>? SubAgents { get; set; }
-        //public AgentInteractionType AgentInteractionType { get; set; }
+        
         public bool IsPrimary { get; set; }
     }
     public class AgentExecutionRequest
@@ -39,7 +38,6 @@ namespace SkPluginLibrary.Agents.Models
             {
                 AgentInteractionType.SingleAgent when Agents.Count != 1 => false,
                 AgentInteractionType.AgentWithSubAgentsAsPlugins when Agents.Count < 2 => false,
-                //AgentInteractionType.AgentWithSubAgentsOnThread when Agents.Count < 2 => false,
                 _ => true
             };
             if (!hasProperAgents)
@@ -49,12 +47,6 @@ namespace SkPluginLibrary.Agents.Models
 
             return AgentInteractionType switch
             {
-                //AgentInteractionType.AgentWithSubAgentsOnThread when Agents.All(x => !x.IsPrimary) => (false,
-                //    $"{AgentInteractionType} requires a primary agent"),
-                //AgentInteractionType.AgentWithSubAgentsOnThread when string.IsNullOrWhiteSpace(Stop) ||
-                //                                                     !Agents.Find(x => x.IsPrimary)!.Instructions
-                //                                                         .Contains(Stop) => (false,
-                //    $"{AgentInteractionType} requires a STOP string that matches instructions"),
                 AgentInteractionType.ChatWithAgentsAsOpenAiToolFunctions when Agents.All(x => !x.IsPrimary) => (false,
                                    $"{AgentInteractionType} requires a primary agent"),
                 AgentInteractionType.AgentWithSubAgentsAsPlugins when Agents.All(x => !x.IsPrimary) => (false,
@@ -71,8 +63,6 @@ namespace SkPluginLibrary.Agents.Models
         SingleAgent,
         [Description("Primary Agent with sub-agents added as plugins")]
         AgentWithSubAgentsAsPlugins,
-        //[Description("Primary Agent with sub-agents added to primary agent thread")]
-        //AgentWithSubAgentsOnThread,
         [Description("Chat interaction with all Agents called as an OpenAI functions")]
         ChatWithAgentsAsOpenAiToolFunctions
     }

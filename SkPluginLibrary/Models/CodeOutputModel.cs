@@ -11,18 +11,15 @@ public class CodeOutputModel
     public string? Code { get; set; }
     public string? Output { get; set; }
     public string? ExistingCode { get; set; }
-    //public override string ToString()
-    //{
-    //    return $"Code:\n{Code}\n\nOutput:\n{Output}";
-    //}
+   
 }
 
 public class CodeElementsDescriptionsModel
 {
-    public List<CodeElementDescription> MethodDescription { get; set; } = new();
-    public List<CodeElementDescription> ConstructorDescription { get; set; } = new();
-    public List<CodeElementDescription> PropertyDescription { get; set; } = new();
-    public List<CodeElementDescription> FieldDescription { get; set; } = new();
+    public List<CodeElementDescription> MethodDescription { get; set; } = [];
+    public List<CodeElementDescription> ConstructorDescription { get; set; } = [];
+    public List<CodeElementDescription> PropertyDescription { get; set; } = [];
+    public List<CodeElementDescription> FieldDescription { get; set; } = [];
 
     public IEnumerable<CodeElementDescription> GetAllSyntaxDescriptions()
     {

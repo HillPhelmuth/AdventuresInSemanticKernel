@@ -25,13 +25,8 @@ namespace SkPluginLibrary.Models.Helpers
             services.AddSingleton<ScriptService>();
             services.AddScoped<CompilerService>();
             services.AddScoped<HdbscanService>();
-            services.AddScoped<StorageService>();
             services.AddScoped<AdventureStoryAgents>();
             services.AddTransient<AssistantAgentService>();
-            services.AddAzureClients(clientBuilder =>
-            {
-                clientBuilder.AddBlobServiceClient(configuration["AzureStorage:ConnectionString:blob"], preferMsi: true);
-            });
             return services;
         }
     }

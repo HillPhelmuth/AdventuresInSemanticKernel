@@ -223,7 +223,7 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
         var detailString = $" a {details.Race} {details.Class} with a {details.Alignment} alignment";
         characterDescription += detailString;
 
-        var kernel = CreateKernel("gpt-4-1106-preview");
+        var kernel = CreateKernel(TestConfiguration.OpenAI.PlannerModelId);
         var dndApiPlugin = await kernel.ImportPluginFromOpenApiAsync("DndApiPlugin", Path.Combine(RepoFiles.ApiPluginDirectoryPath, "DndApiPlugin", "openapi.json"), new OpenApiFunctionExecutionParameters { IgnoreNonCompliantErrors = true }, cancellationToken: cancellationToken);
         var writer = kernel.ImportPluginFromPromptDirectoryYaml("WriterPlugin");
         var dndPlugin = new DndPlugin();

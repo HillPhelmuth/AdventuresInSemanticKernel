@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 
 namespace BlazorWithSematicKernel.Pages
 {
-    public partial class AddEmbeddings : ComponentBase
+    public partial class VectorPlaygroundPage : ComponentBase
     {
         [Inject]
         private IMemoryConnectors CoreKernelService { get; set; } = default!;

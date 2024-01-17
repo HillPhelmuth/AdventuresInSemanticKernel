@@ -5,58 +5,6 @@ using System.Text.Json.Serialization;
 
 namespace SkPluginLibrary.Models
 {
-    public class ChatGptPlugin
-    {
-        [JsonPropertyName("id")]
-        public string? Id { get; set; }
-
-        [JsonPropertyName("title")]
-        public string? Title { get; set; }
-
-        [JsonPropertyName("description")]
-        public string? Description { get; set; }
-
-        [JsonPropertyName("logo")]
-        public string? Logo { get; set; }
-
-        [JsonPropertyName("category")]
-        public string? Category { get; set; }
-
-        [JsonPropertyName("agent_manifest_url")]
-        public Uri? AgentManifestUrl { get; set; }
-
-        [JsonPropertyName("is_local")]
-        public bool IsLocal { get; set; }
-
-        [JsonPropertyName("auth_needed")]
-        public bool AuthNeeded { get; set; }
-        [JsonPropertyName("confirmed")]
-        public bool Confirmed { get; set; }
-        [JsonPropertyName("override_url")]
-        public string? OverrideUrl { get; set; }
-        public static List<ChatGptPlugin> AllChatGptPlugins => FileHelper.ExtractFromAssembly<List<ChatGptPlugin>>("ChatGptPlugins.json");
-
-        public static async Task GetAndSaveAllMantifestFiles()
-        {
-            var plugins = AllChatGptPlugins;
-            var manifestFiles = new List<ChatGptPluginManifest>();
-            var client = new HttpClient();
-            foreach (var plugin in plugins)
-            {
-                try
-                {
-                    var manifest = await client.GetFromJsonAsync<ChatGptPluginManifest>(plugin.AgentManifestUrl);
-                    manifestFiles.Add(manifest);
-                }
-                catch
-                {
-                    Console.WriteLine($"Plugin {plugin.Title} ({plugin.Description}) Manifest unavailable");
-                }
-            }
-            await File.WriteAllTextAsync("ChatGptPluginManifests.json", JsonSerializer.Serialize(manifestFiles, new JsonSerializerOptions {WriteIndented = true}));
-        }
-    }
-
     public class ChatGptPluginManifest
     {
         [JsonPropertyName("schema_version")]
@@ -104,15 +52,7 @@ namespace SkPluginLibrary.Models
     {
         [JsonPropertyName("url")]
         public Uri? Url { get; set; }
-
-        public string? PluginUrl => Url is null ? null : GetStringUpToSegment(Url.ToString(), "/.well-known/") is null ? null : $"{GetStringUpToSegment(Url.ToString(), "/.well-known/")}ai-plugin.json";
-
-        public static string? GetStringUpToSegment(string source, string segment)
-        {
-            var index = source.IndexOf(segment, StringComparison.OrdinalIgnoreCase);
-
-            return index == -1 ? null : source[..(index + segment.Length)];
-        }
+     
     }
 
     public class Auth

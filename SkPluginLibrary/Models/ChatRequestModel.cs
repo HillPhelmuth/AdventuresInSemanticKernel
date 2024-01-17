@@ -8,18 +8,7 @@ public class ChatRequestModel
 {
     public ExecutionType ExecutionType { get; set; }
     public List<KernelPlugin> SelectedPlugins { get; set; } = [];
-    public List<ChatGptPlugin>? ChatGptPlugins { get; set; }
     public List<string>? ExcludedFunctions { get; set; }
     public List<string>? RequredFunctions { get; set; }
     public Dictionary<string, string>? Variables { get; set; }
-}
-
-public static class FunctionExtensions
-{
-    public static KernelPlugin ToPlugin(this Dictionary<string, KernelFunction> functions,
-        string pluginName)
-    {
-        var result = KernelPluginFactory.CreateFromFunctions(pluginName, functions.Values.ToList());
-        return result;
-    }
 }

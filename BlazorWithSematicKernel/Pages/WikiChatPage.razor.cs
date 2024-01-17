@@ -3,7 +3,7 @@ using SkPluginLibrary.Abstractions;
 
 namespace BlazorWithSematicKernel.Pages
 {
-    public partial class CrawlAndSummarize : ComponentBase
+    public partial class WikiChatPage : ComponentBase
     {
         [Inject]
         private ICustomNativePlugins CoreKernelExecution { get; set; } = default!;
@@ -19,7 +19,6 @@ namespace BlazorWithSematicKernel.Pages
             _chatView.ChatState.AddUserMessage(input);
             CoreKernelExecution.AdditionalAgentText += HandleYieldReturn;
             var hasStarted = false;
-            //var query = $"Answer the user's query by searching the web. Always include CITATIONS in your response.\n\nQuery: {input}";
             await foreach (var response in CoreKernelExecution.RunWikiSearchChat(input))
             {
                 if (!hasStarted)

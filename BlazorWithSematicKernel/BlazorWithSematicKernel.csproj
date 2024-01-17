@@ -24,6 +24,7 @@
 	  <Compile Remove="Components\AgentComponents\AgentOrganizer.razor.cs" />
 	  <Compile Remove="Components\AgentComponents\AgentRunner.razor.cs" />
 	  <Compile Remove="Pages\AgentBuilderPage.razor.cs" />
+	  <Compile Remove="Pages\Error.cshtml.cs" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -31,6 +32,7 @@
 	  <Content Remove="Components\AgentComponents\AgentOrganizer.razor" />
 	  <Content Remove="Components\AgentComponents\AgentRunner.razor" />
 	  <Content Remove="Pages\AgentBuilderPage.razor" />
+	  <Content Remove="Pages\Error.cshtml" />
 	</ItemGroup>
 
 	

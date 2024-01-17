@@ -20,7 +20,6 @@ public class AdventureStoryAgents(AskUserService askUserService) : IAsyncDisposa
     private static readonly List<IAgent> Agents = [];
     public event Action<AgentMessage>? ChatMessage;
     public event Action<ChatHistory>? ChatHistoryUpdate;
-    private readonly AskUserService _askUserService = askUserService;
     private readonly AskUserPlugin _askUserPlugin = new(askUserService);
     private IAgent? _astra;
     private IAgent? _zanar;
@@ -173,10 +172,8 @@ public class AdventureStoryAgents(AskUserService askUserService) : IAsyncDisposa
     }
     private static async Task<IAgent> GenerateCommanderAstra()
     {
-        var template = FileHelper.ExtractFromAssembly<string>("CommanderAstra.yaml");
         return Track(await new AgentBuilder()
             .WithOpenAIChatCompletion(TestConfiguration.OpenAI.ModelId, TestConfiguration.OpenAI.ApiKey)
-            //.FromTemplate(template)
             .WithInstructions(AstraInstructions)
             .WithDescription("Gruff but crafty leader of the crew.")
             .WithName("Commander Astra")
@@ -302,20 +299,7 @@ public class AdventureStoryAgents(AskUserService askUserService) : IAsyncDisposa
         """;
     #endregion
 }
-public static class AgentExtensions
-{
-    public static AgentProxy AgentProxy(this IAgent agent)
-    {
-        return new AgentProxy
-        {
-            Description = agent.Description ?? "no description",
-            Instructions = agent.Instructions,
-            Name = agent.Name,
-            Plugins = [.. agent.Plugins],
-            IsPrimary = false
-        };
-    }
-}
+
 public class AdventurePlugin
 {
     public static string Name = "The Quest for the Celestial Keys";

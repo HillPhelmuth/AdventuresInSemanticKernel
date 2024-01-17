@@ -25,7 +25,7 @@ public partial class CoreKernelService
 
     #region Semantic Plugin Picker (SemanticPluginPicker.razor, SequentialPlannerBuilder.razor)
 
-    
+
     public async Task<FunctionResult> ExecuteKernelFunction(KernelFunction function, Dictionary<string, string>? variables = null)
     {
         var kernel = CreateKernel();
@@ -42,7 +42,7 @@ public partial class CoreKernelService
         var result = await kernel.InvokeAsync(function, args);
         return result;
     }
-   
+
 
     private Dictionary<string, object>? _nativePlugins;
     private Dictionary<string, object>? _customNativePlugins;
@@ -114,7 +114,7 @@ public partial class CoreKernelService
 
     private IEnumerable<string> CoreNativePluginNames => _nativePlugins?.Keys.ToList() ?? [.. GetCoreNativePlugins().Keys];
 
-   
+
     private Dictionary<string, KernelFunction> GetNativeFunctionsFromNames(IEnumerable<string> pluginNames, bool isCustom = false)
     {
         var result = new Dictionary<string, KernelFunction>();
@@ -200,9 +200,9 @@ public partial class CoreKernelService
         }
         return result;
     }
-    
 
-    
+
+
 
     private record ChatExchange(string UserMessage, string AssistantMessage);
 
@@ -212,12 +212,10 @@ public partial class CoreKernelService
     public async IAsyncEnumerable<string> ChatWithAutoFunctionCalling(string query, ChatRequestModel requestModel,
         bool runAsChat = true, string? askOverride = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        //yield return "stop";
+
         var userMessage = $"User: {query}";
         var kernel = CreateKernelWithPlugins(requestModel.SelectedPlugins);
-        //var chatService = kernel.GetService<IChatCompletion>();
-        //var context = kernel.CreateNewContext();
-        //var functions = kernel.Functions.GetFunctionViews();
+
         kernel.FunctionInvoking += (_, e) =>
         {
             var soemthing = e.Function;
@@ -246,20 +244,19 @@ public partial class CoreKernelService
         }
 
     }
-    private static StepwiseExecutionResult _executionResults = new();
     private readonly AskUserService _modalService;
     private readonly JsonSerializerOptions _optionsAsIndented = JsonExtensions.JsonOptionsIndented;
     public event Action<string>? YieldAdditionalText;
     public async IAsyncEnumerable<string> ChatWithStepwisePlanner(string query, ChatRequestModel chatRequestModel,
         bool runAsChat = true, string? askOverride = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        //yield return "no! No Stepwise Planner!";
+
         var kernel = CreateKernelWithPlugins(chatRequestModel.SelectedPlugins);
         var config = new FunctionCallingStepwisePlannerConfig
         {
             MaxIterations = 15,
             MaxTokens = 5500,
-            
+
         };
         var planner = new FunctionCallingStepwisePlanner(config);
 
@@ -274,7 +271,7 @@ public partial class CoreKernelService
         var planResults = await planner.ExecuteAsync(kernel, askOverride, cancellationToken);
         var chatResult = planResults.ChatHistory;
         var historyBuilder = new StringBuilder();
-        
+
         historyBuilder.AppendLine("<ol>");
         foreach (var chat in chatResult)
         {
@@ -310,8 +307,6 @@ public partial class CoreKernelService
     public async IAsyncEnumerable<string> ChatWithHandlebarsPlanner(string query, ChatRequestModel chatRequestModel,
         bool runAsChat = true, string? askOverride = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        //var kernel = CreateKernel("gpt-4-1106-preview");
-        //kernel.FunctionInvoked += HandleFunctionInvoked;
         var kernel = CreateKernelWithPlugins(chatRequestModel.SelectedPlugins);
         var planner = CreateHandlebarsPlanner(chatRequestModel);
         yield return "<h2> Generating Plan</h2>\n\n";
@@ -335,14 +330,14 @@ public partial class CoreKernelService
                                       <br/>
                                     </details>
                                     """;
-            
+
         }
         catch (Exception ex)
         {
             isError = true;
             errorMsg = $"<h3> Error Generating Plan</h3><br/><p style=\"color:red;background-color:white\">{ex}</p>";
         }
-        
+
         yield return "\n\n";
         if (isError)
         {
@@ -360,8 +355,8 @@ public partial class CoreKernelService
                 yield return $"<tr><td>{arg.Key}</td><td>{arg.Value}</td></tr>";
             }
         }
-        
-        
+
+
         yield return "\n<h3>Executing plan...</h3>\n\n";
         var finalResult = "";
         kernel.FunctionInvoking += HandleFunctionInvoking;
@@ -410,7 +405,7 @@ public partial class CoreKernelService
         {
             config.ExcludedFunctions.Add(exclude);
         }
-       
+
         var planner = new HandlebarsPlanner(config);
         return planner;
     }
@@ -460,10 +455,10 @@ public partial class CoreKernelService
         bool runAsChat = true, string? askOverride = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         yield return "stop";
-        
+
     }
 
-   
+
     private async IAsyncEnumerable<string> ExecuteChatStream(string query, string result, Kernel kernel)
     {
         var systemPrmpt =
@@ -502,9 +497,9 @@ public partial class CoreKernelService
         _chatExchanges.Add(new ChatExchange(userMessage, assistantMessage));
     }
 
-    private static Kernel CreateKernelWithPlugins(IEnumerable<KernelPlugin> pluginFunctions, string model = "gpt-4-1106-preview")
+    private static Kernel CreateKernelWithPlugins(IEnumerable<KernelPlugin> pluginFunctions)
     {
-        var kernel = CreateKernel(model);
+        var kernel = CreateKernel(TestConfiguration.OpenAI.PlannerModelId);
         kernel.Plugins.AddRange(pluginFunctions);
         return kernel;
     }

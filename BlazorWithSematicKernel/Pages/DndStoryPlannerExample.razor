@@ -16,7 +16,7 @@
                     <RadzenTextArea Style="width: 100%; height: 8rem;" Name="Ask" @bind-Value="@_dndPlanForm.Input"></RadzenTextArea>
                 </ChildContent>
                 <Helper>
-                    <RadzenRequiredValidator Component="Ask" Popup="true" Text="Just ask for SOMETHING dumbass! This isn't hard..."></RadzenRequiredValidator>
+                    <RadzenRequiredValidator Component="Ask" Popup="true" Text="Add some details. Just a name or short description is sufficient"></RadzenRequiredValidator>
                 </Helper>
             </RadzenFormField>
             <RadzenButton ButtonType="ButtonType.Submit" Text="Run" IsBusy="_isBusy" BusyText="Running..."></RadzenButton>
@@ -33,11 +33,6 @@
                     }
                 </Items>
             </RadzenTimeline>
-           @*  @foreach (var message in _chatMessages)
-            {
-                <RadzenText TextStyle="TextStyle.Caption">Role: @message.Role</RadzenText>
-                <RadzenText TextStyle="TextStyle.Body2">@message.Content</RadzenText>
-            } *@
         </RadzenCard>
     </RadzenColumn>
     <RadzenColumn Size="8">

@@ -18,7 +18,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Remove="Agents\AgentTemplates\CommanderAstra.yaml" />
 		<None Remove="Agents\ParrotAgents.yaml" />
 		<None Remove="Agents\ToolAgents.yaml" />
 		<None Remove="ApiPlugins\ChatGptPlugins\openapi.json" />
@@ -92,8 +91,6 @@
 	</ItemGroup>
 	<ItemGroup>
 		
-		<EmbeddedResource Include="Agents\AgentTemplates\CommanderAstra.yaml" />
-		
 		<EmbeddedResource Include="Agents\ParrotAgents.yaml" />
 		<EmbeddedResource Include="Agents\ToolAgents.yaml" />
 		<EmbeddedResource Include="ChatGptPluginManifests.json">
@@ -110,6 +107,9 @@
 		</Content>
 		
 		
+	</ItemGroup>
+	<ItemGroup>
+	  <Compile Remove="Models\Helpers\ConversionHelperModels.cs" />
 	</ItemGroup>
 	
 	<ItemGroup>
