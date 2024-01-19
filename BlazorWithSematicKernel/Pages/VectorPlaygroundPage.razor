@@ -71,7 +71,7 @@
             @if (_testForm.VisualType == VisualType.OneToManyGrid)
             {
                 <RadzenCard>
-                    <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.DisplayH5">Similarty to <span style="color: black !important;font-weight: bold; font-size:120%"> @_testForm.Input</span></RadzenText>
+                    <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.DisplayH5" Style="color: black !important;">Similarty to <span style="font-weight: bold; font-size:120%"> @_testForm.Input</span></RadzenText>
                     <RadzenDataGrid Data="_scores" TItem="SimScore" AllowSorting="true" Density="Density.Compact">
                         <Columns>
                             <RadzenDataGridColumn TItem="SimScore" Property="Prompt" Title="Prompt"></RadzenDataGridColumn>

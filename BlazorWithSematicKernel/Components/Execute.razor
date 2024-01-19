@@ -1,4 +1,5 @@
-﻿<RadzenRow>
+﻿@using SkPluginLibrary.Models.Helpers
+<RadzenRow>
     <RadzenColumn Size="6">
         @if (!string.IsNullOrEmpty(_promptText))
         {
@@ -13,7 +14,7 @@
                 <RadzenRow>
                     @foreach (var input in _functionInputsForm.FunctionParameterFields)
                     {
-                        if (input.Type.Contains("string", StringComparison.InvariantCultureIgnoreCase))
+                        if (input.Type == typeof(string))
                         {
                             <RadzenColumn Size="6">
                                 <RadzenFormField Text="@input.Name" Style="width:100%">
@@ -26,7 +27,7 @@
                                 </RadzenFormField>
                             </RadzenColumn>
                         }
-                        else if (input.Type.Equals("array", StringComparison.InvariantCultureIgnoreCase))
+                        else if (input.Type.IsCollectionType())
                         {
                             <RadzenColumn Size="6">
                                 <RadzenFormField Text="@input.Name">
@@ -39,7 +40,7 @@
                                 </RadzenFormField>
                             </RadzenColumn>
                         }
-                        else if (input.Type.Contains("number", StringComparison.InvariantCultureIgnoreCase) || input.Type.Contains("integer", StringComparison.InvariantCultureIgnoreCase) || input.Type.Contains("double", StringComparison.InvariantCultureIgnoreCase))
+                        else if (input.Type.IsNumericType())
                         {
                             <RadzenColumn Size="6">
                                 <RadzenFormField Text="@input.Name">
@@ -52,7 +53,7 @@
                                 </RadzenFormField>
                             </RadzenColumn>
                         }
-                        else if (input.Type.Contains("boolean", StringComparison.InvariantCultureIgnoreCase))
+                        else if (input.Type == typeof(bool))
                         {
                             <RadzenColumn Size="6">
                                 <RadzenFormField Text="@input.Name">

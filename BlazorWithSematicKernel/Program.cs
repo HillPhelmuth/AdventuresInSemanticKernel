@@ -44,17 +44,14 @@ services.AddApplicationInsightsTelemetry(options =>
     options.ConnectionString = appInsightsConnectionString;
     options.EnableDebugLogger = true;
 });
-builder.Logging.AddApplicationInsights(
-    configureTelemetryConfiguration: (config) =>
-        config.ConnectionString = appInsightsConnectionString,
-    configureApplicationInsightsLoggerOptions: (options) => { }
-);
+
 
 builder.Logging.AddFilter<ApplicationInsightsLoggerProvider>("Default", LogLevel.Debug);
 services.AddLogging(config =>
 {
     config.AddProvider(new StringEventWriterLoggerProvider(stringEventWriter));    
     config.Services.AddSingleton<ILoggerProvider, CustomApplicationInsightsLoggerProvider>();
+    config.AddFilter<CustomApplicationInsightsLoggerProvider>("Default", LogLevel.Information);
 });
 services.AddCascadingAuthenticationState();
 services.AddSingleton<ActivityLogging>();

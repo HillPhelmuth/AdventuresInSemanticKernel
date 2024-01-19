@@ -57,6 +57,13 @@ public class FileHelper
         var paragraphs = TextChunker.SplitPlainTextParagraphs(lines, 512, 96, "## Blazor Documentation\n", StringHelpers.GetTokens);
         return paragraphs;
     }
+    public static List<string> ReadAndChunkMarkdownFile(string path, string chunckHeader = "")
+    {
+        var text = File.ReadAllText(path);
+        var lines = TextChunker.SplitMarkDownLines(text, 128, StringHelpers.GetTokens);
+        var paragraphs = TextChunker.SplitMarkdownParagraphs(lines, 512, 96, $"## {chunckHeader}\n", StringHelpers.GetTokens);
+        return paragraphs;
+    }
 }
 
 public enum FileType

@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using static SkPluginLibrary.CoreKernelService;
@@ -14,6 +15,9 @@ using UglyToad.PdfPig;
 using Microsoft.SemanticKernel.Text;
 using NRedisStack.Search;
 using Microsoft.SemanticKernel.Memory;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Http.Resilience;
+using Polly;
 
 namespace SkPluginLibrary.Plugins
 {
@@ -38,7 +42,17 @@ namespace SkPluginLibrary.Plugins
             //{
             await LoadMemories();
             //}
-            var kernel = Kernel.CreateBuilder()
+            var kernelBuilder = Kernel.CreateBuilder();
+            kernelBuilder.Services.ConfigureHttpClientDefaults(c =>
+            {
+                c.AddStandardResilienceHandler().Configure(o =>
+                {
+                    o.Retry.ShouldHandle = args => ValueTask.FromResult(args.Outcome.Result?.StatusCode is HttpStatusCode.TooManyRequests);
+                    o.Retry.BackoffType = DelayBackoffType.Exponential;
+                    o.TotalRequestTimeout = new HttpTimeoutStrategyOptions { Timeout = TimeSpan.FromSeconds(90) };
+                });
+            });
+            var kernel = kernelBuilder
                 .AddOpenAIChatCompletion(TestConfiguration.OpenAI.ModelId, TestConfiguration.OpenAI.ApiKey)
                 .Build();
             var semanticMemory = await GetSemanticTextMemory();
@@ -54,13 +68,7 @@ namespace SkPluginLibrary.Plugins
             var engine = promptTemplateFactory.Create(new PromptTemplateConfig(ChatWithBlazorSystemPromptTemplate));
             var systemPrompt = await engine.RenderAsync(kernel, args);
             return systemPrompt;
-            //var chatService = new OpenAIChatCompletionService(TestConfiguration.OpenAI!.ChatModelId, TestConfiguration.OpenAI.ApiKey);
-            //var chat = new ChatHistory(systemPrompt);
-            //chat.AddUserMessage(query);
-            //await foreach (var token in chatService.GetStreamingChatMessageContentsAsync(chat, new OpenAIPromptExecutionSettings { MaxTokens = 2000, Temperature = 1 }))
-            //{
-            //    yield return token.Content ?? "";
-            //}
+           
 
         }
         protected static async Task<bool> CollectionExists()

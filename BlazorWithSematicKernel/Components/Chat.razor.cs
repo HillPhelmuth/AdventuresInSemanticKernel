@@ -121,38 +121,38 @@ namespace BlazorWithSematicKernel.Components
             StateHasChanged();
         }
 
-        private async Task ExecuteActionChatSequence(string input, bool runAsChat)
+        private Task ExecuteActionChatSequence(string input, bool runAsChat)
         {
             var token = _cancellationTokenSource.Token;
             _chatView!.ChatState.AddUserMessage(input);
             var chatWithActionPlanner = CoreKernelService.ChatWithAutoFunctionCalling(input,
                 ChatRequestModel, runAsChat, _askInput, token);
-            await ExecuteChatSequence(chatWithActionPlanner);
+            return ExecuteChatSequence(chatWithActionPlanner);
         }
 
-        private async Task ExecuteSequentialChatSequence(string input, bool runAsChat)
+        private Task ExecuteSequentialChatSequence(string input, bool runAsChat)
         {
             var token = _cancellationTokenSource.Token;
             _chatView!.ChatState.AddUserMessage(input);
             var chatWithPlanner = CoreKernelService.ChatWithSequentialPlanner(input,
                 ChatRequestModel, runAsChat, _askInput, token);
-            await ExecuteChatSequence(chatWithPlanner);
+            return ExecuteChatSequence(chatWithPlanner);
         }
 
-        private async Task ExecuteStepwiseChatSequence(string input, bool runAsChat)
+        private Task ExecuteStepwiseChatSequence(string input, bool runAsChat)
         {
             var token = _cancellationTokenSource.Token;
             _chatView!.ChatState.AddUserMessage(input);
             var chatWithPlanner = CoreKernelService.ChatWithStepwisePlanner(input, ChatRequestModel, runAsChat, _askInput, token);
-            await ExecuteChatSequence(chatWithPlanner);
+            return ExecuteChatSequence(chatWithPlanner);
         }
-        private async Task ExecuteHandlebarsChatSequence(string input, bool runAsChat)
+        private Task ExecuteHandlebarsChatSequence(string input, bool runAsChat)
         {
             var token = _cancellationTokenSource.Token;
             _chatView!.ChatState.AddUserMessage(input);
             var chatWithPlanner = CoreKernelService.ChatWithHandlebarsPlanner(input,
                                ChatRequestModel, runAsChat, _askInput, token);
-            await ExecuteChatSequence(chatWithPlanner);
+            return ExecuteChatSequence(chatWithPlanner);
         }
 
         private async Task ExecuteChatSequence(IAsyncEnumerable<string> chatWithPlanner)

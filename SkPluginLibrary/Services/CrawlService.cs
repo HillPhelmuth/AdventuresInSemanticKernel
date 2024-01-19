@@ -121,7 +121,12 @@ namespace SkPluginLibrary.Services
                 };
 
                 var converter = new Converter(config);
-                var tidyHtml = Cleaner.PreTidy(html, true);
+                var htmlBuilder = new StringBuilder();
+                foreach (var child in doc.DocumentNode?.DescendantsAndSelf().Where(x => x.Name?.ToLower() == "p" || IsValidHeader(x.Name?.ToLower())) ?? new List<HtmlNode>())
+                {
+                    htmlBuilder.Append(child.OuterHtml);
+                }
+                var tidyHtml = Cleaner.PreTidy(htmlBuilder.ToString(), true);
                 var mkdwnText = converter.Convert(tidyHtml);
                 _taskCompletionSource.SetResult(CleanUpContent(mkdwnText));
                 return;

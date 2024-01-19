@@ -9,7 +9,7 @@
                              TItem="SimScore"
                              Name="@score.Key"
                              XValue="@(e => e.ComparedTo!)"
-                             YValue="@(e => (decimal) Math.Round(e.Score, 3))" ShowDataLabels="true"></ApexPointSeries>
+                             YValue="@(e => (decimal) Math.Round(e.Score, 3)*100)" ShowDataLabels="true"></ApexPointSeries>
         }
 
 

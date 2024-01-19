@@ -5,6 +5,7 @@ using Markdig;
 using System.Text.Json.Serialization;
 using System.Diagnostics;
 using SkPluginLibrary.Models.Helpers;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace BlazorWithSematicKernel.Components
 {
@@ -19,7 +20,7 @@ namespace BlazorWithSematicKernel.Components
         private IJSRuntime JsRuntime { get; set; } = default!;
         [Inject]
         private NotificationService NotificationService { get; set; } = default!;
-        private record FunctionParameterField(string Name, string Description, object? DefaultValue, string Type)
+        private record FunctionParameterField(string Name, string Description, object? DefaultValue, Type Type)
         {
             public string? Value { get; set; } = DefaultValue?.ToString();
             public int NumValue { get; set; } = int.TryParse(DefaultValue?.ToString(), out var num) ? num : 0;
@@ -68,10 +69,10 @@ namespace BlazorWithSematicKernel.Components
         protected override Task OnParametersSetAsync()
         {
             var funcView = Function.SkFunction.Metadata;
-            var fields = funcView.Parameters.Select(x => new FunctionParameterField(x.Name, x.Description ?? "", x.DefaultValue ?? "", x.ParameterType?.ToString() ?? "string")).ToList();
+            var fields = funcView.Parameters.Select(x => new FunctionParameterField(x.Name, x.Description ?? "", x.DefaultValue ?? "", x.ParameterType ?? typeof(string))).ToList();
             if (!fields.Any(x => x.Name.Equals("input", StringComparison.InvariantCultureIgnoreCase)))
             {
-                fields.Add(new FunctionParameterField("Input", "Basic input for the function", "", "string"));
+                fields.Add(new FunctionParameterField("Input", "Basic input for the function", "", typeof(string)));
             }
             _functionInputsForm.FunctionParameterFields = fields;
             _promptText = PromptText(Function.SkFunction);
@@ -99,30 +100,30 @@ namespace BlazorWithSematicKernel.Components
             try
             {
                 var variables = functionInputsForm.FunctionParameterFields.ToDictionary(x => x.Name, x => x.Value);
-                var newVariables = new Dictionary<string, string>();
-                foreach (var field in functionInputsForm.FunctionParameterFields)
+                var newVariables = new Dictionary<string, object>();
+                foreach (var input in functionInputsForm.FunctionParameterFields)
                 {
-                    if (field.Type.Equals("array", StringComparison.InvariantCultureIgnoreCase))
+                    if (input.Type.IsCollectionType())
                     {
-                        var values = new InputArray { Items = field.Value.Split(',').ToList() };
+                        var values = new InputArray { Items = [.. input.Value.Split(',')] };
                         var value = JsonSerializer.Serialize(values);
-                        newVariables.Add(field.Name, value);
+                        newVariables.Add(input.Name, value);
                     }
-                    else if (field.Type.Contains("string", StringComparison.InvariantCultureIgnoreCase))
+                    else if (input.Type == typeof(string))
                     {
-                        newVariables.Add(field.Name, field.Value);
+                        newVariables.Add(input.Name, input.Value);
                     }
-                    else if (field.Type.Contains("boolean", StringComparison.InvariantCultureIgnoreCase))
+                    else if (input.Type==typeof(bool))
                     {
-                        newVariables.Add(field.Name, field.BoolValue ? "true" : "false");
+                        newVariables.Add(input.Name, input.BoolValue);
                     }
-                    else if (field.Type.Equals("number", StringComparison.InvariantCultureIgnoreCase) || field.Type.Equals("integer", StringComparison.InvariantCultureIgnoreCase))
+                    else if (input.Type.IsNumericType())
                     {
-                        newVariables.Add(field.Name, field.NumValue.ToString());
+                        newVariables.Add(input.Name, input.NumValue);
                     }
                     else
                     {
-                        newVariables.Add(field.Name, JsonSerializer.Serialize(field.Value));
+                        newVariables.Add(input.Name, JsonSerializer.Serialize(input.Value));
                     }
                 }
 

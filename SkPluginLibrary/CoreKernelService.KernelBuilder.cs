@@ -26,7 +26,8 @@ public partial class CoreKernelService
     #region Semantic Plugin Picker (SemanticPluginPicker.razor, SequentialPlannerBuilder.razor)
 
 
-    public async Task<FunctionResult> ExecuteKernelFunction(KernelFunction function, Dictionary<string, string>? variables = null)
+    public async Task<FunctionResult> ExecuteKernelFunction(KernelFunction function,
+        Dictionary<string, object>? variables = null)
     {
         var kernel = CreateKernel();
         var args = new KernelArguments();
@@ -34,7 +35,7 @@ public partial class CoreKernelService
         {
             args = [];
         }
-        foreach (var item in variables)
+        foreach (var item in variables ?? [])
         {
             args[item.Key] = item.Value;
         }

@@ -17,13 +17,13 @@ namespace BlazorWithSematicKernel.Components
                     {
                         Ranges =
                         [
-                            new PlotOptionsHeatmapColorScaleRange {From = 0.0, To = 0.6, Name = "Very Dissimilar", Color = "#FFA07A"},
-                            new PlotOptionsHeatmapColorScaleRange {From = 0.6, To = 0.69, Name = "Dissimilar", Color = "#FA8072"},
-                            new PlotOptionsHeatmapColorScaleRange {From = 0.69, To = 0.77, Name = "Very Slightly Similar", Color = "#F08080"},
-                            new PlotOptionsHeatmapColorScaleRange {From = 0.77, To = 0.85, Name = "Somewhat Similar", Color = "#CD5C5C"},
-                            new PlotOptionsHeatmapColorScaleRange {From = 0.85, To = 0.92, Name = "Similar", Color = "#DC143C"},
-                            new PlotOptionsHeatmapColorScaleRange {From = 0.92, To = 0.98, Name = "Extremely Similar", Color = "#B22222"},
-                            new PlotOptionsHeatmapColorScaleRange {From = 0.98, To = 1.0, Name = "Nearly Exact", Color = "#8B0000"}
+                            new PlotOptionsHeatmapColorScaleRange {From = 0.0*100, To = 0.6 * 100, Name = "Very Dissimilar", Color = "#FFA07A"},
+                            new PlotOptionsHeatmapColorScaleRange {From = 0.6 * 100, To = 0.69 * 100, Name = "Dissimilar", Color = "#FA8072"},
+                            new PlotOptionsHeatmapColorScaleRange {From = 0.69 * 100, To = 0.77 * 100, Name = "Very Slightly Similar", Color = "#F08080"},
+                            new PlotOptionsHeatmapColorScaleRange {From = 0.77 * 100, To = 0.85 * 100, Name = "Somewhat Similar", Color = "#CD5C5C"},
+                            new PlotOptionsHeatmapColorScaleRange {From = 0.85 * 100, To = 0.92 * 100, Name = "Similar", Color = "#DC143C"},
+                            new PlotOptionsHeatmapColorScaleRange {From = 0.92 * 100, To = 0.98 * 100, Name = "Extremely Similar", Color = "#B22222"},
+                            new PlotOptionsHeatmapColorScaleRange {From = 0.98 * 100, To = 1.0 * 100, Name = "Nearly Exact", Color = "#8B0000"}
                         ],
 
                     },

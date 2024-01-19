@@ -11,6 +11,7 @@ using SkPluginLibrary.Services;
 using System.Collections.Concurrent;
 using DocumentFormat.OpenXml.Wordprocessing;
 using System.Text.Json;
+using static SkPluginLibrary.CoreKernelService;
 
 namespace SkPluginLibrary.Plugins;
 
@@ -20,7 +21,7 @@ public class WikiChatPlugin
     private readonly KernelFunction _summarizeWebContent;
     public WikiChatPlugin()
     {
-        _kernel = Kernel.CreateBuilder().AddOpenAIChatCompletion("gpt-3.5-turbo-1106", TestConfiguration.OpenAI.ApiKey).Build();
+        _kernel = CreateKernel();
         var summarizePlugin = _kernel.ImportPluginFromPromptDirectory(Path.Combine(RepoFiles.PluginDirectoryPath, "SummarizePlugin"), "SummarizePlugin");
         _summarizeWebContent = summarizePlugin["Summarize"];
     }

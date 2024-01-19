@@ -66,17 +66,17 @@ namespace SkPluginLibrary.Plugins
             var collectionExists = collections.Contains(CollectionName.LangchainDocsCollection);
             if (collectionExists)
                 return (collectionExists, sqliteMemoryStore);
-            return (false, null);
+            return (false, sqliteMemoryStore);
         }
         protected static async Task LoadCollection(IMemoryStore sqliteMemoryStore)
         {
-            await sqliteMemoryStore.CreateCollectionAsync(DocsPath);
-            var chunks = ReadAndChunkPythonPdf();
+            await sqliteMemoryStore.CreateCollectionAsync(CollectionName.LangchainDocsCollection);
+            var chunks = ReadAndChunkPythonMkdn();
             var memory = await GetSemanticTextMemory();
             var chunkNumber = 1;
             foreach (var chunk in chunks)
             {
-                var id = await memory.SaveInformationAsync(DocsPath, chunk, $"BlazorPdf_{chunkNumber}");
+                var id = await memory.SaveInformationAsync(CollectionName.LangchainDocsCollection, chunk, $"langChain_{chunkNumber}");
                 Console.WriteLine($"Saved Chunk {chunkNumber} (id:{id})");
                 chunkNumber++;
             }
@@ -90,9 +90,16 @@ namespace SkPluginLibrary.Plugins
                 .WithOpenAITextEmbeddingGeneration(TestConfiguration.OpenAI.EmbeddingModelId, TestConfiguration.OpenAI.ApiKey)
                 .Build();
         }
-        protected static List<string> ReadAndChunkPythonPdf()
+        protected static List<string> ReadAndChunkPythonMkdn()
         {
-            return FileHelper.ReadAndChunkPdf(DocsPath);
+            var result = new List<string>();
+            var markdownFiles = Directory.GetFiles(DocsPath, "*.md*", SearchOption.AllDirectories);
+            foreach (var mkdFile in markdownFiles)
+            {
+                var chunks = FileHelper.ReadAndChunkMarkdownFile(mkdFile, Path.GetFileNameWithoutExtension(mkdFile));
+                result.AddRange(chunks);
+            }
+            return result;
         }
     }
 }

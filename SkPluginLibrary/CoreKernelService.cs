@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using System.Net;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.Qdrant;
@@ -23,6 +24,8 @@ using Microsoft.SemanticKernel.Connectors.Weaviate;
 using SkPluginLibrary.Plugins;
 using System.Runtime.CompilerServices;
 using Microsoft.SemanticKernel.Plugins.Memory;
+using Microsoft.Extensions.Http.Resilience;
+using Polly;
 
 
 namespace SkPluginLibrary;
@@ -68,8 +71,6 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
 
     public static Kernel ChatCompletionKernel(string chatModel = "gpt-3.5-turbo-1106")
     {
-        //var kernel = new Kernel();
-        //kernel.Services.AddOpenAiChatCompletionService()
         return Kernel.CreateBuilder().AddOpenAIChatCompletion(chatModel, TestConfiguration.OpenAI!.ApiKey)
             .Build();
     }
@@ -77,6 +78,15 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
     {
         var kernelBuilder = Kernel.CreateBuilder();
         kernelBuilder.Services.AddLogging(builder => builder.AddConsole());
+        kernelBuilder.Services.ConfigureHttpClientDefaults(c =>
+        {
+            c.AddStandardResilienceHandler().Configure(o =>
+            {
+                o.Retry.ShouldHandle = args => ValueTask.FromResult(args.Outcome.Result?.StatusCode is HttpStatusCode.TooManyRequests);
+                o.Retry.BackoffType = DelayBackoffType.Exponential;
+                o.TotalRequestTimeout = new HttpTimeoutStrategyOptions { Timeout = TimeSpan.FromSeconds(90) };
+            });
+        });
         var kernel = kernelBuilder
             .AddOpenAIChatCompletion(chatModel, TestConfiguration.OpenAI!.ApiKey)
             .AddOpenAITextEmbeddingGeneration("text-embedding-ada-002", TestConfiguration.OpenAI.ApiKey)

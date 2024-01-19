@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.SemanticKernel.Plugins.OpenApi;
+using static SkPluginLibrary.CoreKernelService;
 using System.Collections.Concurrent;
 
 namespace SkPluginLibrary.Plugins;
@@ -22,10 +23,9 @@ public class WebCrawlPlugin
 
     public WebCrawlPlugin(BingWebSearchService bingWebSearchService)
     {
-        var kernel = Kernel.CreateBuilder().AddOpenAIChatCompletion("gpt-3.5-turbo-1106", TestConfiguration.OpenAI.ApiKey).Build();
+        var kernel = CreateKernel();
         var summarizePlugin = kernel.ImportPluginFromPromptDirectory(Path.Combine(RepoFiles.PluginDirectoryPath, "SummarizePlugin"), "SummarizePlugin");
         _summarizeWebContent = summarizePlugin["Summarize"];
-        Console.WriteLine($"SummarizePlugin loaded:{summarizePlugin}");
         _kernel = kernel;
         _searchService = bingWebSearchService;
 
@@ -59,12 +59,12 @@ public class WebCrawlPlugin
 
         }
         var scrapeResults = new ConcurrentBag<List<SearchResultItem>>();
-        await Parallel.ForEachAsync(scrapeList, new ParallelOptions { MaxDegreeOfParallelism = 2 }, async (task, token) =>
+      
+        foreach (var task in scrapeList)
         {
             var result = await task;
             scrapeResults.Add(result);
-            await Task.Delay(500);
-        });
+        }
         //var scrapeResults = await Task.WhenAll(scrapeList);
         var searchCiteJson = JsonSerializer.Serialize(scrapeResults.SelectMany(x => x), new JsonSerializerOptions { WriteIndented = true });
         return searchCiteJson;
@@ -98,18 +98,17 @@ public class WebCrawlPlugin
             var crawler = new CrawlService();
             var text = await crawler.CrawlAsync(url);
             var tokens = StringHelpers.GetTokens(text);
-            var count = tokens / 2048;
-            var segments = ChunkIntoSegments(text, Math.Max(count, 1), 2048, title);
-            var summaryTasks = segments.Select(segment => new KernelArguments { ["input"] = segment, ["query"] = input }).Select(segmentArgs => _kernel.InvokeAsync(_summarizeWebContent, segmentArgs)).ToList();
-
-            var summaryResults = new ConcurrentBag<FunctionResult>()/* await Task.WhenAll(summaryTasks)*/;
-            foreach (var summaryTask in summaryTasks)
+            var count = tokens / 4096;
+            var segments = ChunkIntoSegments(text, Math.Max(count, 1), 4096, title).ToList();
+            Console.WriteLine($"Segment count: {segments.Count}");
+            var argList = segments.Select(segment => new KernelArguments { ["input"] = segment, ["query"] = input }).ToList();
+            var summaryResults = new List<FunctionResult>();
+            foreach (var arg in argList)
             {
-                var result = await summaryTask;
+                var result = await _kernel.InvokeAsync(_summarizeWebContent, arg);
                 summaryResults.Add(result);
-                await Task.Delay(500);
             }
-            
+           
             return summaryResults.Select(x => new SearchResultItem(url) { Title = title, Content = x.Result() }).ToList();
         }
         catch (Exception ex)
