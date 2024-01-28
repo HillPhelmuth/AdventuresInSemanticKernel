@@ -81,6 +81,7 @@ public class CodeSampleTemplate
                                           using Microsoft.SemanticKernel.Experimental.Agents;
                                           using SkPluginLibrary.Models;
                                           using SkPluginLibrary.Models.Helpers;
+                                          using SkPluginLibrary.Models.Hooks;
                                           using System;
                                           using System.Collections.Generic;
                                           using System.IO;

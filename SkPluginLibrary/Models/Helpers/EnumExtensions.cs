@@ -20,6 +20,18 @@ namespace SkPluginLibrary.Models.Helpers
             return attributes is { Length: > 0 } ? attributes[0].LongDescription : string.Empty;
 
         }
+        public static string GetOpenAIModelName(this Enum value, bool isAzure)
+        {
+            var fi = value.GetType().GetField(value.ToString());
+            if (isAzure)
+            {
+                var attribs = (AzureOpenAIModelAttribute[])fi.GetCustomAttributes(typeof(AzureOpenAIModelAttribute), false);
+                return attribs is { Length: > 0 } ? attribs[0].Model : string.Empty;
+            }
+            var attributes = (OpenAIModelAttribute[])fi.GetCustomAttributes(typeof(OpenAIModelAttribute), false);
+
+            return attributes is { Length: > 0 } ? attributes[0].Model : string.Empty;
+        }
         public static bool IsActive(this Enum value)
         {
             var fi = value.GetType().GetField(value.ToString());

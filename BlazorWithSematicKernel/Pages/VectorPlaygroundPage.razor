@@ -45,7 +45,10 @@
                         <RadzenButton ButtonType="ButtonType.Button" Size="ButtonSize.Small" Style="" Text="Add" Click="Add" Icon="add"></RadzenButton>
                     </RadzenColumn>
                     <RadzenColumn Size="4">
-                        <RadzenButton ButtonType="ButtonType.Button" Click=GetVectors IsBusy="_isBusy" Icon="dvr" BusyText="Generating Items..." Text="Generate Random Items"></RadzenButton><br />
+                        <RadzenFormField Text="Number of Items">
+                            <RadzenNumeric Min="0" Max="100" @bind-Value=_testForm.RandomTextNumber></RadzenNumeric>
+                        </RadzenFormField><br />
+                        <RadzenButton ButtonType="ButtonType.Button" Click=@(() => GetVectors(_testForm.RandomTextNumber)) IsBusy="_isBusy" Icon="dvr" BusyText="Generating Items..." Text="Generate Random Items"></RadzenButton><br />
                         <RadzenFormField Text="Output Visualization Type">
                             <RadzenRadioButtonList @bind-Value="_testForm.VisualType" Orientation="Radzen.Orientation.Vertical">
                                 <Items>
@@ -55,12 +58,17 @@
                             </RadzenRadioButtonList>
                         </RadzenFormField>
                         <br />
-
+                        <RadzenFormField Text="Embeddings Model">
+                            <ChildContent>
+                                <RadzenDropDown Data="_models" @bind-Value=_testForm.Model></RadzenDropDown>
+                            </ChildContent>
+                        </RadzenFormField>
+                        <br/>
                         <RadzenButton ButtonType="ButtonType.Submit" Text="Submit" IsBusy="_isBusy" BusyText="Running..."></RadzenButton>
                         <br />
                         @if (_scores.Any())
                         {
-                            <RadzenButton Text="Next" Click="@(() => _currentStep++)"></RadzenButton>
+                            <RadzenButton Text="View Results" Click="@(() => _currentStep++)"></RadzenButton>
                         }
                         
                     </RadzenColumn>
@@ -87,7 +95,7 @@
             else if (_testForm.VisualType == VisualType.ManyToManyHeatMap)
             {
                 <RadzenCard>
-                    <SimilarityMap HasRendered="HasRendered" SimilarityScores="_scores"></SimilarityMap>
+                    <SimilarityMap Model="@_testForm.Model" HasRendered="HasRendered" SimilarityScores="_scores"></SimilarityMap>
                 </RadzenCard>
             }
         </RadzenStepsItem>

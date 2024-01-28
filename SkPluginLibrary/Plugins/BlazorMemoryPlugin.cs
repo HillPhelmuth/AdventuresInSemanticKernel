@@ -53,7 +53,7 @@ namespace SkPluginLibrary.Plugins
                 });
             });
             var kernel = kernelBuilder
-                .AddOpenAIChatCompletion(TestConfiguration.OpenAI.ModelId, TestConfiguration.OpenAI.ApiKey)
+                .AddOpenAIChatCompletion(TestConfiguration.OpenAI.Gpt35ModelId, TestConfiguration.OpenAI.ApiKey)
                 .Build();
             var semanticMemory = await GetSemanticTextMemory();
             var memoryItems = await semanticMemory.SearchAsync(CollectionName.BlazorDocsCollection, $"{query} {history}", topN, 0.78).ToListAsync();

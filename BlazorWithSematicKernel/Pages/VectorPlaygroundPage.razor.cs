@@ -16,6 +16,7 @@ namespace BlazorWithSematicKernel.Pages
         private bool _isBusy;
         private bool _isChartRendered = true;
         private MemoryStoreType _memoryStoreType = MemoryStoreType.None;
+        private string _busyText = "";
         private class MemoryStoreForm
         {
             public MemoryStoreType MemoryStoreType { get; set; }
@@ -23,12 +24,12 @@ namespace BlazorWithSematicKernel.Pages
         private MemoryStoreForm _memoryStoreForm = new();
         private readonly Dictionary<MemoryStoreType, string> _memoryStoreTypes = typeof(MemoryStoreType).GetEnumsWithDescriptions<MemoryStoreType>();
         private int _currentStep;
-        private async Task GetVectors()
+        private async Task GetVectors(int number = 10)
         {
             _isBusy = true;
             StateHasChanged();
             await Task.Delay(1);
-            var randos = await CoreKernelService.GenerateRandomSentances();
+            var randos = await CoreKernelService.GenerateRandomSentances(number);
             if (_testForm.TestInputs.Count == 1)
             {
                 _testForm.TestInputs.Clear();
@@ -63,15 +64,18 @@ namespace BlazorWithSematicKernel.Pages
             _currentStep++;
             StateHasChanged();
         }
+        private List<string> _models = ["text-embedding-3-small", "text-embedding-3-large", "text-embedding-ada-002"];
         private class TestForm
         {
+            
             [Required]
             public string? Input { get; set; }
 
-            public List<TestInput> TestInputs { get; set; } = new() { new TestInput() { Input = "" } };
+            public List<TestInput> TestInputs { get; set; } = [new TestInput() { Input = "" }];
             public bool CompareAllMap { get; set; }
             public VisualType VisualType { get; set; }
-
+            public int RandomTextNumber { get; set; } = 10;
+            public string Model { get; set; } = "text-embedding-3-small";
             public void Reset()
             {
                 Input = "";
@@ -142,7 +146,7 @@ namespace BlazorWithSematicKernel.Pages
                 if (testForm.VisualType == VisualType.ManyToManyHeatMap)
                     contextItems.Add(new ContextItem() { Prompt = testForm.Input });
                 _contextItems.Clear();
-                await foreach (var item in CoreKernelService.SaveBatchToMemory("testCollection", contextItems, _memoryStoreType, true))
+                await foreach (var item in CoreKernelService.SaveBatchToMemory("testCollection", contextItems, _memoryStoreType, true, testForm.Model))
                 {
                     _contextItems.Add(item);
                 }

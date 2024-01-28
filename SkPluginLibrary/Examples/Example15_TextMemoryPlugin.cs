@@ -141,7 +141,7 @@ public static class Example15_TextMemoryPlugin
     private static async Task RunWithStoreAsync(IMemoryStore memoryStore, CancellationToken cancellationToken)
     {
         var kernel = Kernel.CreateBuilder()
-            .AddOpenAIChatCompletion(TestConfiguration.OpenAI.ChatModelId, TestConfiguration.OpenAI.ApiKey)
+            .AddOpenAIChatCompletion(TestConfiguration.OpenAI.Gpt4ModelId, TestConfiguration.OpenAI.ApiKey)
             .AddOpenAITextEmbeddingGeneration(TestConfiguration.OpenAI.EmbeddingModelId, TestConfiguration.OpenAI.ApiKey)
             .Build();
 

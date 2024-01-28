@@ -6,6 +6,7 @@ namespace BlazorWithSematicKernel.Components
     {
         [Parameter] public List<SimScore> SimilarityScores { get; set; } = [];
         [Parameter] public EventCallback HasRendered { get; set; }
+        [Parameter] public string Model { get; set; } = TestConfiguration.OpenAI!.EmbeddingModelId;
         private ApexChartOptions<SimScore> _options = new()
         {
             Colors = ["#008FFB"],
@@ -15,16 +16,7 @@ namespace BlazorWithSematicKernel.Components
                 {
                     ColorScale = new PlotOptionsHeatmapColorScale
                     {
-                        Ranges =
-                        [
-                            new PlotOptionsHeatmapColorScaleRange {From = 0.0*100, To = 0.6 * 100, Name = "Very Dissimilar", Color = "#FFA07A"},
-                            new PlotOptionsHeatmapColorScaleRange {From = 0.6 * 100, To = 0.69 * 100, Name = "Dissimilar", Color = "#FA8072"},
-                            new PlotOptionsHeatmapColorScaleRange {From = 0.69 * 100, To = 0.77 * 100, Name = "Very Slightly Similar", Color = "#F08080"},
-                            new PlotOptionsHeatmapColorScaleRange {From = 0.77 * 100, To = 0.85 * 100, Name = "Somewhat Similar", Color = "#CD5C5C"},
-                            new PlotOptionsHeatmapColorScaleRange {From = 0.85 * 100, To = 0.92 * 100, Name = "Similar", Color = "#DC143C"},
-                            new PlotOptionsHeatmapColorScaleRange {From = 0.92 * 100, To = 0.98 * 100, Name = "Extremely Similar", Color = "#B22222"},
-                            new PlotOptionsHeatmapColorScaleRange {From = 0.98 * 100, To = 1.0 * 100, Name = "Nearly Exact", Color = "#8B0000"}
-                        ],
+                        Ranges = _heatMapColorScale,
 
                     },
                     Distributed = true,
@@ -34,6 +26,44 @@ namespace BlazorWithSematicKernel.Components
         };
         private ApexChart<SimScore> _apexChart;
         private bool _isReady;
+        private static List<PlotOptionsHeatmapColorScaleRange> _heatMapColorScale = [];
+        private static List<PlotOptionsHeatmapColorScaleRange> _heatmapColorScaleRanges003 = [
+            new PlotOptionsHeatmapColorScaleRange { From = 0.01, To = 20.00, Name = "Extremely Dissimilar", Color = "#000000" },
+            new PlotOptionsHeatmapColorScaleRange { From = 20.01, To = 40.00, Name = "Dissimilar", Color = "#cc9900" },
+            new PlotOptionsHeatmapColorScaleRange { From = 40.01, To = 60.00, Name = "Somewhat Similar", Color = "#ff3333" },
+            new PlotOptionsHeatmapColorScaleRange { From = 60.01, To = 80.00, Name = "Similar", Color = "#008000" },
+            new PlotOptionsHeatmapColorScaleRange { From = 80.01, To = 100, Name = "Extremely Similar", Color = "#0000ff" },
+        ];
+        private static List<PlotOptionsHeatmapColorScaleRange> _heatMapColorRanges002 = [
+            new PlotOptionsHeatmapColorScaleRange { From = 0.01, To = 60.00, Name = "Extremely Dissimilar", Color = "#000000" },
+            new PlotOptionsHeatmapColorScaleRange { From = 60.01, To = 70.00, Name = "Dissimilar", Color = "#cc9900" },
+            new PlotOptionsHeatmapColorScaleRange { From = 70.01, To = 80.00, Name = "Somewhat Similar", Color = "#ff3333" },
+            new PlotOptionsHeatmapColorScaleRange { From = 80.01, To = 90.00, Name = "Similar", Color = "#008000" },
+            new PlotOptionsHeatmapColorScaleRange { From = 90.01, To = 100, Name = "Extremely Similar", Color = "#0000ff" },
+        ];
+       
+        protected override Task OnParametersSetAsync()
+        {
+            _heatMapColorScale = Model.Contains("002") ? _heatMapColorRanges002 : _heatmapColorScaleRanges003;
+            _options = new ApexChartOptions<SimScore>
+            {
+                Colors = ["#008FFB"],
+                PlotOptions = new PlotOptions
+                {
+                    Heatmap = new PlotOptionsHeatmap
+                    {
+                        ColorScale = new PlotOptionsHeatmapColorScale
+                        {
+                            Ranges = _heatMapColorScale,
+
+                        },
+                        Distributed = true,
+
+                    }
+                }
+            };
+            return base.OnParametersSetAsync();
+        }
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             if (firstRender)

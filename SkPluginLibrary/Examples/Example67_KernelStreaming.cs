@@ -14,8 +14,8 @@ public static class Example67_KernelStreaming
     public static async Task RunAsync()
     {
         string apiKey = TestConfiguration.AzureOpenAI.ApiKey;
-        string chatDeploymentName = TestConfiguration.AzureOpenAI.ChatDeploymentName;
-        string chatModelId = TestConfiguration.AzureOpenAI.ChatModelId;
+        string chatDeploymentName = TestConfiguration.AzureOpenAI.Gpt4DeploymentName;
+        string chatModelId = TestConfiguration.AzureOpenAI.Gpt35ModelId;
         string endpoint = TestConfiguration.AzureOpenAI.Endpoint;
 
         if (apiKey == null || chatDeploymentName == null || chatModelId == null || endpoint == null)

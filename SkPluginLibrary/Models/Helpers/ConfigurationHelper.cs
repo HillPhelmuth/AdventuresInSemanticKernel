@@ -14,7 +14,7 @@ public class ConfigurationHelper
         {
             var configSection = new ConfigurationSection(type.Name, type, GetStaticPropertyValue(type.Name.Replace("Config", "")));
             var properties = GetInstanceProperties(type);
-            configSection.ConfigurationProperties = new List<ConfigurationProperty>();
+            configSection.ConfigurationProperties = [];
             foreach (var prop in properties)
             {
                 var propValue = GetInstancePropertyValue(configSection.Instance, prop.Name);
@@ -32,15 +32,13 @@ public class ConfigurationHelper
         var type = section.Type;
         var instance = section.Instance;
         var properties = section.ConfigurationProperties;
-        foreach (var property in properties)
+        foreach (var property in properties ?? [])
         {
             var value = property.Value;
             SetInstancePropertyValue(instance, property.Name, value);
             Console.WriteLine($"Config Property {property.Name} of type {section.Name} set to {value}");
         }
         SetStaticPropertyValue(type.Name.Replace("Config", ""), instance);
-        var json = JsonSerializer.Serialize(TestConfiguration.Qdrant, new JsonSerializerOptions { WriteIndented = true });
-        Console.WriteLine($"Qdrant set to:\n{json}");
 
     }
     private static void SetStaticPropertyValue(string propertyName, object value)
@@ -52,6 +50,7 @@ public class ConfigurationHelper
             property.SetValue(null, value, null);
         }
     }
+    // ReSharper disable once SuggestBaseTypeForParameter -> Type more performant than IReflect
     private static IEnumerable<ConfigurationProperty> GetInstanceProperties(Type type)
     {
         var properties = type.GetProperties(BindingFlags.Instance | BindingFlags.Public);
@@ -80,18 +79,7 @@ public class ConfigurationHelper
         var property = obj.GetType().GetProperty(propertyName, BindingFlags.Instance | BindingFlags.Public);
         return property?.GetValue(obj, null)?.ToString();
     }
-    public static T CreateInstanceOf<T>() where T : new()
-    {
-        return new T();
-    }
-
-    public static object CreateInstanceOf(Type type)
-    {
-        if (type == null)
-            throw new ArgumentNullException(nameof(type));
-
-        return Activator.CreateInstance(type);
-    }
+   
 
 }
 

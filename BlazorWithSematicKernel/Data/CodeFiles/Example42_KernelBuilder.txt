@@ -4,8 +4,8 @@ public static class Example42_KernelBuilder
     {
         string azureOpenAIKey = TestConfiguration.AzureOpenAI.ApiKey;
         string azureOpenAIEndpoint = TestConfiguration.AzureOpenAI.Endpoint;
-        string azureOpenAIChatDeploymentName = TestConfiguration.AzureOpenAI.ChatDeploymentName;
-        string azureOpenAIChatModelId = TestConfiguration.AzureOpenAI.ChatModelId;
+        string azureOpenAIChatDeploymentName = TestConfiguration.AzureOpenAI.Gpt4DeploymentName;
+        string azureOpenAIChatModelId = TestConfiguration.AzureOpenAI.Gpt35ModelId;
 
         // KernelBuilder provides a simple way to configure a Kernel. This constructs a kernel
         // with logging and an Azure OpenAI chat completion service configured.

@@ -11,6 +11,7 @@ using Microsoft.SemanticKernel.Experimental.Agents;
 using SkPluginComponents;
 using SkPluginComponents.Models;
 using SkPluginLibrary.Agents.Models;
+using SkPluginLibrary.Models.Hooks;
 using SkPluginLibrary.Services;
 
 namespace SkPluginLibrary.Agents.Examples;
@@ -35,13 +36,15 @@ public class AdventureStoryAgents(AskUserService askUserService) : IAsyncDisposa
         _elara ??= await GenerateElara();
         var kernelBuilder = Kernel.CreateBuilder();
         kernelBuilder.Services.AddLogging(builder => builder.AddConsole());
-        var kernel = kernelBuilder.AddOpenAIChatCompletion(TestConfiguration.OpenAI.ChatModelId, TestConfiguration.OpenAI.ApiKey).Build();
+        var kernel = kernelBuilder.AddOpenAIChatCompletion(TestConfiguration.OpenAI.Gpt4ModelId, TestConfiguration.OpenAI.ApiKey).Build();
         //kernel.Plugins.Add(GenerateAgentsAsPluginFunctions());
         kernel.Plugins.Add(_astra.AsPlugin());
         kernel.Plugins.Add(_zanar.AsPlugin());
         kernel.Plugins.Add(_elara.AsPlugin());
-        kernel.FunctionInvoking += HandleFunctionInvoking;
-        kernel.FunctionInvoked += HandleFunctionInvoked;
+        var functionHook = new FunctionFilterHook();
+        kernel.FunctionFilters.Add(functionHook);
+        functionHook.FunctionInvoking += HandleFunctionInvoking;
+        functionHook.FunctionInvoked += HandleFunctionInvoked;
         OpenAIPromptExecutionSettings settings = new() { ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions, ChatSystemPrompt = AdventureSystemPrompt, Temperature = 1.0 };
         var chat = kernel.GetRequiredService<IChatCompletionService>();
         _chatHistory.AddUserMessage(input);
@@ -74,12 +77,12 @@ public class AdventureStoryAgents(AskUserService askUserService) : IAsyncDisposa
         ChatHistoryUpdate?.Invoke(_chatHistory);
 
     }
-    private void HandleFunctionInvoked(object? sender, FunctionInvokedEventArgs invokedArgs)
+    private void HandleFunctionInvoked(object? sender, FunctionInvokedContext invokedArgs)
     {
         var function = invokedArgs.Function;
         Console.WriteLine($"\n---------Function {function.Name} Invoked-----------\nResults:\n{invokedArgs.Result}\n----------------------------");
     }
-    private void HandleFunctionInvoking(object? sender, FunctionInvokingEventArgs invokingEventArgs)
+    private void HandleFunctionInvoking(object? sender, FunctionInvokingContext invokingEventArgs)
     {
         var function = invokingEventArgs.Function;
         Console.WriteLine($"Function Arguments: {invokingEventArgs.Arguments.AsJson()}");
@@ -106,18 +109,18 @@ public class AdventureStoryAgents(AskUserService askUserService) : IAsyncDisposa
             while (true)
             {
                 
-                var chatMessages = await thread.InvokeAsync(commander, cancellationToken).ToListAsync(cancellationToken);
+                var chatMessages = await thread.InvokeAsync(commander, cancellationToken: cancellationToken).ToListAsync(cancellationToken);
                 Console.WriteLine($"Commander Astra has {chatMessages.Count} messages");
                 var message = chatMessages.First();
                 ChatMessage?.Invoke(AgentMessage.FromChatMessage(message, commander.Name!));
                 if (message.Content.Contains("[Engineer Zanar]"))
                 {
-                    chatMessages = await thread.InvokeAsync(zanar, cancellationToken).ToListAsync(cancellationToken);
+                    chatMessages = await thread.InvokeAsync(zanar, cancellationToken: cancellationToken).ToListAsync(cancellationToken);
                     SendChatMessages(chatMessages, zanar.Name);
                 }
                 else if (message.Content.Contains("[Mystic Elara]"))
                 {
-                    chatMessages = await thread.InvokeAsync(elara, cancellationToken).ToListAsync(cancellationToken);
+                    chatMessages = await thread.InvokeAsync(elara, cancellationToken: cancellationToken).ToListAsync(cancellationToken);
                     SendChatMessages(chatMessages, elara.Name);
                 }
                 else if (message.Content.Contains("[New Recruit]"))
@@ -173,7 +176,7 @@ public class AdventureStoryAgents(AskUserService askUserService) : IAsyncDisposa
     private static async Task<IAgent> GenerateCommanderAstra()
     {
         return Track(await new AgentBuilder()
-            .WithOpenAIChatCompletion(TestConfiguration.OpenAI.ModelId, TestConfiguration.OpenAI.ApiKey)
+            .WithOpenAIChatCompletion(TestConfiguration.OpenAI.Gpt35ModelId, TestConfiguration.OpenAI.ApiKey)
             .WithInstructions(AstraInstructions)
             .WithDescription("Gruff but crafty leader of the crew.")
             .WithName("Commander Astra")
@@ -182,7 +185,7 @@ public class AdventureStoryAgents(AskUserService askUserService) : IAsyncDisposa
     private static async Task<IAgent> GenerateZanar()
     {
         return Track(await new AgentBuilder()
-            .WithOpenAIChatCompletion(TestConfiguration.OpenAI.ModelId, TestConfiguration.OpenAI.ApiKey)
+            .WithOpenAIChatCompletion(TestConfiguration.OpenAI.Gpt35ModelId, TestConfiguration.OpenAI.ApiKey)
             .WithName("Engineer Zanar")
             .WithDescription("A brilliant but quirky engineer character who specializes in technology and gadgetry. Provides information on fictional technologies, solves technical puzzles, or creates imaginative solutions to challenges faced by the team")
             .WithInstructions(ZanarInstructions)
@@ -192,7 +195,7 @@ public class AdventureStoryAgents(AskUserService askUserService) : IAsyncDisposa
     {
         return Track(
             await new AgentBuilder()
-                .WithOpenAIChatCompletion(TestConfiguration.OpenAI.ModelId, TestConfiguration.OpenAI.ApiKey)
+                .WithOpenAIChatCompletion(TestConfiguration.OpenAI.Gpt35ModelId, TestConfiguration.OpenAI.ApiKey)
                 .WithName("Mystic Elara")
                 .WithDescription("A character with deep knowledge of the universe's mystical and magical aspects. Offers insights into alien cultures, ancient lore, and cosmic mysteries, adding a layer of fantasy and intrigue to the narrative.")
                 .WithInstructions(ElaraInstructions)

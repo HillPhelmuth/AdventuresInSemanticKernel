@@ -1,5 +1,10 @@
 ﻿<RadzenCard>
     <RadzenText Text="Create Agent" TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Center"></RadzenText>
+    <RadzenText TextAlign="TextAlign.Center">
+        <RadzenText TextStyle="TextStyle.Subtitle2"> Use one of the following examples or create your agent</RadzenText>
+        <RadzenButton Size="ButtonSize.ExtraSmall" Text="Medium.com Api Helper" Click="UseMediumExample"></RadzenButton>
+        <RadzenButton Size="ButtonSize.ExtraSmall" Text="Web Chat Agent" Click="UseWebChatExample"></RadzenButton>
+    </RadzenText>
     <RadzenTemplateForm Data="_agentForm" TItem="AgentForm" Submit="GenerateAgent">
         <RadzenFormField Text="Name" Style="width:100%">
             <ChildContent>

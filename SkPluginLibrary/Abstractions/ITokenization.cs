@@ -10,6 +10,6 @@ public interface ITokenization
     Dictionary<int, (List<TokenString>, int)> ChunkAndTokenize(string input, int lineMax, int chunkMax,
         int overlap);
 
-    Task<string> SaveChunks(List<TokenizedChunk> chunks);
+    Task<string> SaveChunks(List<TokenizedChunk> chunks, string model = "text-embedding-3-small");
     Task<List<MemoryQueryResult>> SearchInChunks(string query, int limit = 1, double threshold = 0.7d);
 }

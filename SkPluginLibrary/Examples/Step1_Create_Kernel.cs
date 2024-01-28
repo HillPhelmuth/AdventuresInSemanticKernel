@@ -16,7 +16,7 @@ public static class Step1_Create_Kernel
         // Create a kernel with OpenAI chat completion
         Kernel kernel = Kernel.CreateBuilder()
             .AddOpenAIChatCompletion(
-                modelId: TestConfiguration.OpenAI.ChatModelId,
+                modelId: TestConfiguration.OpenAI.Gpt4ModelId,
                 apiKey: TestConfiguration.OpenAI.ApiKey)
             .Build();
 

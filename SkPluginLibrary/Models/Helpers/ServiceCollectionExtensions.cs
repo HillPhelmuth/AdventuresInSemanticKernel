@@ -25,7 +25,7 @@ namespace SkPluginLibrary.Models.Helpers
             services.AddSingleton<ScriptService>();
             services.AddScoped<CompilerService>();
             services.AddScoped<HdbscanService>();
-            services.AddScoped<AdventureStoryAgents>();
+            services.AddTransient<AdventureStoryAgents>();
             services.AddTransient<AssistantAgentService>();
             return services;
         }

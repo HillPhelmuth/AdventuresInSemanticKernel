@@ -1,6 +1,6 @@
 ﻿<CascadingValue Name="PageTitle" Value="@_pageTitle">
     <CascadingAuthenticationState>
-        <Router AppAssembly="@typeof(Routes).Assembly" OnNavigateAsync="HandleNavigation">
+        <Router AppAssembly="@typeof(Routes).Assembly" OnNavigateAsync="HandleNavigation" >
             <Found Context="routeData">
                 <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
                     <NotAuthorized>

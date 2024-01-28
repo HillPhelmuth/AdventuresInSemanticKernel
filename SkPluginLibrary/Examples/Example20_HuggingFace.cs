@@ -23,7 +23,7 @@ public static class Example20_HuggingFace
 
         Kernel kernel = Kernel.CreateBuilder()
             .AddHuggingFaceTextGeneration(
-                model: TestConfiguration.HuggingFace.ModelId,
+                model: "gpt2",
                 apiKey: TestConfiguration.HuggingFace.ApiKey)
             .Build();
 

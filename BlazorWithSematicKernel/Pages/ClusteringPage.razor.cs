@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components;
 using SkPluginLibrary.Abstractions;
 using SkPluginLibrary.Models.Helpers;
 using SkPluginLibrary.Services;
+using System.Text.Json;
 
 namespace BlazorWithSematicKernel.Pages
 {
@@ -11,7 +12,7 @@ namespace BlazorWithSematicKernel.Pages
         private const string FileuploadCollection = "fileupload";
 
         [Inject]
-        private IMemoryConnectors CoreKernelService { get; set; } = default!;
+        private IMemoryConnectors CoreMemoryKernelService { get; set; } = default!;
         [Inject]
         private NotificationService NotificationService { get; set; } = default!;
         private List<MemoryResult> _memoryResults = new();
@@ -25,6 +26,7 @@ namespace BlazorWithSematicKernel.Pages
             public string Title { get; set; } = title;
             public string? Tags { get; set; }
             public List<MemoryResult> MemoryResults { get; set; } = memoryResults;
+            public int Count => MemoryResults.Count;
         }
 
         private List<ClusterDisplay> _clusters = new();
@@ -64,14 +66,21 @@ namespace BlazorWithSematicKernel.Pages
                 _busyText = "Clustering...";
                 StateHasChanged();
             }
-            await RunCluster(form);
+            try
+            {
+                await RunCluster(form);
+            }
+            catch (Exception ex)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, $"Error Generating Cluster Data:<br/>{ex.Message}<br/>", ex.ToString(), 30000);
+            }
             _isBusy = false;
             StateHasChanged();
         }
         private async Task RunCluster(ClusterForm form)
         {
             var collection = form.UseDefaultContent ? null : FileuploadCollection;
-            _memoryResults = await CoreKernelService.GetItemClustersFromCollection(form.ItemCount, "*", form.MinPoints, form.MinCluster, form.DistanceFunction, collection);
+            _memoryResults = await CoreMemoryKernelService.GetItemClustersFromCollection(form.ItemCount, "*", form.MinPoints, form.MinCluster, form.DistanceFunction, collection);
             var memoryGroups = _memoryResults.GroupBy(x => x.Cluster).Select(g =>
                 new ClusterDisplay(g.Key, g.FirstOrDefault()?.ClusterTitle ?? "no title", g.ToList()) { Tags = g.FirstOrDefault()?.ClusterSummary });
             _clusters = memoryGroups.ToList();
@@ -95,13 +104,13 @@ namespace BlazorWithSematicKernel.Pages
         }
 
         private FileUploadData _fileUploadData = new();
-
+        
 
         private async Task HandleFile(FileUploadData fileUploadData)
         {
             if (_fileNameHandled == fileUploadData.FileName) return;
             var file = Convert.FromBase64String(fileUploadData.FileBase64!.ExtractBase64FromDataUrl());
-            await CoreKernelService.ChunkAndSaveFileCluster(file, $"File: {fileUploadData.FileName}", collectionName: FileuploadCollection);
+            await CoreMemoryKernelService.ChunkAndSaveFileCluster(file, $"File: {fileUploadData.FileName}", collectionName: FileuploadCollection);
             _fileNameHandled = fileUploadData.FileName!;
             _isBusy = false;
             StateHasChanged();

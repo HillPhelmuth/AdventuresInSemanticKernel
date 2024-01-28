@@ -18,8 +18,8 @@ public static class Example62_CustomAIServiceSelector
         Console.WriteLine("======== Example62_CustomAIServiceSelector ========");
 
         string azureApiKey = TestConfiguration.AzureOpenAI.ApiKey;
-        string azureDeploymentName = TestConfiguration.AzureOpenAI.ChatDeploymentName;
-        string azureModelId = TestConfiguration.AzureOpenAI.ChatModelId;
+        string azureDeploymentName = TestConfiguration.AzureOpenAI.Gpt4DeploymentName;
+        string azureModelId = TestConfiguration.AzureOpenAI.Gpt35ModelId;
         string azureEndpoint = TestConfiguration.AzureOpenAI.Endpoint;
 
         if (azureApiKey == null || azureDeploymentName == null || azureModelId == null || azureEndpoint == null)
@@ -28,7 +28,7 @@ public static class Example62_CustomAIServiceSelector
             return;
         }
 
-        string openAIModelId = TestConfiguration.OpenAI.ChatModelId;
+        string openAIModelId = TestConfiguration.OpenAI.Gpt4ModelId;
         string openAIApiKey = TestConfiguration.OpenAI.ApiKey;
 
         if (openAIModelId == null || openAIApiKey == null)

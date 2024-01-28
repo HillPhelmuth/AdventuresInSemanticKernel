@@ -17,8 +17,8 @@ public static class Example58_ConfigureExecutionSettings
 
         string serviceId = TestConfiguration.AzureOpenAI.ServiceId;
         string apiKey = TestConfiguration.AzureOpenAI.ApiKey;
-        string chatDeploymentName = TestConfiguration.AzureOpenAI.ChatDeploymentName;
-        string chatModelId = TestConfiguration.AzureOpenAI.ChatModelId;
+        string chatDeploymentName = TestConfiguration.AzureOpenAI.Gpt4DeploymentName;
+        string chatModelId = TestConfiguration.AzureOpenAI.Gpt35ModelId;
         string endpoint = TestConfiguration.AzureOpenAI.Endpoint;
 
         if (apiKey == null || chatDeploymentName == null || chatModelId == null || endpoint == null)
@@ -28,7 +28,7 @@ public static class Example58_ConfigureExecutionSettings
         }
 
         Kernel kernel = Kernel.CreateBuilder()
-            .AddOpenAIChatCompletion(TestConfiguration.OpenAI.ModelId, TestConfiguration.OpenAI.ApiKey)
+            .AddOpenAIChatCompletion(TestConfiguration.OpenAI.Gpt35ModelId, TestConfiguration.OpenAI.ApiKey)
             .Build();
 
         var prompt = "Hello AI, what can you do for me?";

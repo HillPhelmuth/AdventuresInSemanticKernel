@@ -376,3 +376,7 @@ FodyWeavers.xsd
 /BlazorWithSematicKernel/Components/AgentComponents/AgentRunner.razor
 /BlazorWithSematicKernel/Components/AgentComponents/AgentRunner.razor.cs
 /BlazorWithSematicKernel/usings.txt
+/SkPluginLibrary/Models/FineTuning
+/SkPluginLibrary/Plugins/FineTuneEvalPlugin.cs
+/SkPluginLibrary/Resources/TrainingData_textTosql_shuffled2.jsonl
+/SkPluginLibrary/YamlPlugins/EvalPlugin/SqlQueryEval.yaml

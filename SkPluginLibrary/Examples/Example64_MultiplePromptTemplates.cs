@@ -16,8 +16,8 @@ public static class Example64_MultiplePromptTemplates
         Console.WriteLine("======== Example64_MultiplePromptTemplates ========");
 
         string apiKey = TestConfiguration.AzureOpenAI.ApiKey;
-        string chatDeploymentName = TestConfiguration.AzureOpenAI.ChatDeploymentName;
-        string chatModelId = TestConfiguration.AzureOpenAI.ChatModelId;
+        string chatDeploymentName = TestConfiguration.AzureOpenAI.Gpt4DeploymentName;
+        string chatModelId = TestConfiguration.AzureOpenAI.Gpt35ModelId;
         string endpoint = TestConfiguration.AzureOpenAI.Endpoint;
 
         if (apiKey == null || chatDeploymentName == null || endpoint == null || chatModelId == null)

@@ -15,18 +15,28 @@
                                     if (item.Name.Contains("Key") || item.Name.Contains("Connection") || item.Name.Contains("pat", StringComparison.InvariantCultureIgnoreCase))
                                     {
                                         <RadzenFormField Text="@item.Name">
-                                            <RadzenPassword @bind-Value="@item.Value" AutoComplete="false"></RadzenPassword>
+                                            <ChildContent>
+                                                <RadzenPassword @bind-Value="@item.Value" AutoComplete="false"></RadzenPassword>
+                                            </ChildContent>
+                                           @*  <Helper>
+                                                <RadzenCustomValidator Component="@item.Name" Validator="@(() => ValidateApiKeyChange(configSection.ConfigurationSection))" Text="Nice Try! If you want to modify the Model used, you'll have to supply your own ApiKey"></RadzenCustomValidator>
+                                            </Helper> *@
                                         </RadzenFormField>
                                     }
                                     else
                                     {
                                         <RadzenFormField Text="@item.Name">
-                                            <RadzenTextBox @bind-Value="@item.Value"></RadzenTextBox>
+                                            <ChildContent>
+                                                <RadzenTextBox Name="@item.Name" @bind-Value="@item.Value"></RadzenTextBox>
+                                            </ChildContent>
+                                            <Helper>
+                                                <RadzenCustomValidator Component="@item.Name" Validator="@(() => ValidateApiKeyChange(configSection.ConfigurationSection))" Text="Nice Try! If you want to modify the Model used, you'll have to supply your own ApiKey"></RadzenCustomValidator>
+                                            </Helper>
                                         </RadzenFormField>
                                     }
 
                                 }
-                                <br/>
+                                <br />
                                 <RadzenButton ButtonType="ButtonType.Submit" Icon="save" Text="Save"></RadzenButton>
                             </RadzenTemplateForm>
                         </RadzenCard>

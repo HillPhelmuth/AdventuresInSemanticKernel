@@ -68,7 +68,7 @@ namespace BlazorWithSematicKernel.Components
                 {
                     case ExecutionType.AutoFunctionCalling:
                         {
-                            await ExecuteActionChatSequence(input, false);
+                            await ExecuteActionChatSequence(input, true);
                             break;
                         }
                     case ExecutionType.AutoFunctionCallingChat:
@@ -125,8 +125,9 @@ namespace BlazorWithSematicKernel.Components
         {
             var token = _cancellationTokenSource.Token;
             _chatView!.ChatState.AddUserMessage(input);
+            var reset = _chatView!.ChatState.MessageCount > 1;
             var chatWithActionPlanner = CoreKernelService.ChatWithAutoFunctionCalling(input,
-                ChatRequestModel, runAsChat, _askInput, token);
+                ChatRequestModel, runAsChat, _askInput, token, reset);
             return ExecuteChatSequence(chatWithActionPlanner);
         }
 
@@ -143,15 +144,17 @@ namespace BlazorWithSematicKernel.Components
         {
             var token = _cancellationTokenSource.Token;
             _chatView!.ChatState.AddUserMessage(input);
-            var chatWithPlanner = CoreKernelService.ChatWithStepwisePlanner(input, ChatRequestModel, runAsChat, _askInput, token);
+            var reset = _chatView!.ChatState.MessageCount > 1;
+            var chatWithPlanner = CoreKernelService.ChatWithStepwisePlanner(input, ChatRequestModel, runAsChat, _askInput, token, reset);
             return ExecuteChatSequence(chatWithPlanner);
         }
         private Task ExecuteHandlebarsChatSequence(string input, bool runAsChat)
         {
             var token = _cancellationTokenSource.Token;
             _chatView!.ChatState.AddUserMessage(input);
+            var reset = _chatView!.ChatState.MessageCount > 1;
             var chatWithPlanner = CoreKernelService.ChatWithHandlebarsPlanner(input,
-                               ChatRequestModel, runAsChat, _askInput, token);
+                               ChatRequestModel, runAsChat, _askInput, token, reset);
             return ExecuteChatSequence(chatWithPlanner);
         }
 

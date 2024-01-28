@@ -97,7 +97,7 @@ namespace SkPluginLibrary.Plugins
 
         private async Task<CodeElementDescription> GenerateSnippitDoc(CodeElementDescription codeElementDescription)
         {
-            var kernel = CoreKernelService.ChatCompletionKernel("gpt-3.5-turbo-1106");
+            var kernel = CoreKernelService.ChatCompletionKernel();
             var function = kernel.CreateFunctionFromPrompt("Generate a summary of the c# code snippet. Be as detailed and specific as possible.[Snippet]\n```csharp\n{{$input}}\n````", executionSettings: new OpenAIPromptExecutionSettings { ChatSystemPrompt = "You are a c# code documentation expert", MaxTokens = 512, Temperature = 0.5 });
             var codeSnippet = codeElementDescription.Code;
             var kernelResult = await kernel.InvokeAsync(function, new KernelArguments() { { "input", codeSnippet } });

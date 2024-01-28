@@ -114,8 +114,17 @@
                                     <RadzenText TextStyle="TextStyle.Caption" Text="Min similarity threshold"></RadzenText>
                                 </Helper>
                             </RadzenFormField>
+                            <RadzenFormField Text="Model">
+                                <ChildContent>
+                                    <RadzenDropDown Data="_models" @bind-Value=_searchForm.Model></RadzenDropDown>
+                                </ChildContent>
+                                <Helper>
+                                    <RadzenText TextStyle="TextStyle.Caption" Text="OpenAI Embeddings model"></RadzenText>
+                                </Helper>
+                            </RadzenFormField>
                             <hr />
                             <RadzenButton ButtonType="ButtonType.Submit" Text="Search" IsBusy="_isBusy" BusyText="@_searchBusyString"></RadzenButton>
+                            <RadzenButton Text="Save with new Model" Click="@(() => ReSave(_searchForm.Model))"></RadzenButton>
                         </RadzenTemplateForm>
                     </RadzenCard>
                     <RadzenCard>

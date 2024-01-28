@@ -6,7 +6,8 @@ namespace SkPluginLibrary.Models;
 
 public static class RepoFiles
 {
-  
+    public static string AppBasePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? Directory.GetCurrentDirectory();
+
     /// <summary>
     /// Scan the local folders from the repo, looking for "samples/skills" folder.
     /// </summary>
@@ -17,9 +18,9 @@ public static class RepoFiles
 
 
     }
-    public static string PathToYamlPlugins => Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? Directory.GetCurrentDirectory(), "YamlPlugins");
-    public static string PluginDirectoryPath => Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? Directory.GetCurrentDirectory(), "SemanticPlugins");
-    public static string ApiPluginDirectoryPath => Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? Directory.GetCurrentDirectory(), "ApiPlugins");
-    public static string CodeTextDirectoryPath => Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? Directory.GetCurrentDirectory(), "Data", "CodeFiles");
+    public static string PathToYamlPlugins => Path.Combine(AppBasePath, "YamlPlugins");
+    public static string PluginDirectoryPath => Path.Combine(AppBasePath, "SemanticPlugins");
+    public static string ApiPluginDirectoryPath => Path.Combine(AppBasePath, "ApiPlugins");
+    public static string CodeTextDirectoryPath => Path.Combine(AppBasePath, "Data", "CodeFiles");
     
 }

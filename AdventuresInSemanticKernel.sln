@@ -9,8 +9,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SkPluginLibrary", "SkPlugin
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ChatComponents", "ChatComponents\ChatComponents.csproj", "{6D13C02E-3ACA-457C-8256-5AD3D116EA2B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NCalcPlugins", "NCalcPlugins\NCalcPlugins.csproj", "{9D049734-CDAA-455D-973B-1B7E22BEA662}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorAceEditor", "BlazorAceEditor\BlazorAceEditor.csproj", "{8CEEA2AC-B0FE-49F0-AAC2-E934DCCE15A9}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SkPluginComponents", "SkPluginComponents\SkPluginComponents.csproj", "{DFDB3637-E2FD-416F-9438-66BF14830611}"
@@ -35,10 +33,6 @@ Global
 		{6D13C02E-3ACA-457C-8256-5AD3D116EA2B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6D13C02E-3ACA-457C-8256-5AD3D116EA2B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6D13C02E-3ACA-457C-8256-5AD3D116EA2B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9D049734-CDAA-455D-973B-1B7E22BEA662}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9D049734-CDAA-455D-973B-1B7E22BEA662}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9D049734-CDAA-455D-973B-1B7E22BEA662}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9D049734-CDAA-455D-973B-1B7E22BEA662}.Release|Any CPU.Build.0 = Release|Any CPU
 		{8CEEA2AC-B0FE-49F0-AAC2-E934DCCE15A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{8CEEA2AC-B0FE-49F0-AAC2-E934DCCE15A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8CEEA2AC-B0FE-49F0-AAC2-E934DCCE15A9}.Release|Any CPU.ActiveCfg = Release|Any CPU

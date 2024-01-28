@@ -56,10 +56,10 @@ after this event Caroline became his wife.""";
         Console.WriteLine("\n======== Groundedness Checks ========");
         var kernel = Kernel.CreateBuilder()
             .AddAzureOpenAIChatCompletion(
-                deploymentName: TestConfiguration.AzureOpenAI.ChatDeploymentName,
+                deploymentName: TestConfiguration.AzureOpenAI.Gpt4DeploymentName,
                 endpoint: TestConfiguration.AzureOpenAI.Endpoint,
                 apiKey: TestConfiguration.AzureOpenAI.ApiKey,
-                modelId: TestConfiguration.AzureOpenAI.ChatModelId)
+                modelId: TestConfiguration.AzureOpenAI.Gpt35ModelId)
             .Build();
 
         string folder = RepoFiles.SamplePluginsPath();
@@ -123,11 +123,12 @@ Text:\n{GroundingText};
         Console.WriteLine("\n======== Planning - Groundedness Checks ========");
 
         var kernel = Kernel.CreateBuilder()
-            .AddAzureOpenAIChatCompletion(
-                deploymentName: TestConfiguration.AzureOpenAI.ChatDeploymentName,
-                endpoint: TestConfiguration.AzureOpenAI.Endpoint,
-                apiKey: TestConfiguration.AzureOpenAI.ApiKey,
-                modelId: TestConfiguration.AzureOpenAI.ChatModelId)
+            //.AddAzureOpenAIChatCompletion(
+            //    deploymentName: TestConfiguration.AzureOpenAI.Gpt4DeploymentName,
+            //    endpoint: TestConfiguration.AzureOpenAI.Endpoint,
+            //    apiKey: TestConfiguration.AzureOpenAI.ApiKey,
+            //    modelId: TestConfiguration.AzureOpenAI.ChatModelId)
+            .AddOpenAIChatCompletion(TestConfiguration.OpenAI.Gpt4ModelId, TestConfiguration.OpenAI.ApiKey)
             .Build();
 
         string folder = RepoFiles.SamplePluginsPath();

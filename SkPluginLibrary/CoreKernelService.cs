@@ -14,7 +14,6 @@ using StringHelpers = SkPluginLibrary.Models.Helpers.StringHelpers;
 using SkPluginComponents;
 using Microsoft.SemanticKernel.Planning;
 using Microsoft.SemanticKernel.Plugins.OpenApi;
-using OpenApiFunctionExecutionParameters = Microsoft.SemanticKernel.Plugins.OpenApi.OpenApiFunctionExecutionParameters;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
@@ -26,7 +25,7 @@ using System.Runtime.CompilerServices;
 using Microsoft.SemanticKernel.Plugins.Memory;
 using Microsoft.Extensions.Http.Resilience;
 using Polly;
-
+using SkPluginLibrary.Models.Hooks;
 
 namespace SkPluginLibrary;
 
@@ -41,6 +40,7 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
     private readonly ILoggerFactory _loggerFactory;
     private readonly BingWebSearchService _bingSearchService;
     private readonly ISemanticTextMemory _semanticTextMemory;
+    private static string _appInsightConnectionString;
     public class CollectionName
     {
         public const string ClusterCollection = "clusterCollection";
@@ -58,7 +58,7 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
         _hdbscanService = hdbscanService;
         _loggerFactory = loggerFactory;
         _bingSearchService = bingSearchService;
-        _modalService = modalService;
+        _askUserService = modalService;
 
         _memoryStore = new VolatileMemoryStore();
         CreateKernel();
@@ -67,29 +67,34 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
             .WithOpenAITextEmbeddingGeneration("text-embedding-ada-002", TestConfiguration.OpenAI!.ApiKey)
             .WithLoggerFactory(_loggerFactory)
             .Build();
+        _appInsightConnectionString = _configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"] ?? _configuration["ApplicationInsights:ConnectionString"]!;
     }
 
-    public static Kernel ChatCompletionKernel(string chatModel = "gpt-3.5-turbo-1106")
+    public static Kernel ChatCompletionKernel()
     {
-        return Kernel.CreateBuilder().AddOpenAIChatCompletion(chatModel, TestConfiguration.OpenAI!.ApiKey)
+        return Kernel.CreateBuilder().AddAIChatCompletion(AIModel.Gpt35)
             .Build();
     }
-    public static Kernel CreateKernel(string chatModel = "gpt-3.5-turbo-1106")
+    public static Kernel CreateKernel(AIModel aiModel = AIModel.Gpt35)
     {
         var kernelBuilder = Kernel.CreateBuilder();
-        kernelBuilder.Services.AddLogging(builder => builder.AddConsole());
+        kernelBuilder.Services.AddLogging(builder =>
+        {
+            builder.AddConsole();
+        });
         kernelBuilder.Services.ConfigureHttpClientDefaults(c =>
         {
             c.AddStandardResilienceHandler().Configure(o =>
             {
                 o.Retry.ShouldHandle = args => ValueTask.FromResult(args.Outcome.Result?.StatusCode is HttpStatusCode.TooManyRequests);
                 o.Retry.BackoffType = DelayBackoffType.Exponential;
-                o.TotalRequestTimeout = new HttpTimeoutStrategyOptions { Timeout = TimeSpan.FromSeconds(90) };
+                o.AttemptTimeout = new HttpTimeoutStrategyOptions { Timeout = TimeSpan.FromSeconds(90) };
+                o.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(180);
+                o.TotalRequestTimeout = new HttpTimeoutStrategyOptions { Timeout = TimeSpan.FromMinutes(5) };
             });
         });
         var kernel = kernelBuilder
-            .AddOpenAIChatCompletion(chatModel, TestConfiguration.OpenAI!.ApiKey)
-            .AddOpenAITextEmbeddingGeneration("text-embedding-ada-002", TestConfiguration.OpenAI.ApiKey)
+            .AddAIChatCompletion(aiModel)
             .Build();
 
         return kernel;
@@ -109,39 +114,41 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
         };
     }
 
-    private ISemanticTextMemory CreateSemanticMemory(MemoryStoreType memoryStoreType)
+    private ISemanticTextMemory CreateSemanticMemory(MemoryStoreType memoryStoreType, string model = "text-embedding-3-small")
     {
         return new MemoryBuilder()
             .WithMemoryStore(CreateMemoryStore(memoryStoreType))
-            .WithOpenAITextEmbeddingGeneration("text-embedding-ada-002", TestConfiguration.OpenAI.ApiKey)
+            .WithOpenAITextEmbeddingGeneration(model, TestConfiguration.OpenAI.ApiKey)
             .WithLoggerFactory(_loggerFactory)
             .Build();
     }
 
-    private async Task<ISemanticTextMemory> CreateSqliteMemoryAsync(bool isSkChat = false)
+    private static async Task<ISemanticTextMemory> CreateSqliteMemoryAsync()
     {
-        var connectionString = isSkChat ? TestConfiguration.Sqlite!.ChatContentConnectionString : TestConfiguration.Sqlite!.ConnectionString!;
+        var connectionString = TestConfiguration.Sqlite!.ConnectionString!;
         var sqliteMemoryStore = await SqliteMemoryStore.ConnectAsync(connectionString);
 
-        _sqliteStore = sqliteMemoryStore;
-        var collections = await _sqliteStore.GetCollectionsAsync().ToListAsync();
+        //_sqliteStore = sqliteMemoryStore;
+        var collections = await sqliteMemoryStore.GetCollectionsAsync().ToListAsync();
+        if (collections.Count == 0)
+            await sqliteMemoryStore.CreateCollectionAsync(CollectionName.ClusterCollection);
         Console.WriteLine($"Collections: {string.Join((string?)"\n", collections)}");
         return new MemoryBuilder()
-            .WithMemoryStore(_sqliteStore)
-            .WithOpenAITextEmbeddingGeneration("text-embedding-ada-002", TestConfiguration.OpenAI!.ApiKey)
-            .WithLoggerFactory(_loggerFactory)
+            .WithMemoryStore(sqliteMemoryStore)
+            .WithOpenAITextEmbeddingGeneration(TestConfiguration.OpenAI.EmbeddingModelId, TestConfiguration.OpenAI!.ApiKey)
+            .WithLoggerFactory(ConsoleLogger.LoggerFactory)
             .Build();
     }
 
-    public static ISemanticTextMemory CreateMemoryStore(IMemoryStore? memory = null)
+    public static ISemanticTextMemory CreateMemoryStore(IMemoryStore? memory = null, string model = "text-embedding-3-small")
     {
         memory ??= new VolatileMemoryStore();
         return new MemoryBuilder()
             .WithMemoryStore(memory)
-            .WithOpenAITextEmbeddingGeneration("text-embedding-ada-002", TestConfiguration.OpenAI.ApiKey)
+            .WithOpenAITextEmbeddingGeneration(model, TestConfiguration.OpenAI.ApiKey)
             .Build();
     }
-    internal static async Task<Kernel> ChatWithSkKernal(string chatModel = "gpt-3.5-turbo-1106")
+    internal static async Task<Kernel> ChatWithSkKernal()
     {
         var sqliteMemoryStore = await SqliteMemoryStore.ConnectAsync(TestConfiguration.Sqlite!.ChatContentConnectionString!);
 
@@ -150,13 +157,12 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
         if (!collections.Contains(CollectionName.SkDocsCollection))
         {
             await sqliteMemoryStore.CreateCollectionAsync(CollectionName.SkDocsCollection);
-            //await GenerateAndSaveEmbeddings();
         }
-
+        
         var kernelBuilder = Kernel.CreateBuilder();
         kernelBuilder.Services.AddLogging(builder => builder.AddConsole());
         var kernel = kernelBuilder
-            .AddOpenAIChatCompletion(chatModel, TestConfiguration.OpenAI!.ApiKey)
+            .AddAIChatCompletion(AIModel.Gpt35)
             .Build();
         var semanticMemory = await ChatWithSkKernelMemory();
         var textMemory = KernelPluginFactory.CreateFromObject(new TextMemoryPlugin(semanticMemory), "TextMemoryPlugin");
@@ -172,7 +178,6 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
         if (!collections.Contains(CollectionName.SkDocsCollection))
         {
             await sqliteMemoryStore.CreateCollectionAsync(CollectionName.SkDocsCollection);
-            //await GenerateAndSaveEmbeddings();
         }
         return new MemoryBuilder()
             .WithMemoryStore(sqliteMemoryStore)
@@ -180,7 +185,6 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
             .WithOpenAITextEmbeddingGeneration(TestConfiguration.OpenAI.EmbeddingModelId, TestConfiguration.OpenAI.ApiKey)
             .Build();
     }
-
 
     private const string ChatWithSkSystemPromptTemplate = 
         """
@@ -199,14 +203,14 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
         {
             ["input"] = query,
             ["limit"] = 10,
-            ["relevance"] = 0.77,
+            ["relevance"] = 0.40,
             ["collection"] = CollectionName.SkDocsCollection
         };
         
         var promptTemplateFactory = new KernelPromptTemplateFactory();
         var engine = promptTemplateFactory.Create(new PromptTemplateConfig(ChatWithSkSystemPromptTemplate));
         var systemPrompt = await engine.RenderAsync(_skChatKernel, context, cancellationToken);
-        var chatService = new OpenAIChatCompletionService(TestConfiguration.OpenAI.ModelId, TestConfiguration.OpenAI.ApiKey);
+        var chatService = new OpenAIChatCompletionService(TestConfiguration.OpenAI.Gpt35ModelId, TestConfiguration.OpenAI.ApiKey);
         var chat = new ChatHistory(systemPrompt);
         
         foreach (var message in chatHistory ?? [])
@@ -222,7 +226,6 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
 
     }
     public event EventHandler<string>? StringWritten;
-    public event EventHandler<string>? KernelError;
 
     #region D&D Writer with Sequential Planner and DndApiSkill (DndOpenApiSkillPage.razor)
     public event Action<SimpleChatMessage>? DndPlannerFunctionHook;
@@ -233,19 +236,21 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
         var detailString = $" a {details.Race} {details.Class} with a {details.Alignment} alignment";
         characterDescription += detailString;
 
-        var kernel = CreateKernel(TestConfiguration.OpenAI.PlannerModelId);
+        var kernel = CreateKernel(AIModel.Planner);
+        var functionHook = new FunctionFilterHook();
+        kernel.FunctionFilters.Add(functionHook);
         var dndApiPlugin = await kernel.ImportPluginFromOpenApiAsync("DndApiPlugin", Path.Combine(RepoFiles.ApiPluginDirectoryPath, "DndApiPlugin", "openapi.json"), new OpenApiFunctionExecutionParameters { IgnoreNonCompliantErrors = true }, cancellationToken: cancellationToken);
         var writer = kernel.ImportPluginFromPromptDirectoryYaml("WriterPlugin");
         var dndPlugin = new DndPlugin();
         kernel.ImportPluginFromObject(dndPlugin);
-        var askUserplugin = new AskUserPlugin(_modalService);
+        var askUserplugin = new AskUserPlugin(_askUserService);
         var askUser = kernel.ImportPluginFromObject(askUserplugin, "AskUserPlugin");
 
         var config = new FunctionCallingStepwisePlannerConfig
         {
             MaxTokens = 9500,
             MaxIterations = 15,
-            ExecutionSettings = new OpenAIPromptExecutionSettings { Temperature = 0.3, TopP = 1.0, ModelId = TestConfiguration.OpenAI.ModelId, ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions },
+            ExecutionSettings = new OpenAIPromptExecutionSettings { Temperature = 0.3, TopP = 1.0, ModelId = TestConfiguration.OpenAI.Gpt35ModelId, ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions },
 
         };
 
@@ -265,7 +270,7 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
             config.ExcludedFunctions.Add(exclude);
         }
         var ask = $"Invent a D&D character based on the description below as the protagonist. Generate a short story using the available relevant details of the character and a DndMonster as a primary antagonist. The DndMonster should be selected from a list of all dnd monsters by Asking the User filtereed by challenge rating, also selected by asking the user.\ndescription: \n {characterDescription}.\n\n YOUR FINAL RESPONSE MUST BE A STORY.";
-        kernel.FunctionInvoked += HandleDndFunctionInvoked;
+        functionHook.FunctionInvoked += HandleDndFunctionFilterInvoked;
         var stepwisePlanner = new FunctionCallingStepwisePlanner(config);
         var planResult = await stepwisePlanner.ExecuteAsync(kernel, ask, cancellationToken)/*await PlanResult(plan, context)*/;
         foreach (var item in planResult.ChatHistory ?? [])
@@ -276,13 +281,13 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
 
 
     }
-    private void HandleDndFunctionInvoked(object? sender, FunctionInvokedEventArgs invokedArgs)
+   
+    private void HandleDndFunctionFilterInvoked(object? sender, FunctionFilterContext context)
     {
-        var name = invokedArgs.Function.Name;
-        var plugin = invokedArgs.Function.Metadata.PluginName;
+        var name = context.Function.Name;
+        var plugin = context.Function.Metadata.PluginName;
         DndPlannerFunctionHook?.Invoke(new SimpleChatMessage("ToolCall", $"{plugin}_{name}"));
     }
-    
     #endregion
 
 }

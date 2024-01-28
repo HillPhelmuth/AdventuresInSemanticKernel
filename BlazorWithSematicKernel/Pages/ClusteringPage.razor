@@ -35,8 +35,8 @@
                             <RadzenRadioButtonListItem Value="false" Text="Upload"></RadzenRadioButtonListItem>
                         </Items>
                     </RadzenRadioButtonList>
-                </RadzenFormField><br/>
-               
+                </RadzenFormField><br />
+
                 @if (!_clusterForm.UseDefaultContent)
                 {
                     <RadzenFormField>
@@ -46,10 +46,10 @@
                             @* <RadzenRequiredValidator Component="File" Text="Upload a file" Popup=true Style="position:absolute"></RadzenRequiredValidator> *@
                         </Helper>
                     </RadzenFormField>
-                    
-                    <br/>
+
+                    <br />
                 }
-                
+
                 <RadzenButton ButtonType="ButtonType.Submit" IsBusy="_isBusy" BusyText="@_busyText" Text="Cluster & Title"></RadzenButton>
             </RadzenTemplateForm>
 
@@ -78,8 +78,6 @@
                             <RadzenTabsItem Text="Cluster Info">
                                 <RadzenDataGrid Data="@cluster.MemoryResults" TItem="MemoryResult" AllowSorting="true" AllowPaging="true" AllowFiltering="true" PageSize="5" Density="Density.Compact" ShowPagingSummary="true" Style="width: 100%">
                                     <Columns>
-                                        @* <RadzenDataGridColumn TItem="MemoryResult" Title="Cluster" Property="@nameof(MemoryResult.Cluster)" Width="20%"></RadzenDataGridColumn>
-                                        <RadzenDataGridColumn TItem="MemoryResult" Title="Cluster Title" Property="@nameof(MemoryResult.ClusterTitle)" Width="35%"></RadzenDataGridColumn> *@
                                         <RadzenDataGridColumn TItem="MemoryResult" Title="Title" Property="@nameof(MemoryResult.Title)" Width="85%"></RadzenDataGridColumn>
                                         <RadzenDataGridColumn TItem="MemoryResult" Width="15%">
                                             <Template Context="mem">
@@ -93,8 +91,9 @@
                     </RadzenTabs>
                 </Template>
                 <Columns>
-                    <RadzenDataGridColumn TItem="ClusterDisplay" Title="Label" Property="CluserLabel" Width="10%"></RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="ClusterDisplay" Title="Generated Cluster Title" Property="Title" Width="90%"></RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="ClusterDisplay" Title="Label" Property="CluserLabel" Width="5%"></RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="ClusterDisplay" Title="Generated Cluster Title" Property="Title" Width="85%"></RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="ClusterDisplay" Title="#" Property="Count" Width="10%"></RadzenDataGridColumn>
                     @* <RadzenDataGridColumn TItem="ClusterDisplay" Title="Summary" Property="Tags" Width="45%"></RadzenDataGridColumn> *@
                 </Columns>
             </RadzenDataGrid>

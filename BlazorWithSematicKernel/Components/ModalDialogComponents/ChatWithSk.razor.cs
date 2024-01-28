@@ -34,7 +34,7 @@ namespace BlazorWithSematicKernel.Components.ModalDialogComponents
             await Task.Delay(1);
             var token = _cancellationTokenSource.Token;
             var hasStarted = false;
-            await foreach (var response in ChatWithSkDocs.ExecuteChatWithSkStream("Quickly Introduce yourself and Semantic Kernel", null, token))
+            await foreach (var response in ChatWithSkDocs.ExecuteChatWithSkStream("Quickly Introduce yourself and answer the question \"What is Semantic Kernel?\"", null, token))
             {
                 if (!hasStarted)
                 {

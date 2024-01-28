@@ -41,7 +41,7 @@ namespace SkPluginLibrary.Plugins
                 await LoadCollection(ready.memStore);
             }
             var kernel = Kernel.CreateBuilder()
-                .AddOpenAIChatCompletion(TestConfiguration.OpenAI.ModelId, TestConfiguration.OpenAI.ApiKey)
+                .AddOpenAIChatCompletion(TestConfiguration.OpenAI.Gpt35ModelId, TestConfiguration.OpenAI.ApiKey)
                 .Build();
             var semanticMemory = await GetSemanticTextMemory();
             var memoryItems = await semanticMemory.SearchAsync(CollectionName.LangchainDocsCollection, $"{query} {history}", topN, 0.78).ToListAsync();

@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Logging;
 using Polly;
+using SkPluginLibrary.Models.Hooks;
 
 namespace SkPluginLibrary;
 
@@ -40,20 +41,7 @@ public partial class CoreKernelService
 
     public async IAsyncEnumerable<string> RunWebSearchChat(string query)
     {
-        var kernelBuilder = Kernel.CreateBuilder();
-        kernelBuilder.Services.AddLogging(builder => builder.AddConsole());
-        kernelBuilder.Services.ConfigureHttpClientDefaults(c =>
-        {
-            c.AddStandardResilienceHandler().Configure(o =>
-            {
-                o.Retry.ShouldHandle = args => ValueTask.FromResult(args.Outcome.Result?.StatusCode is HttpStatusCode.TooManyRequests);
-                o.Retry.BackoffType = DelayBackoffType.Exponential;
-                o.TotalRequestTimeout = new HttpTimeoutStrategyOptions { Timeout = TimeSpan.FromSeconds(90)};
-            });
-        });
-        var kernel = kernelBuilder
-            .AddOpenAIChatCompletion(TestConfiguration.OpenAI.ChatModelId, TestConfiguration.OpenAI!.ApiKey)
-            .Build();
+        var kernel = CreateKernel(AIModel.Gpt4);
         var webPlugin = new WebCrawlPlugin(_bingSearchService);
         var webPluginInstance = kernel.ImportPluginFromObject(webPlugin, "WebSearchPlugin");
         var sysPromptTemplate =
@@ -62,14 +50,15 @@ public partial class CoreKernelService
             Always search the web before responding. 
             Always include CITATIONS in your response.
             """;
-        
-        kernel.FunctionInvoking += (_, e) =>
+        var functionHook = new FunctionFilterHook();
+        kernel.FunctionFilters.Add(functionHook);
+        functionHook.FunctionInvoking += (_, e) =>
         {
             var soemthing = e.Function;
             if (e.Function.Name.StartsWith("func")) return;
             AdditionalAgentText?.Invoke($"\n<h4> Executing {soemthing.Name} {soemthing.Metadata.PluginName}</h4>\n\n");
         };
-        kernel.FunctionInvoked += HandleCustomFunctionInvoked;
+        functionHook.FunctionInvoked += HandleCustomFunctionInvoked;
         query = $"""
                  Find the answer to the user question on the web
 
@@ -90,26 +79,15 @@ public partial class CoreKernelService
     public event Action<string>? AdditionalAgentText;
     public async IAsyncEnumerable<string> RunWikiSearchChat(string query)
     {
-        var kernelBuilder = Kernel.CreateBuilder();
-        kernelBuilder.Services.AddLogging(builder => builder.AddConsole());
-        kernelBuilder.Services.ConfigureHttpClientDefaults(c =>
-        {
-            c.AddStandardResilienceHandler().Configure(o =>
-            {
-                o.Retry.ShouldHandle = args => ValueTask.FromResult(args.Outcome.Result?.StatusCode is HttpStatusCode.TooManyRequests);
-                o.Retry.BackoffType = DelayBackoffType.Exponential;
-                o.TotalRequestTimeout = new HttpTimeoutStrategyOptions { Timeout = TimeSpan.FromSeconds(90) };
-            });
-        });
-        var kernel = kernelBuilder
-            .AddOpenAIChatCompletion(TestConfiguration.OpenAI.ChatModelId, TestConfiguration.OpenAI!.ApiKey)
-            .Build();
-        kernel.FunctionInvoking += (_, e) =>
+        var kernel = CreateKernel(AIModel.Gpt4);
+        var functionHook = new FunctionFilterHook();
+        kernel.FunctionFilters.Add(functionHook);
+        functionHook.FunctionInvoking += (_, e) =>
         {
             var soemthing = e.Function;
             AdditionalAgentText?.Invoke($"\n<h4> Executing {soemthing.Name} {soemthing.Metadata.PluginName}</h4>\n\n");
         };
-        kernel.FunctionInvoked += HandleCustomFunctionInvoked;
+        functionHook.FunctionInvoked += HandleCustomFunctionInvoked;
         var wikiPlugin = new WikiChatPlugin();
         var wiki = kernel.ImportPluginFromObject(wikiPlugin);
         var systemPrompt =
@@ -141,7 +119,7 @@ public partial class CoreKernelService
             yield return result.ToString();
         }
     }
-    private void HandleCustomFunctionInvoked(object? sender, FunctionInvokedEventArgs invokedArgs)
+    private void HandleCustomFunctionInvoked(object? sender, FunctionInvokedContext invokedArgs)
     {
         var function = invokedArgs.Function;
         if (invokedArgs.Function.Name.StartsWith("func")) return;
@@ -156,6 +134,7 @@ public partial class CoreKernelService
                                 <p>
                                 {result}
                                 </p>
+
                                 <br/>
                               </details>
                               """;

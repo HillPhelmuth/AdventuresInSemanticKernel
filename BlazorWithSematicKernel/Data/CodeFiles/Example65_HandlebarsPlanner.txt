@@ -29,7 +29,7 @@ public static class Example65_HandlebarsPlanner
     private static async Task RunSampleAsync(string goal, bool shouldPrintPrompt = false, params string[] pluginDirectoryNames)
     {
         var apiKey = TestConfiguration.OpenAI?.ApiKey;
-        var chatModelId = TestConfiguration.OpenAI?.ChatModelId;
+        var chatModelId = TestConfiguration.OpenAI?.Gpt4ModelId;
 
         if (apiKey == null || chatModelId == null)
         {

@@ -14,8 +14,8 @@ public static class Example61_MultipleLLMs
         Console.WriteLine("======== Example61_MultipleLLMs ========");
 
         string azureApiKey = TestConfiguration.AzureOpenAI.ApiKey;
-        string azureDeploymentName = TestConfiguration.AzureOpenAI.ChatDeploymentName;
-        string azureModelId = TestConfiguration.AzureOpenAI.ChatModelId;
+        string azureDeploymentName = TestConfiguration.AzureOpenAI.Gpt4DeploymentName;
+        string azureModelId = TestConfiguration.AzureOpenAI.Gpt35ModelId;
         string azureEndpoint = TestConfiguration.AzureOpenAI.Endpoint;
 
         if (azureApiKey == null || azureDeploymentName == null || azureModelId == null || azureEndpoint == null)
@@ -24,7 +24,7 @@ public static class Example61_MultipleLLMs
             return;
         }
 
-        string openAIModelId = TestConfiguration.OpenAI.ChatModelId;
+        string openAIModelId = TestConfiguration.OpenAI.Gpt4ModelId;
         string openAIApiKey = TestConfiguration.OpenAI.ApiKey;
 
         if (openAIModelId == null || openAIApiKey == null)
@@ -48,7 +48,7 @@ public static class Example61_MultipleLLMs
 
         await RunByServiceIdAsync(kernel, "AzureOpenAIChat");
         await RunByModelIdAsync(kernel, openAIModelId);
-        await RunByFirstModelIdAsync(kernel, "gpt-4-1106-preview", azureModelId, openAIModelId);
+        await RunByFirstModelIdAsync(kernel, "gpt-4-turbo-preview", azureModelId, openAIModelId);
     }
 
     public static async Task RunByServiceIdAsync(Kernel kernel, string serviceId)

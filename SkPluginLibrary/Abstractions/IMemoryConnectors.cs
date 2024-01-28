@@ -5,7 +5,9 @@ namespace SkPluginLibrary.Abstractions;
 
 public interface IMemoryConnectors
 {
-    IAsyncEnumerable<ContextItem> SaveBatchToMemory(string collection, List<ContextItem> items, MemoryStoreType storeType = MemoryStoreType.InMemory, bool delete = false);
+    IAsyncEnumerable<ContextItem> SaveBatchToMemory(string collection, List<ContextItem> items,
+        MemoryStoreType storeType = MemoryStoreType.InMemory, bool delete = false,
+        string model = "text-embedding-3-small");
     Task<List<MemoryQueryResult>> SearchKernelMemory(string query, string collection, int topN = 3, double minThreshold = 0.0);
     Task<List<string>> GenerateRandomSentances(int count = 10);
     Task<List<MemoryResult>> GetItemClustersFromCollection(int numberOfItems = 100, string searchTerm = "*", int minpoints = 3, int minCluster = 3, DistanceFunction distanceFunction = DistanceFunction.CosineSimilarity, string? collection = null);

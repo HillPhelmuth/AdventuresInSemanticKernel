@@ -128,7 +128,9 @@ namespace SkPluginLibrary.Services
                 }
                 var tidyHtml = Cleaner.PreTidy(htmlBuilder.ToString(), true);
                 var mkdwnText = converter.Convert(tidyHtml);
-                _taskCompletionSource.SetResult(CleanUpContent(mkdwnText));
+                var cleanUpContent = CleanUpContent(mkdwnText);
+                Console.WriteLine($"{crawledPage.Uri}\n----------------\n Crawled for {StringHelpers.GetTokens(cleanUpContent)} Tokens");
+                _taskCompletionSource.SetResult(cleanUpContent);
                 return;
             }
             if (crawledPage.Uri.AbsoluteUri.EndsWith("/html"))
@@ -170,6 +172,33 @@ namespace SkPluginLibrary.Services
             var doc = new HtmlDocument();
             doc.LoadHtml(html);
             string text = "";
+            if (_convertToMarkdown)
+            {
+                var config = new Config
+                {
+                    // Include the unknown tag completely in the result (default as well)
+                    UnknownTags = Config.UnknownTagsOption.Drop,
+                    // generate GitHub flavoured markdown, supported for BR, PRE and table tags
+                    GithubFlavored = true,
+                    // will ignore all comments
+                    RemoveComments = true,
+                    // remove markdown output for links where appropriate
+                    SmartHrefHandling = true
+                };
+
+                var converter = new Converter(config);
+                var htmlBuilder = new StringBuilder();
+                foreach (var child in doc.DocumentNode?.DescendantsAndSelf().Where(x => x.Name?.ToLower() == "p" || IsValidHeader(x.Name?.ToLower())) ?? new List<HtmlNode>())
+                {
+                    htmlBuilder.Append(child.OuterHtml);
+                }
+                var tidyHtml = Cleaner.PreTidy(htmlBuilder.ToString(), true);
+                var mkdwnText = converter.Convert(tidyHtml);
+                var cleanUpContent = CleanUpContent(mkdwnText);
+                Console.WriteLine($"{crawledPage.Uri}\n----------------\n Crawled for {StringHelpers.GetTokens(cleanUpContent)} Tokens");
+                _taskCompletionSource.SetResult(cleanUpContent);
+                return;
+            }
             if (crawledAbsUri.EndsWith("/html"))
                 text = html;
             else if (crawledAbsUri.Contains("wikipedia.org"))

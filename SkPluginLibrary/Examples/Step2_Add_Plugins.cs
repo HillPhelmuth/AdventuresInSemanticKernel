@@ -17,7 +17,7 @@ public static class Step2_Add_Plugins
         // Create a kernel with OpenAI chat completion
         IKernelBuilder kernelBuilder = Kernel.CreateBuilder();
         kernelBuilder.AddOpenAIChatCompletion(
-            modelId: TestConfiguration.OpenAI.ChatModelId,
+            modelId: TestConfiguration.OpenAI.Gpt4ModelId,
             apiKey: TestConfiguration.OpenAI.ApiKey);
         kernelBuilder.Plugins.AddFromType<TimeInformation>();
         Kernel kernel = kernelBuilder.Build();

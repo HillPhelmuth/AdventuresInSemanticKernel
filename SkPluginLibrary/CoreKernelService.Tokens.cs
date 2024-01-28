@@ -66,9 +66,9 @@ public partial class CoreKernelService
 
     #region Text Search
     private ISemanticTextMemory? _chunkMemory;
-    public async Task<string> SaveChunks(List<TokenizedChunk> chunks)
+    public async Task<string> SaveChunks(List<TokenizedChunk> chunks, string model = "text-embedding-3-small")
     {
-        _chunkMemory = CreateMemoryStore();
+        _chunkMemory = CreateMemoryStore(model:model);
         var ids = new List<string>();
         foreach (var chunk in chunks)
         {

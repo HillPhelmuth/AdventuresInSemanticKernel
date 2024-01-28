@@ -8,7 +8,7 @@ public static class Step3_Yaml_Prompt
         // Create a kernel with OpenAI chat completion
         Kernel kernel = Kernel.CreateBuilder()
             .AddOpenAIChatCompletion(
-                modelId: TestConfiguration.OpenAI.ChatModelId,
+                modelId: TestConfiguration.OpenAI.Gpt4ModelId,
                 apiKey: TestConfiguration.OpenAI.ApiKey)
             .Build();
 

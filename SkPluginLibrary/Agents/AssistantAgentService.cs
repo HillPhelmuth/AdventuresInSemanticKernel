@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Azure.AI.OpenAI;
 using SkPluginLibrary.Agents.Examples;
+using SkPluginLibrary.Models.Hooks;
 
 namespace SkPluginLibrary.Agents;
 
@@ -113,7 +114,7 @@ public class AssistantAgentService : IAsyncDisposable
         primary.Plugins.AddRange(Agents.Select(x => x.AsPlugin()));
         _agentThread = await primary.NewThreadAsync(cancellationToken);
         await _agentThread.AddUserMessageAsync(input, cancellationToken);
-        var response = _agentThread.InvokeAsync(primary, cancellationToken);
+        var response = _agentThread.InvokeAsync(primary, cancellationToken: cancellationToken);
         var responseString = new StringBuilder();
         await foreach (var message in response)
         {
@@ -125,7 +126,8 @@ public class AssistantAgentService : IAsyncDisposable
     {
         var kernelBuilder = Kernel.CreateBuilder();
         kernelBuilder.Services.AddLogging(builder => builder.AddConsole());
-        var kernel = kernelBuilder.AddOpenAIChatCompletion(TestConfiguration.OpenAI.ChatModelId, TestConfiguration.OpenAI.ApiKey).Build();
+
+        var kernel = kernelBuilder.AddAIChatCompletion(AIModel.Planner).Build();
         if (hasAgents)
         {
             foreach (var agent in Agents)
@@ -137,15 +139,16 @@ public class AssistantAgentService : IAsyncDisposable
         {
             kernel.Plugins.AddRange(plugins);
         }
-        kernel.FunctionInvoking += HandleFunctionInvoking;
-        kernel.FunctionInvoked += HandleFunctionInvoked;
+        var functionHook = new FunctionFilterHook();
+        functionHook.FunctionInvoking += HandleFunctionInvokingFilter;
+        functionHook.FunctionInvoked += HandleFunctionInvokedFilter;
         return kernel;
     }
 
     private static async Task<IAgent> GenerateAgent(string name, string description, string? instructions = null, List<KernelPlugin>? plugins = null)
     {
         var agentBuilder = new AgentBuilder()
-            .WithOpenAIChatCompletion(TestConfiguration.OpenAI.ModelId, TestConfiguration.OpenAI.ApiKey)
+            .WithOpenAIChatCompletion(TestConfiguration.OpenAI.Gpt35ModelId, TestConfiguration.OpenAI.ApiKey)
             .WithName(name)
             .WithDescription(description)
             .WithInstructions(instructions ?? "");
@@ -156,17 +159,16 @@ public class AssistantAgentService : IAsyncDisposable
         }
         return Track(await agentBuilder.BuildAsync());
     }
-    private void HandleFunctionInvoked(object? sender, FunctionInvokedEventArgs invokedArgs)
+    private void HandleFunctionInvokingFilter(object? sender, FunctionInvokingContext context)
     {
-        var function = invokedArgs.Function;
-        Console.WriteLine($"\n---------Function {function.Name} Invoked-----------\nResults:\n{invokedArgs.Result.Result()}\n----------------------------");
-    }
-    private void HandleFunctionInvoking(object? sender, FunctionInvokingEventArgs invokingEventArgs)
-    {
-        var function = invokingEventArgs.Function;
-        Console.WriteLine($"Function Arguments: {invokingEventArgs.Arguments.AsJson()}");
-        //_currentRespondent = function.Name;
+        var function = context.Function;
+        Console.WriteLine($"Function Arguments: {context.Arguments.AsJson()}");
         Console.WriteLine($"Function {function.Name} Invoking");
+    }
+    private void HandleFunctionInvokedFilter(object? sender, FunctionInvokedContext context)
+    {
+        var function = context.Function;
+        Console.WriteLine($"\n---------Function {function.Name} Invoked-----------\nResults:\n{context.Result.Result()}\n----------------------------");
     }
     private static IAgent Track(IAgent agent)
     {

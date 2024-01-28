@@ -18,7 +18,7 @@ public static class Example59_OpenAIFunctionCalling
     {
         // Create kernel.
         IKernelBuilder builder = Kernel.CreateBuilder();
-        builder.AddOpenAIChatCompletion(TestConfiguration.OpenAI.ChatModelId, TestConfiguration.OpenAI.ApiKey);
+        builder.AddOpenAIChatCompletion(TestConfiguration.OpenAI.Gpt4ModelId, TestConfiguration.OpenAI.ApiKey);
         builder.Services.AddLogging(services => services.AddConsole().SetMinimumLevel(LogLevel.Trace));
         Kernel kernel = builder.Build();
 

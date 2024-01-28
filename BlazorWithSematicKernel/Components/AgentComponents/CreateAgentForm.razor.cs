@@ -14,7 +14,20 @@ namespace BlazorWithSematicKernel.Components.AgentComponents
         [Inject]
         private DialogService DialogService { get; set; } = default!;
         private List<PluginData> _allPlugins = [];
-
+        protected override async Task OnParametersSetAsync()
+        {
+            if (Agent != null)
+            {
+                await AllPlugins();
+                var pluginNames = Agent.Plugins.Select(x => x.Name);
+                var pluginData = _allPlugins.Where(x => pluginNames.Contains(x.Name)).ToList();
+                _agentForm.Name = Agent.Name;
+                _agentForm.Description = Agent.Description;
+                _agentForm.Instructions = Agent.Instructions;
+                _agentForm.Plugins = pluginData;
+            }
+            await base.OnParametersSetAsync();
+        }
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             if (firstRender)
@@ -33,6 +46,35 @@ namespace BlazorWithSematicKernel.Components.AgentComponents
 
         }
         private AgentForm _agentForm = new();
+        private void UseMediumExample()
+        {
+            _agentForm.Name = "Medium Article Helper";
+            _agentForm.Description = "Help users find and learn about articles they're interested in on Medium.com";
+            _agentForm.Instructions = """
+                                      Search for articles on medium.com that best fit the user's request. Summarize, paraphrase or describe articles when it's requested.
+                                      When you're not sure what to do, ask the user.
+                                      If a task requires multiple steps, always stop between steps to describe your plan and confirm the user wishes to continue.
+                                      Now, take a deep breath and use the tools available to complete each task.
+                                      """;
+            var mediumPlugin = _allPlugins.FirstOrDefault(x => x.Name.Equals("MediumApiPlugin", StringComparison.InvariantCultureIgnoreCase));
+            var summarizePlugin = _allPlugins.FirstOrDefault(x => x.Name.Equals("SummarizePlugin", StringComparison.InvariantCultureIgnoreCase));
+            _agentForm.Plugins = [mediumPlugin, summarizePlugin];
+            StateHasChanged();
+        }
+        private void UseWebChatExample()
+        {
+            _agentForm.Name = "Web Search Agent";
+            _agentForm.Description = "You are a web-search Q&A assistant. Find the answer to the user question on the web and then answer them. Provide links to the relevant web pages used in your answers.";
+            _agentForm.Instructions = """
+                                      Answer the user's query using the web search results below. 
+                                      Always search the web before responding. 
+                                      Always include CITATIONS in your response.
+                                      Now, take a deep breath and use the tools available to complete each task.
+                                      """;
+            var webCrawlPlugin = _allPlugins.FirstOrDefault(x => x.Name.Equals("WebCrawlPlugin", StringComparison.InvariantCultureIgnoreCase));
+            _agentForm.Plugins = [webCrawlPlugin];
+            StateHasChanged();
+        }
         private class PluginData(PluginType pluginType, KernelPlugin kernelPlugin)
         {
             public PluginType PluginType { get; set; } = pluginType;
@@ -42,8 +84,10 @@ namespace BlazorWithSematicKernel.Components.AgentComponents
         }
         private async Task AllPlugins()
         {
+            if (_allPlugins.Count > 0) return;
             var allPluginTypes = await CoreKernelService.GetAllPlugins();
             _allPlugins = allPluginTypes.SelectMany(x => x.Value.Select(y => new PluginData(x.Key, y))).ToList();
+            StateHasChanged();
 
         }
         private async void GenerateAgent(AgentForm agentForm)

@@ -17,7 +17,7 @@ public static class Example63_ChatCompletionPrompts
 
         var kernel = Kernel.CreateBuilder()
             .AddOpenAIChatCompletion(
-                modelId: TestConfiguration.OpenAI.ChatModelId,
+                modelId: TestConfiguration.OpenAI.Gpt4ModelId,
                 apiKey: TestConfiguration.OpenAI.ApiKey)
             .Build();
 

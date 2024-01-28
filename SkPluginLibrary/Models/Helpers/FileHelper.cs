@@ -68,5 +68,5 @@ public class FileHelper
 
 public enum FileType
 {
-    Text, Pdf
+    Text, Pdf, Json
 }

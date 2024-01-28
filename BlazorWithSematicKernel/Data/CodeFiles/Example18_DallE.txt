@@ -14,7 +14,7 @@ public static class Example18_DallE
             // Add your text to image service
             .AddOpenAITextToImage(TestConfiguration.OpenAI.ApiKey)
             // Add your chat completion service 
-            .AddOpenAIChatCompletion(TestConfiguration.OpenAI.ChatModelId, TestConfiguration.OpenAI.ApiKey)
+            .AddOpenAIChatCompletion(TestConfiguration.OpenAI.Gpt4ModelId, TestConfiguration.OpenAI.ApiKey)
             .Build();
 
         ITextToImageService dallE = kernel.GetRequiredService<ITextToImageService>();
@@ -88,10 +88,10 @@ public static class Example18_DallE
                 apiVersion: "2023-12-01-preview") //Dall-E 3 is only supported in this version
 // Add your chat completion service
             .AddAzureOpenAIChatCompletion(
-                deploymentName: TestConfiguration.AzureOpenAI.ChatDeploymentName,
+                deploymentName: TestConfiguration.AzureOpenAI.Gpt4DeploymentName,
                 endpoint: TestConfiguration.AzureOpenAI.Endpoint,
                 apiKey: TestConfiguration.AzureOpenAI.ApiKey,
-                modelId: TestConfiguration.AzureOpenAI.ChatModelId)
+                modelId: TestConfiguration.AzureOpenAI.Gpt35ModelId)
             .Build();
 
         ITextToImageService dallE = kernel.GetRequiredService<ITextToImageService>();

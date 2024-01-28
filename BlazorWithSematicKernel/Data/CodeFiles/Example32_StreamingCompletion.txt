@@ -11,7 +11,7 @@ public static class Example32_StreamingCompletion
         Console.WriteLine("======== Azure OpenAI - Text Completion - Raw Streaming ========");
 
         var textGeneration = new AzureOpenAITextGenerationService(
-            deploymentName: TestConfiguration.AzureOpenAI.DeploymentName,
+            deploymentName: TestConfiguration.AzureOpenAI.Gpt35DeploymentName,
             endpoint: TestConfiguration.AzureOpenAI.Endpoint,
             apiKey: TestConfiguration.AzureOpenAI.ApiKey,
             modelId: TestConfiguration.AzureOpenAI.ModelId);

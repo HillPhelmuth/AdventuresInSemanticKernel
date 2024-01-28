@@ -32,7 +32,7 @@ namespace SkPluginLibrary.Plugins
         {
             var kernel = CreateKernel();
             var semanticMemory = await ChatWithSkKernelMemory();
-            var memoryItems = await semanticMemory.SearchAsync(CollectionName.SkDocsCollection, $"{query} {history}", 10, 0.78).ToListAsync();
+            var memoryItems = await semanticMemory.SearchAsync(CollectionName.SkDocsCollection, $"{query} {history}", 10, 0.58).ToListAsync();
             var memory = string.Join("\n", memoryItems.Select(x => x.Metadata.Text));
             ConsoleLogger.LoggerFactory.CreateLogger<KernelChatPlugin>().LogInformation("Memory:\n {memory}", memory);
             var context = new KernelArguments

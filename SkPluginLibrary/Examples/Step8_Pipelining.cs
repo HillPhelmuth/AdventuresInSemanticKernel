@@ -17,7 +17,7 @@ namespace SkPluginLibrary.Examples
         {
             IKernelBuilder builder = Kernel.CreateBuilder();
             builder.AddOpenAIChatCompletion(
-                TestConfiguration.OpenAI.ChatModelId,
+                TestConfiguration.OpenAI.Gpt4ModelId,
                 TestConfiguration.OpenAI.ApiKey);
             builder.Services.AddLogging(c => c.AddConsole().SetMinimumLevel(LogLevel.Trace));
             Kernel kernel = builder.Build();

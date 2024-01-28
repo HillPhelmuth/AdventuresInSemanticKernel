@@ -11,7 +11,7 @@ namespace SkPluginLibrary.Examples
             Console.WriteLine("======== Method Function types ========");
 
             var kernel = Kernel.CreateBuilder()
-                .AddOpenAIChatCompletion(TestConfiguration.OpenAI.ChatModelId, TestConfiguration.OpenAI.ApiKey)
+                .AddOpenAIChatCompletion(TestConfiguration.OpenAI.Gpt4ModelId, TestConfiguration.OpenAI.ApiKey)
                 .Build();
 
             // Load native plugin into the kernel function collection, sharing its functions with prompt templates

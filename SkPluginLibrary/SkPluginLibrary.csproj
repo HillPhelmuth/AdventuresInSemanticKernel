@@ -18,8 +18,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Remove="Agents\ParrotAgents.yaml" />
-		<None Remove="Agents\ToolAgents.yaml" />
+		<None Remove="Agents\ParrotAgent.yaml" />
+		<None Remove="Agents\ToolAgent.yaml" />
 		<None Remove="ApiPlugins\ChatGptPlugins\openapi.json" />
 		<None Remove="ApiPlugins\DndApiPlugin\openapi.json" />
 		<None Remove="ApiPlugins\MathApiPlugin\openapi.json" />
@@ -27,6 +27,7 @@
 		<None Remove="ChatGptPluginManifests.json" />
 		<None Remove="Resources\GenerateStory.yaml" />
 		<None Remove="Resources\GenerateStoryHandlebars.yaml" />
+		<None Remove="Resources\TrainingData_textTosql_shuffled2.jsonl" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -38,32 +39,34 @@
 		<PackageReference Include="HdbscanSharp" Version="2.0.0" />
 		<PackageReference Include="Html2Markdown" Version="5.1.0.703" />
 		<PackageReference Include="Microsoft.ApplicationInsights" Version="2.22.0" />
+		<PackageReference Include="Microsoft.Extensions.Logging.ApplicationInsights" Version="2.22.0" />
+		<PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.22.0" />
 		<PackageReference Include="Microsoft.DeepDev.TokenizerLib" Version="1.3.2" />
 		<PackageReference Include="Microsoft.Extensions.Azure" Version="1.7.1" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="8.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="8.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.0" />
 		<PackageReference Include="Microsoft.ML.Tokenizers" Version="0.21.0" />
-		<PackageReference Include="Microsoft.SemanticKernel" Version="1.0.1" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.AzureAISearch" Version="1.0.1-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Chroma" Version="1.0.1-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.HuggingFace" Version="1.0.1-preview" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Pinecone" Version="1.0.1-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Qdrant" Version="1.0.1-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Redis" Version="1.0.1-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Sqlite" Version="1.0.1-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Weaviate" Version="1.0.1-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Experimental.Agents" Version="1.0.1-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Planners.Handlebars" Version="1.0.1-preview" />
-		<PackageReference Include="Microsoft.SemanticKernel.Planners.OpenAI" Version="1.0.1-preview" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Core" Version="1.0.1-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Document" Version="1.0.1-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Grpc" Version="1.0.1-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Memory" Version="1.0.1-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.MsGraph" Version="1.0.1-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.OpenApi" Version="1.0.1-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Web" Version="1.0.1-alpha" />
-		<PackageReference Include="PdfPig" Version="0.1.9-alpha-20231119-4537e" />
+		<PackageReference Include="Microsoft.SemanticKernel" Version="1.2.0" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.AzureAISearch" Version="1.2.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Chroma" Version="1.2.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.HuggingFace" Version="1.2.0-preview" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Pinecone" Version="1.2.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Qdrant" Version="1.2.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Redis" Version="1.2.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Sqlite" Version="1.2.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Weaviate" Version="1.2.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Experimental.Agents" Version="1.2.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Planners.Handlebars" Version="1.2.0-preview" />
+		<PackageReference Include="Microsoft.SemanticKernel.Planners.OpenAI" Version="1.2.0-preview" />
+		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Core" Version="1.2.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Document" Version="1.2.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Grpc" Version="1.2.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Memory" Version="1.2.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Plugins.MsGraph" Version="1.2.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Plugins.OpenApi" Version="1.2.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Web" Version="1.2.0-alpha" />
+		<PackageReference Include="PdfPig" Version="0.1.9-alpha-20240117-096eb" />
 		<PackageReference Include="ReverseMarkdown" Version="4.1.0" />
 		<PackageReference Include="SharpToken" Version="1.2.14" />
 		<PackageReference Include="System.Linq.Async" Version="6.0.1" />
@@ -90,9 +93,8 @@
 		</None>
 	</ItemGroup>
 	<ItemGroup>
-		
-		<EmbeddedResource Include="Agents\ParrotAgents.yaml" />
-		<EmbeddedResource Include="Agents\ToolAgents.yaml" />
+		<EmbeddedResource Include="Agents\ParrotAgent.yaml" />
+		<EmbeddedResource Include="Agents\ToolAgent.yaml" />
 		<EmbeddedResource Include="ChatGptPluginManifests.json">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
@@ -110,10 +112,10 @@
 	</ItemGroup>
 	<ItemGroup>
 	  <Compile Remove="Models\Helpers\ConversionHelperModels.cs" />
+	  <Compile Remove="Plugins\FineTuneEvalPlugin.cs" />
 	</ItemGroup>
 	
 	<ItemGroup>
-		<ProjectReference Include="..\NCalcPlugins\NCalcPlugins.csproj" />
 		<ProjectReference Include="..\SkPluginComponents\SkPluginComponents.csproj" />
 	</ItemGroup>
 	<ItemGroup>

@@ -18,11 +18,13 @@ namespace BlazorWithSematicKernel.Pages
             public string Text { get; set; } = string.Empty;
 
         }
+        private List<string> _models = ["text-embedding-3-small", "text-embedding-3-large", "text-embedding-ada-002"];
         private class SearchForm
         {
             public string? Query { get; set; }
             public int Limit { get; set; } = 1;
             public double MinThreshold { get; set; } = 0.7d;
+            public string Model { get; set; } = "text-embedding-3-small";
         }
         private SearchForm _searchForm = new();
         private List<TokenizedChunk> _tokenizedChunks = new();
@@ -74,6 +76,16 @@ namespace BlazorWithSematicKernel.Pages
                 _isBusy = false;
 
             }
+            StateHasChanged();
+        }
+        private async void ReSave(string model)
+        {
+            _isBusy = true;
+            _searchBusyString = $"Saving Chuncks ({model})...";
+            StateHasChanged();
+            await Task.Delay(1);
+            await CoreKernelService.SaveChunks(_tokenizedChunks, model);
+            _isBusy = false;
             StateHasChanged();
         }
         private async void Search(SearchForm search)

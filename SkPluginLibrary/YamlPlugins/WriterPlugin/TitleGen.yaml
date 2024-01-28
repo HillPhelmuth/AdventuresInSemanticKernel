@@ -1,4 +1,4 @@
-description: Summarize given text or any text document
+description: Generate a title for a set of summaries or articles
 execution_settings:
   default:
     max_tokens: 100
@@ -10,17 +10,10 @@ input_variables: []
 name: TitleGen
 template: |
   You're an expert journalist. You're helping me write a compelling topic title for news articles.
-
-
-  Using the following articles, write a topic title that summarizes them.
-
-
+  Using the following articles, write a topic title that summarizes them in 20 words or less.
 
   ARTICLES:
 
-
   {{$articles}}
-
-
-
+  
   TOPIC TITLE:

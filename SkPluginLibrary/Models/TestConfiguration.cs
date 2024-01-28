@@ -13,14 +13,65 @@ public sealed class TestConfiguration
 
     private TestConfiguration(IConfiguration configRoot)
     {
-        this._configRoot = configRoot;
+        _configRoot = configRoot;
     }
 
     public static void Initialize(IConfiguration configRoot)
     {
         s_instance = new TestConfiguration(configRoot);
+        
     }
-
+    private static CoreAISettings SetCore()
+    {
+        return CoreSettings?.Service switch
+        {
+            "OpenAI" => new CoreAISettings
+            {
+                ApiKey = OpenAI.ApiKey,
+                Gpt35ModelId = OpenAI.Gpt35ModelId,
+                Gpt4ModelId = OpenAI.Gpt4ModelId,
+                ImageModelId = OpenAI.ImageModelId,
+                PlannerModelId = OpenAI.PlannerModelId
+            },
+            "AzureOpenAI" => new CoreAISettings
+            {
+                ServiceId = AzureOpenAI.ServiceId,
+                Gpt35DeploymentName = AzureOpenAI.Gpt35DeploymentName,
+                Gpt4DeploymentName = AzureOpenAI.Gpt4DeploymentName,
+                PlannerDeploymentName = AzureOpenAI.PlannerDeploymentName,
+                Endpoint = AzureOpenAI.Endpoint,
+                ApiKey = AzureOpenAI.ApiKey,
+                Gpt35ModelId = AzureOpenAI.ModelId,
+                Gpt4ModelId = AzureOpenAI.Gpt35ModelId,
+                ImageModelId = AzureOpenAI.ImageModelId,
+                PlannerModelId = AzureOpenAI.PlannerModelId,
+            },
+            _ => throw new ConfigurationNotFoundException("CoreSettings")
+        };
+    }
+    public static (bool isValid, string message) Validate()
+    {
+        var isAzure = CoreSettings?.Service == "AzureOpenAI";
+        if (isAzure)
+        {
+            if (string.IsNullOrWhiteSpace(CoreAISettings.ApiKey)) return (false, "missing ApiKey");
+            if (string.IsNullOrEmpty(CoreAISettings.Endpoint)) return (false, "missing Endpoint");
+            var missingDeployments = string.IsNullOrWhiteSpace(CoreAISettings.Gpt35DeploymentName) &&
+                                     string.IsNullOrWhiteSpace(CoreAISettings.Gpt4DeploymentName) &&
+                                     string.IsNullOrWhiteSpace(CoreAISettings.PlannerDeploymentName);
+            if (missingDeployments) return (false, "missing DeploymentName");
+            var missingModelId = string.IsNullOrWhiteSpace(CoreAISettings.Gpt35ModelId) &&
+                                 string.IsNullOrWhiteSpace(CoreAISettings.Gpt4ModelId) &&
+                                 string.IsNullOrWhiteSpace(CoreAISettings.PlannerModelId);
+            return missingModelId ? (false, "missing Modelname") : (true, "");
+        }
+        if (string.IsNullOrWhiteSpace(CoreAISettings.ApiKey)) return (false, "missing ApiKey");
+        var missingModel = string.IsNullOrWhiteSpace(CoreAISettings.Gpt35ModelId) &&
+                             string.IsNullOrWhiteSpace(CoreAISettings.Gpt4ModelId) &&
+                             string.IsNullOrWhiteSpace(CoreAISettings.PlannerModelId);
+        return missingModel ? (false, "missing ModelId") : (true,"");
+    }
+    public static CoreAISettings CoreAISettings => SetCore();
     private static OpenAIConfig? _openAi;
     public static OpenAIConfig? OpenAI
     {
@@ -146,7 +197,13 @@ public sealed class TestConfiguration
         get => _sqlite ?? LoadSection<SqliteConfig>();
         set => _sqlite = value;
     }
+    private static CoreSettingsConfig? _coreSettings;
 
+    public static CoreSettingsConfig? CoreSettings
+    {
+        get => _coreSettings ?? LoadSection<CoreSettingsConfig>();
+        set => _coreSettings = value;
+    }
 
 
     private static T LoadSection<T>([CallerMemberName] string? caller = null)
@@ -169,8 +226,8 @@ public sealed class TestConfiguration
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor.
     public class OpenAIConfig
     {
-        public string ModelId { get; set; }
-        public string ChatModelId { get; set; }
+        public string Gpt35ModelId { get; set; }
+        public string Gpt4ModelId { get; set; }
         public string EmbeddingModelId { get; set; }
         public string ApiKey { get; set; }
         public string ImageModelId { get; set; }
@@ -180,13 +237,15 @@ public sealed class TestConfiguration
     public class AzureOpenAIConfig
     {
         public string ServiceId { get; set; }
-        public string DeploymentName { get; set; }
-        public string ChatDeploymentName { get; set; }
+        public string Gpt35DeploymentName { get; set; }
+        public string Gpt4DeploymentName { get; set; }
         public string Endpoint { get; set; }
         public string ApiKey { get; set; }
         public string ModelId { get; set; }
-        public string ChatModelId { get; set; }
+        public string Gpt35ModelId { get; set; }
         public string ImageModelId { get; set; }
+        public string PlannerModelId { get; set; }
+        public string PlannerDeploymentName { get; set; }
     }
 
     public class AzureOpenAIEmbeddingsConfig
@@ -285,8 +344,28 @@ public sealed class TestConfiguration
         public string ConnectionString { get; set; }
         public string ChatContentConnectionString { get; set; }
     }
+    public class CoreSettingsConfig
+    {
+        public string Service { get; set; }
+    }
+
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor.
 }
+// ReSharper disable once InconsistentNaming
+public class CoreAISettings
+{
+    public string? ServiceId { get; set; }
+    public string? Gpt35DeploymentName { get; set; }
+    public string? Gpt4DeploymentName { get; set; }
+    public string? Endpoint { get; set; }
+    public string? ApiKey { get; set; }
+    public string? Gpt35ModelId { get; set; }
+    public string? Gpt4ModelId { get; set; }
+    public string? ImageModelId { get; set; }
+    public string? PlannerModelId { get; set; }
+    public string? PlannerDeploymentName { get; set; }
+}
+
 public static class Validations
 {
     public static bool IsValid(this TestConfiguration.WeaviateConfig weaviateConfig)

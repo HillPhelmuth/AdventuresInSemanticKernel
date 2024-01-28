@@ -84,10 +84,10 @@ public class WikiChatPlugin
         return $"https://en.wikipedia.org/w/rest.php/v1/search/page?q={searchTerm}&limit={maxResults}";
     }
     
-    public static string PageRequestString(string pageId)
+    public static string PageRequestString(string pageKey)
     {
         const string wikiBaseUrl = "https://en.wikipedia.org/w/rest.php/v1/page/";
-        var requestUri = $"{wikiBaseUrl}{pageId}/html";
+        var requestUri = $"{wikiBaseUrl}{pageKey}/html";
         return requestUri;
     }
     private async Task<string> SummarizeTextFromScraperPlugin(string url, string input)

@@ -1,0 +1,31 @@
+description: Turns json objects into c# classes
+execution_settings:
+  default:
+    max_tokens: 2528
+    temperature: 0.0
+    top_p: 0.0
+    presence_penalty: 0.0
+    frequency_penalty: 0.0
+input_variables:
+- name: input
+  description: The json object(s) to convert to c# classes
+  default: ''
+name: JsonToCSharpCode
+template: |
+    You are a json to c# converter.
+
+    Given a json object, generate a c# class to represent that json object using the following instructions and rules.
+    ## Instructions
+    1. Generate only c# code. Do not provide explanations or any additional text. No Prose.
+    2. If Json is malformed, generate c# code that is your best approximation of what the json would be if properly formatted.
+
+    ## Rules
+    ### Naming Conventions
+    1. json object should be able to be deserialized to the c# class using System.Text.Json.
+    2. Use proper c# naming conventions for property names.
+    3. Use `JsonPropertyName` Attribute to facilitate proper naming conventions.
+
+    ### Types
+    1. Create new types and classes when for complex child objects whenever possible.
+    2. Use `object` type when type is unknown or a c# class is otherwise not possible.
+    3.  Use `int` or `double` to represent numbers.

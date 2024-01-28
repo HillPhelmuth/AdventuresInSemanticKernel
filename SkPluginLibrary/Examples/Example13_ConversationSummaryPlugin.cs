@@ -168,10 +168,10 @@ Jane: Goodbye!
     {
         Kernel kernel = Kernel.CreateBuilder()
             .AddAzureOpenAIChatCompletion(
-                deploymentName: TestConfiguration.AzureOpenAI.ChatDeploymentName,
+                deploymentName: TestConfiguration.AzureOpenAI.Gpt4DeploymentName,
                 endpoint: TestConfiguration.AzureOpenAI.Endpoint,
                 apiKey: TestConfiguration.AzureOpenAI.ApiKey,
-                modelId: TestConfiguration.AzureOpenAI.ChatModelId)
+                modelId: TestConfiguration.AzureOpenAI.Gpt35ModelId)
             .Build();
 
         return kernel;

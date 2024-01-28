@@ -1,0 +1,32 @@
+description: Summarize given text or any text document in segments using previous summaries as context.
+execution_settings:
+  default:
+    max_tokens: 1024
+    temperature: 0.8
+    top_p: 1.0
+    presence_penalty: 0.0
+    frequency_penalty: 0.0
+input_variables:
+- name: input
+  description: Text to summarize
+  default: ''
+- name: summarySoFar
+  description: Summary so far
+  default: ''
+name: SummarizeLong
+template: |
+  [SUMMARIZATION RULES]
+
+  1. Summarize for clarity first.
+  2. Preserve as much of the original meaning as possible.
+  3. Use plain language to summarize complex ideas.
+  4. Use markdown formatting to make your summary easy to read.
+  5. Use the [SUMMARY SO FAR] for additional context only.
+  6. DO NOT include the [SUMMARY SO FAR] in your response!
+  [end SUMMARIZIATION RULES]
+
+  [SUMMARY SO FAR]    
+  {{$summarySoFar}}
+  [end SUMMARY SO FAR]
+  Summarize this:
+  {{$input}}

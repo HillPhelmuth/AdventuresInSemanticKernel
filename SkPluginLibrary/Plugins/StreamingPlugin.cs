@@ -23,7 +23,7 @@ namespace SkPluginLibrary.Plugins
             [Description("System prompt Instructions for chat model")] string systemPrompt = "",
             [Description(HistoryDescription)] string history = "")
         {
-            var chatKernel = CoreKernelService.ChatCompletionKernel("gpt-3.5-turbo-1106");
+            var chatKernel = CoreKernelService.ChatCompletionKernel();
             
 
 

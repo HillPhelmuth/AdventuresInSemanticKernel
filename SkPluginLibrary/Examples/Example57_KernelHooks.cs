@@ -15,7 +15,7 @@ public static class Example57_KernelHooks
     {
         Console.WriteLine("\n======== Using Function Execution Handlers ========\n");
 
-        s_openAIModelId = TestConfiguration.OpenAI.ChatModelId;
+        s_openAIModelId = TestConfiguration.OpenAI.Gpt4ModelId;
         s_openAIApiKey = TestConfiguration.OpenAI.ApiKey;
 
         if (s_openAIModelId == null || s_openAIApiKey == null)

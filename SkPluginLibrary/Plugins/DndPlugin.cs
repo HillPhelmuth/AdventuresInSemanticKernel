@@ -22,13 +22,13 @@ namespace SkPluginLibrary.Plugins
 
         public DndPlugin()
         {
-            _kernel = CoreKernelService.ChatCompletionKernel("gpt-3.5-turbo-1106");
+            _kernel = CoreKernelService.ChatCompletionKernel();
            
         }
         [KernelFunction("RollDice"),
          Description(
              "Roll dice using [count]D[value]+[bonus] where [count] is number of rolls, and [value] is sides on the die. (examples: 3D6, 2D4, 1D20, etc.)")]
-        public string RollDice([Description("must be in nDv format like 3D6 or 3D6+1")] string countDValue)
+        public string RollDice([Description("must be in nDv format like 3D6 or 1D20")] string countDValue)
         {
             if (!countDValue.Contains('d', StringComparison.InvariantCultureIgnoreCase))
                 throw new ArgumentException("Invalid dice format");

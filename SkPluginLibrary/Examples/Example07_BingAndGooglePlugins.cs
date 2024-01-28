@@ -17,7 +17,7 @@ public static class Example07_BingAndGooglePlugins
 {
     public static async Task RunAsync()
     {
-        string openAIModelId = TestConfiguration.OpenAI.ChatModelId;
+        string openAIModelId = TestConfiguration.OpenAI.Gpt4ModelId;
         string openAIApiKey = TestConfiguration.OpenAI.ApiKey;
 
         if (openAIModelId == null || openAIApiKey == null)

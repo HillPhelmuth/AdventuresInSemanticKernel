@@ -7,6 +7,7 @@ using System.Text.Json.Serialization;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.SemanticKernel.Connectors.Sqlite;
 using UglyToad.PdfPig;
+using SkPluginLibrary.Models.Helpers;
 
 namespace SkPluginLibrary;
 
@@ -30,12 +31,13 @@ public partial class CoreKernelService
     }
 
     public async IAsyncEnumerable<ContextItem> SaveBatchToMemory(string collection, List<ContextItem> items,
-        MemoryStoreType storeType = MemoryStoreType.InMemory, bool delete = false)
+        MemoryStoreType storeType = MemoryStoreType.InMemory, bool delete = false,
+        string model = "text-embedding-3-small")
     {
         _playgroundStore = storeType == MemoryStoreType.SqlLite
-            ? await SqliteMemoryStore.ConnectAsync(_configuration["ConnectionStrings:SqlLite2"]!)
+            ? await SqliteMemoryStore.ConnectAsync(_configuration["Sqlite:ConnectionString"]!)
             : CreateMemoryStore(storeType);
-        _playgroundTextMemory = storeType == MemoryStoreType.SqlLite ? await CreateSqliteMemoryAsync() : CreateSemanticMemory(storeType);
+        _playgroundTextMemory = storeType == MemoryStoreType.SqlLite ? await CreateSqliteMemoryAsync() : CreateSemanticMemory(storeType, model);
         if (delete)
         {
             await DeleteCollection(collection);
@@ -60,9 +62,9 @@ public partial class CoreKernelService
     {
         var kernel = CreateKernel();
         var randoSkill = kernel.CreateFunctionFromPrompt(
-            $"Generate {count} random and distinct sentences or math equations that are each 30 to 60 characters long. Each sentence and equation should be on its own line. Do not label the lines", executionSettings: new OpenAIPromptExecutionSettings { MaxTokens = 250, Temperature = 1.2, TopP = 1.0 });
+            $"Generate {count} random and distinct sentences or math equations that are each 30 to 90 characters long. Each sentence and equation should be on its own line. Do not label the lines", executionSettings: new OpenAIPromptExecutionSettings { MaxTokens = 250, Temperature = 1.2, TopP = 1.0 });
         var randomSentances = await kernel.InvokeAsync(randoSkill);
-        var sentances = randomSentances.GetValue<string>()?.Split("\n").ToList() ?? new List<string>();
+        var sentances = randomSentances.GetValue<string>()?.Split("\n").ToList() ?? [];
         return sentances;
     }
 
@@ -92,12 +94,17 @@ public partial class CoreKernelService
         _loggerFactory.LogInformation("Deduped Items from Vector store: {dedupeCount} from total: {itemCount}",
             dedupeCount, itemCount);
 
-        var result = _hdbscanService.ClusterAsync(itemList, minpoints, minCluster, distanceFunction);
-        var writerPlugin = kernel.ImportPluginFromPromptDirectory(Path.Combine(RepoFiles.PluginDirectoryPath, "WriterPlugin"), "WriterPlugin");
-        var summarySkill = kernel.ImportPluginFromPromptDirectory(Path.Combine(RepoFiles.PluginDirectoryPath, "SummarizePlugin"), "SummarizePlugin");
+        return await ItemClustersFromCollection(minpoints, minCluster, distanceFunction, itemList, kernel);
+    }
 
-        var context = new KernelArguments();
-        var clusterTitles = await AddClusterTitles(result, context, writerPlugin["TitleGen"], summarySkill["Summarize"], kernel);
+    private async Task<List<MemoryResult>> ItemClustersFromCollection(int minpoints, int minCluster, DistanceFunction distanceFunction,
+        IEnumerable<MemoryRecord> itemList, Kernel kernel)
+    {
+        var result = _hdbscanService.ClusterAsync(itemList, minpoints, minCluster, distanceFunction);
+        var writerPlugin = kernel.ImportPluginFromPromptDirectoryYaml("WriterPlugin");
+        var summaryPlugin = kernel.ImportPluginFromPromptDirectoryYaml("SummarizePlugin");
+        var kernelArgs = new KernelArguments();
+        var clusterTitles = await AddClusterTitles(result, kernelArgs, writerPlugin["TitleGen"], summaryPlugin["SummarizeLong"], kernel);
 
         foreach (var item in result)
         {
@@ -116,56 +123,70 @@ public partial class CoreKernelService
     }
 
     private async Task<Dictionary<int, (string, string)>> AddClusterTitles(IEnumerable<MemoryResult> result,
-        KernelArguments context, KernelFunction titleGen, KernelFunction summarize, Kernel kernel)
+        KernelArguments kernelArgs, KernelFunction titleGen, KernelFunction summarize, Kernel kernel)
     {
         var clusterTitles = new Dictionary<int, (string, string)>();
         var clusterGroups = result.GroupBy(x => x.Cluster);
         foreach (var group in clusterGroups)
         {
-            var grpItems = group.Select(x => $"Title:{x.Title}\n\n{x.Text}").ToList();
+            var grpItems = group.Select(x => $"{x.Text}\n\n").ToList();
             var documents = string.Join("\n\n", grpItems);
             var tokenCount = StringHelpers.GetTokens(documents);
-            var tokenCountLog = $"{group.Key}\nToken Count: {tokenCount}";
             var groupTitle = $" {group.FirstOrDefault()?.ClusterTitle}";
-            _loggerFactory.LogInformation("Cluster {groupTitle}\nKey: {tokenCountLog}", groupTitle, tokenCountLog);
-            if (tokenCount > 12000)
+            var groupKey = group.Key;
+            _loggerFactory.LogInformation("Cluster {groupTitle}\nKey: {key}\nTokenCount {tokenCountLog}\nItem Count: {itemCount}", groupTitle, group.Key, tokenCount, group.Count());
+            if (tokenCount > 5000)
             {
                 var lines = TextChunker.SplitMarkDownLines(documents, 200, StringHelpers.GetTokens);
                 var paragraphs =
-                    TextChunker.SplitMarkdownParagraphs(lines, 12000, 0, group.Key.ToString(), StringHelpers.GetTokens);
-                documents = paragraphs[0];
-                var count2 = StringHelpers.GetTokens(documents);
-                _loggerFactory.LogInformation("Cluster {groupTitle} token reduced to {count2}", groupTitle, count2);
+                    TextChunker.SplitMarkdownParagraphs(lines, 4000, 300, group.Key.ToString(), StringHelpers.GetTokens);
+                var summarySoFar = "";
+                
+                foreach (var doc in paragraphs)
+                {
+                    var index = paragraphs.IndexOf(doc) + 1;
+                    kernelArgs["input"] = doc;
+                    kernelArgs["summarySoFar"] = summarySoFar;
+                    var summaryCurrent = await kernel.InvokeAsync(summarize, kernelArgs);
+                    summarySoFar += $"\n{index}. {summaryCurrent.GetValue<string>()}";                
+                }
+                _valueTuple.summaryValue = summarySoFar;
+                //kernelArgs["input"] = documents;
+                kernelArgs["articles"] = summarySoFar;
+                var title = await kernel.InvokeAsync(titleGen, kernelArgs);
+                
+                _valueTuple.titleResultValue = title.GetValue<string>() ?? "";
+                clusterTitles.Add(groupKey, _valueTuple);
             }
+            else
+            {
+                kernelArgs["articles"] = documents;
+                kernelArgs["input"] = documents;
+                var tagResult = await kernel.InvokeAsync(summarize, kernelArgs);
+                kernelArgs["input"] = documents;
+                var titleResult = await kernel.InvokeAsync(titleGen, kernelArgs);
+                
+                _valueTuple.titleResultValue = titleResult.GetValue<string>() ?? "";
 
-            context["articles"] = documents;
-            context["input"] = documents;
-            var tagResult = await kernel.InvokeAsync(summarize, context) /*await summarize.InvokeAsync(context)*/;
-            context["input"] = documents;
-            var titleResult = await kernel.InvokeAsync(titleGen, context)/* await titleGen.InvokeAsync(context)*/;
-            var groupKey = group.Key;
-            _valueTuple.titleResultValue = titleResult.GetValue<string>() ?? "";
-           
-            var summaryValue = tagResult.GetValue<string>() ?? "";
-            _valueTuple.summaryValue = summaryValue;
-            clusterTitles.Add(groupKey, _valueTuple);
-            _loggerFactory.LogInformation("Cluster {groupKey} received Title: {titleResultValue}", groupKey,
-                titleResult.GetValue<string>() ?? "");
+                var summaryValue = tagResult.GetValue<string>() ?? "";
+                _valueTuple.summaryValue = summaryValue;
+                clusterTitles.Add(groupKey, _valueTuple);
+                _loggerFactory.LogInformation("Cluster {groupKey} received Title: {titleResultValue}", groupKey,
+                    titleResult.GetValue<string>() ?? "");
+            }            
         }
 
         return clusterTitles;
     }
-
+       
     public async Task ChunkAndSaveFileCluster(byte[] file, string filename, FileType fileType = FileType.Pdf,
         string? collection = null)
     {
+        
         _dbScanMemory = CreateSemanticMemory(MemoryStoreType.InMemory);
         collection ??= CollectionName.ClusterCollection;
         _loggerFactory.LogInformation("Chunking and saving file {filename} to collection {collection}", filename, collection);
-        //var sqlLiteMemory = await CreateSqliteMemoryAsync();
-        //var hasCollection = await _sqliteStore.DoesCollectionExistAsync(collection);
-        //if (!hasCollection)
-        //    await _sqliteStore.CreateCollectionAsync(collection);
+       
         var paragraphs = await ReadAndChunkFile(file, filename, fileType);
         var index = 0;
         foreach (var paragraph in paragraphs)
@@ -174,7 +195,7 @@ public partial class CoreKernelService
             await _dbScanMemory!.SaveInformationAsync(collection, paragraph, id, filename);
         }
     }
-
+   
     private static async Task<List<string>> ReadAndChunkFile(byte[] file, string filename, FileType fileType)
     {
         var sb = new StringBuilder();

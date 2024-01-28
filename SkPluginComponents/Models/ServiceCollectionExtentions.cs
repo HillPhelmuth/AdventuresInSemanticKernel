@@ -11,7 +11,7 @@ namespace SkPluginComponents.Models
     {
         public static IServiceCollection AddAskUserService(this IServiceCollection services)
         {
-            return services.AddScoped<AskUserService>();
+            return services.AddScoped<AskUserService>().AddScoped<DownloadFileService>();
         }
     }
 }

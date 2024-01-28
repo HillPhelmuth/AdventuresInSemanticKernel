@@ -46,7 +46,7 @@ public class ExternalServiceAgent
         var kernel = CreateKernel();
         var plugin = await kernel.ImportPluginFromOpenApiAsync("RefundPlugin", Path.Combine(RepoFiles.ApiPluginDirectoryPath, "ExternalServiceExamplePlugin", "openapi.json"));
         var agent = await new AgentBuilder()
-            .WithOpenAIChatCompletion(TestConfiguration.OpenAI.ChatModelId, TestConfiguration.OpenAI.ApiKey)
+            .WithOpenAIChatCompletion(TestConfiguration.OpenAI.Gpt4ModelId, TestConfiguration.OpenAI.ApiKey)
             .WithName("Refund Agent")
             .WithDescription("Gets refund information for a user")
             .WithInstructions("Get refund information for a user based on their userName as requested")
@@ -62,7 +62,7 @@ public class ExternalServiceAgent
     {
         var kernelBuilder = Kernel.CreateBuilder();
         kernelBuilder.Services.AddLogging(c => c.AddConsole().SetMinimumLevel(LogLevel.Information));
-        kernelBuilder.AddOpenAIChatCompletion(TestConfiguration.OpenAI.ChatModelId, TestConfiguration.OpenAI.ApiKey);
+        kernelBuilder.AddOpenAIChatCompletion(TestConfiguration.OpenAI.Gpt4ModelId, TestConfiguration.OpenAI.ApiKey);
         var kernel = kernelBuilder.Build();
         return kernel;
     }

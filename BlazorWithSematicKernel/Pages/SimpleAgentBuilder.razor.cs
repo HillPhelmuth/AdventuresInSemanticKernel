@@ -11,6 +11,8 @@ namespace BlazorWithSematicKernel.Pages
     {
         [Inject]
         private AssistantAgentService AgentRunnerService { get; set; } = default!;
+        [Inject]
+        private NotificationService NotificationService { get; set; } = default!;
         private int _step = 0;
         private void GetStarted()
         {
@@ -44,7 +46,14 @@ namespace BlazorWithSematicKernel.Pages
             StateHasChanged();
             var input = userInputRequest.ChatInput!;
             _chatView!.ChatState.AddUserMessage(input);
-            await ExecuteChatStream(input);
+            try
+            {
+                await ExecuteChatStream(input);
+            }
+            catch (Exception ex)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error Generating Response", ex.Message, 30000);
+            }
         }
         private async Task ExecuteChatStream(string input)
         {

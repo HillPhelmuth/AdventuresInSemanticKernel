@@ -41,7 +41,7 @@ namespace ChatComponents
         public void UpdateAssistantMessage(string token)
         {
             if (ChatMessages.All(x => x.Role != Role.Assistant)) throw new ArgumentOutOfRangeException(nameof(token),"No assistant message found.");
-            var message = ChatMessages.Last(x => x.Role == Role.Assistant).Content += token;
+            ChatMessages.Last(x => x.Role == Role.Assistant).Content += token;
             ChatHistory.Last(x => x.Role == AuthorRole.Assistant).Content += token;
             MessagePropertyChanged();
         }

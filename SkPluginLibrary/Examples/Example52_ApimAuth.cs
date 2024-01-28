@@ -46,7 +46,7 @@ namespace SkPluginLibrary.Examples
             IKernelBuilder builder = Kernel.CreateBuilder();
             builder.Services.AddLogging(c => c.SetMinimumLevel(LogLevel.Warning).AddConsole());
             builder.AddAzureOpenAIChatCompletion(
-                deploymentName: TestConfiguration.AzureOpenAI.ChatDeploymentName,
+                deploymentName: TestConfiguration.AzureOpenAI.Gpt4DeploymentName,
                 openAIClient: openAIClient);
             Kernel kernel = builder.Build();
 
