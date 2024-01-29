@@ -271,6 +271,7 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
         }
         var ask = $"Invent a D&D character based on the description below as the protagonist. Generate a short story using the available relevant details of the character and a DndMonster as a primary antagonist. The DndMonster should be selected from a list of all dnd monsters by Asking the User filtereed by challenge rating, also selected by asking the user.\ndescription: \n {characterDescription}.\n\n YOUR FINAL RESPONSE MUST BE A STORY.";
         functionHook.FunctionInvoked += HandleDndFunctionFilterInvoked;
+        kernel.FunctionInvoked += HandleDndFunctionInvoked;
         var stepwisePlanner = new FunctionCallingStepwisePlanner(config);
         var planResult = await stepwisePlanner.ExecuteAsync(kernel, ask, cancellationToken)/*await PlanResult(plan, context)*/;
         foreach (var item in planResult.ChatHistory ?? [])
@@ -283,6 +284,12 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
     }
    
     private void HandleDndFunctionFilterInvoked(object? sender, FunctionFilterContext context)
+    {
+        var name = context.Function.Name;
+        var plugin = context.Function.Metadata.PluginName;
+        DndPlannerFunctionHook?.Invoke(new SimpleChatMessage("ToolCall", $"{plugin}_{name}"));
+    }
+    private void HandleDndFunctionInvoked(object? sendter, FunctionInvokedEventArgs context)
     {
         var name = context.Function.Name;
         var plugin = context.Function.Metadata.PluginName;

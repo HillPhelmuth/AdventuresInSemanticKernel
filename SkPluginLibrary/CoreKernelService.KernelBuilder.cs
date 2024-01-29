@@ -90,7 +90,7 @@ public partial class CoreKernelService
         _customNativePlugins.TryAdd(nameof(DndPlugin), dndPlugin);
         var jsonPlugin = new HandleJsonPlugin();
         _customNativePlugins.TryAdd(nameof(HandleJsonPlugin), jsonPlugin);
-        
+
         var wikiPlugin = new WikiChatPlugin();
         _customNativePlugins.TryAdd(nameof(WikiChatPlugin), wikiPlugin);
         var youtubePlugin = new YouTubePlugin(kernel, _configuration["YouTubeSearch:ApiKey"]!);
@@ -228,7 +228,7 @@ public partial class CoreKernelService
             var assistantMessage = "";
             await foreach (var streamingChatMessageContent in chat.GetStreamingChatMessageContentsAsync(_chatHistory, settings, kernel, cancellationToken))
             {
-                var update = (OpenAIStreamingChatMessageContent) streamingChatMessageContent;
+                var update = (OpenAIStreamingChatMessageContent)streamingChatMessageContent;
                 var toolCall = update.ToolCallUpdate as StreamingFunctionToolCallUpdate;
                 if (toolCall?.Name is not null)
                     YieldAdditionalText?.Invoke($"<h4>Executing {toolCall.ToolCallIndex}. {toolCall.Name}</h4>");
@@ -266,7 +266,8 @@ public partial class CoreKernelService
         yield return "<br/><h3>Executing plan...</h3><br/>";
         functionHook.FunctionInvoking += HandleFunctionInvokingFilter;
         functionHook.FunctionInvoked += HandleFunctionInvokedFilter;
-
+        kernel.FunctionInvoking += HandleFunctionInvoking;
+        kernel.FunctionInvoked += HandleFunctionInvoked;
         var planResults = await planner.ExecuteAsync(kernel, askOverride, cancellationToken);
         var chatResult = planResults.ChatHistory;
         var historyBuilder = new StringBuilder();
@@ -411,7 +412,14 @@ public partial class CoreKernelService
         var planner = new HandlebarsPlanner(config);
         return planner;
     }
-    
+    private void HandleFunctionInvoking(object? sender, FunctionInvokingEventArgs args)
+    {
+        HandleFunctionInvokingFilter(sender, new FunctionInvokingContext(args.Function, args.Arguments));
+    }
+    private void HandleFunctionInvoked(object? sender, FunctionInvokedEventArgs args)
+    {
+        HandleFunctionInvokedFilter(sender, new FunctionInvokedContext(args.Arguments, args.Result));
+    }
     private void HandleFunctionInvokingFilter(object? sender, FunctionInvokingContext context)
     {
         var function = context.Function;
@@ -454,7 +462,7 @@ public partial class CoreKernelService
         YieldAdditionalText?.Invoke(metaDataExpando);
 
     }
-   
+
     [Obsolete("No,no to Sequential planner")]
     public async IAsyncEnumerable<string> ChatWithSequentialPlanner(string query, ChatRequestModel chatRequestModel,
      bool runAsChat = true, string? askOverride = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -480,7 +488,7 @@ public partial class CoreKernelService
             chatService = new OpenAIChatCompletionService(TestConfiguration.OpenAI.Gpt35ModelId, TestConfiguration.OpenAI.ApiKey, loggerFactory: _loggerFactory);
         else
             chatService = new AzureOpenAIChatCompletionService(TestConfiguration.AzureOpenAI.Gpt35DeploymentName, TestConfiguration.AzureOpenAI.Endpoint, TestConfiguration.AzureOpenAI.ApiKey, modelId: TestConfiguration.AzureOpenAI.ModelId, loggerFactory: _loggerFactory);
-               
+
         var settings = new OpenAIPromptExecutionSettings { Temperature = 0.7, TopP = 1.0, MaxTokens = 3000, ChatSystemPrompt = systemPrmpt };
         _chatHistory.AddUserMessage(query);
         var response = "";
@@ -491,7 +499,7 @@ public partial class CoreKernelService
             yield return token.Content;
         }
         _chatHistory.AddAssistantMessage(response);
-        
+
     }
 
     private static Kernel CreateKernelWithPlugins(IEnumerable<KernelPlugin> pluginFunctions)

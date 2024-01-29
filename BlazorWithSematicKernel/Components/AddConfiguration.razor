@@ -17,10 +17,7 @@
                                         <RadzenFormField Text="@item.Name">
                                             <ChildContent>
                                                 <RadzenPassword @bind-Value="@item.Value" AutoComplete="false"></RadzenPassword>
-                                            </ChildContent>
-                                           @*  <Helper>
-                                                <RadzenCustomValidator Component="@item.Name" Validator="@(() => ValidateApiKeyChange(configSection.ConfigurationSection))" Text="Nice Try! If you want to modify the Model used, you'll have to supply your own ApiKey"></RadzenCustomValidator>
-                                            </Helper> *@
+                                            </ChildContent>                                          
                                         </RadzenFormField>
                                     }
                                     else
@@ -30,7 +27,7 @@
                                                 <RadzenTextBox Name="@item.Name" @bind-Value="@item.Value"></RadzenTextBox>
                                             </ChildContent>
                                             <Helper>
-                                                <RadzenCustomValidator Component="@item.Name" Validator="@(() => ValidateApiKeyChange(configSection.ConfigurationSection))" Text="Nice Try! If you want to modify the Model used, you'll have to supply your own ApiKey"></RadzenCustomValidator>
+                                                <RadzenCustomValidator Component="@item.Name" Validator="@(() => ValidateApiKeyChange(configSection.ConfigurationSection))" Text="Nice Try! Add your own ApiKey to modify the default models"></RadzenCustomValidator>
                                             </Helper>
                                         </RadzenFormField>
                                     }
