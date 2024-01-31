@@ -1,10 +1,10 @@
 # Adventures in Semantic Kernel
 
-Welcome to **Adventures in Semantic Kernel**, your interactive guide to exploring the functionalities of Microsoft's AI Orchestration library, Semantic Kernel. Dive into hands-on experiences ranging from memory management and plan execution, to Agent building for a dynamic chat experience. This isn't just a passive learning experience; you'll get to actively experiment with these features to understand their cohesive interactions. [Try it out here](https://adventuresinsemantickernel.azurewebsites.net/)
+Welcome to **Adventures in Semantic Kernel**, your interactive guide to exploring the functionalities of Microsoft's AI Orchestration library, Semantic Kernel. Dive into hands-on experiences ranging from dynamic plan generation and Agent building for a dynamic chat experience to memory management and tokenization. This isn't just a passive learning experience; you'll get to actively experiment with these features to understand their cohesive interactions. [Try it out here](https://adventuresinsemantickernel.azurewebsites.net/)
 
 ## About Semantic Kernel
 
-Originally developed by Microsoft, [Semantic Kernel](https://learn.microsoft.com/en-us/semantic-kernel/overview/) aims to democratize AI integration for developers. While the project benefits from open-source contributions, its core mission is to simplify AI services deployment in apps. It comes equipped with a smart set of connectors that essentially act as your app's "virtual brain", capable of storing and processing information.
+Originally developed by Microsoft, [Semantic Kernel](https://learn.microsoft.com/en-us/semantic-kernel/overview/) aims to democratize AI integration for developers. While the project benefits from open-source contributions, its core mission is to simplify the integration of AI services with app code. It comes equipped with a smart set of connectors that essentially act as your app's "virtual brain", capable of executing LLM prompts, native code or external REST Apis.
 
 ## Application features
 
@@ -27,10 +27,10 @@ Select plugins and functions to build and execute your own:
 ### Custom Examples
 
 #### Web Chat Agent
-Chat with the web using _Bing_ search
+Chat with the web using _Bing_ search and a scrape-and-summarize plugin
 
 #### Wikipedia Chat Agent
-Chat with the web using _Wikipedia_ Rest API
+Chat with the Wikipedia articles using _Wikipedia_ Rest API
 
 #### C# REPL Agent
 Use natural language prompts to generate and execute c# code
@@ -38,7 +38,7 @@ Use natural language prompts to generate and execute c# code
  - Generate and execute c# line-by-line using [Roslyn c# scripting api](https://github.com/dotnet/roslyn/blob/main/docs/wiki/Scripting-API-Samples.md).
 
 #### Dnd Story Agent
-Example of a Stepwise Planner at work. Planner has access to the [D&D5e Api](https://www.dnd5eapi.co/) plugin and multiple semantic plugins. It uses these to create and execute a plan to generate a short story.
+Example of a Stepwise Planner at work. Planner has access to the [D&D5e Api](https://www.dnd5eapi.co/) plugin and multiple prompt plugins. It uses these to create and execute a plan to generate a short story.
  - Leverages a native plugin from a Razor Class Library `AskUserPlugin` to provide user interaction during plan execution
 
 ### SK Memory
@@ -47,7 +47,7 @@ Example of a Stepwise Planner at work. Planner has access to the [D&D5e Api](htt
 Play around with embeddings and similarities using your own or generated text snippets
 
 #### SK + Custom Hdbscan Clustering
-See how embeddings can be used to cluster text items, and then generate a title and topic list for each cluster using semantic plugins
+See how embeddings can be used to cluster text items, and then generate a title and summmary for each cluster using prompt plugins
 
 ### Tokens
 
