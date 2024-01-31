@@ -12,7 +12,7 @@ Originally developed by Microsoft, [Semantic Kernel](https://learn.microsoft.com
 View, modify, and execute dotnet examples. Examples are from [KernelSyntaxExamples](https://github.com/microsoft/semantic-kernel/tree/main/dotnet/samples/KernelSyntaxExamples) with small modifications.
 
 ### Execute Function
-Select a single plugin from a large variety of native, semantic and external plugins, then execute a function from that plugin.
+Select a single plugin from a large variety of native, prompt and external plugins, then execute a function from that plugin.
 
 ### Build Agent
 Build a simple agent by providing a persona and collection of plugins used together with OpenAI Function Calling.
