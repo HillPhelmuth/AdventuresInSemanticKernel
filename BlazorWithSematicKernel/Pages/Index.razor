@@ -27,9 +27,14 @@
     <RadzenColumn Size="9" Offset="1" Style="justify-items:center; justify-content:center; display:flex; flex-direction:column">
         <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.DisplayH6" Text="Add Configuration Values"></RadzenText>
         <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle1">Current configuration will work for most (though not all) plugins, but several <span style="font-weight:800">SK Samples</span> will require config values for specific resources not available by default.</RadzenText>
-        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Body2">Note: All OpenAI chat models are configured for gpt-3.5-turbo. Some examples may not work particularly well with this model. You can change any of the default model settings by adding your own <RadzenLink Text="Api Key" Path="https://platform.openai.com/api-keys" Target="_blank"></RadzenLink></RadzenText>
-        <RadzenButton Style="width:max-content; margin-left:auto; margin-right:auto" Variant="Variant.Text" Click="ShowConfig" Text="Click Here To Add Configuration Values"></RadzenButton>
+       
 
+    </RadzenColumn>
+</RadzenRow>
+<RadzenRow>
+    <RadzenColumn Size="7" Offset="2" Style="justify-items:center; justify-content:center; display:flex; flex-direction:column">
+        <RadzenText TextStyle="TextStyle.Body2">Note: All OpenAI chat models are configured for gpt-3.5-turbo. Some examples may not work particularly well with this model. You can change any of the default model settings by adding your own <RadzenLink Text="Api Key" Path="https://platform.openai.com/api-keys" Target="_blank"></RadzenLink> All configuration values will be saved in your browser's local storage using <RadzenLink Text="ProtectedLocalStorage" Target="_blank" Path="https://learn.microsoft.com/en-us/aspnet/core/blazor/state-management?view=aspnetcore-8.0&pivots=server#aspnet-core-protected-browser-storage"></RadzenLink></RadzenText>
+        <RadzenButton Style="width:max-content; margin-left:auto; margin-right:auto" Variant="Variant.Text" Click="ShowConfig" Size="ButtonSize.Large" Text="Click Here To Add Configuration Values"></RadzenButton>
     </RadzenColumn>
 </RadzenRow>
 

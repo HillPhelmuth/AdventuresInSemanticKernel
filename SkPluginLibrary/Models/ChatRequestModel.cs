@@ -1,5 +1,4 @@
 ﻿using Microsoft.SemanticKernel;
-using System.Text;
 
 namespace SkPluginLibrary.Models;
 

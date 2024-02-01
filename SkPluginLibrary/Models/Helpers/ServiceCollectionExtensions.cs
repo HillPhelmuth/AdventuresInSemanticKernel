@@ -1,9 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using SkPluginLibrary.Abstractions;
 using SkPluginLibrary.Services;
-using Microsoft.SemanticKernel;
 using SkPluginLibrary.Agents;
 using SkPluginLibrary.Agents.Examples;
 

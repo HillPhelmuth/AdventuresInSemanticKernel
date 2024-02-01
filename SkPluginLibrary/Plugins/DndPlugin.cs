@@ -6,30 +6,30 @@ using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 
-namespace SkPluginLibrary.Plugins
+namespace SkPluginLibrary.Plugins;
+
+public class DndPlugin
 {
-    public class DndPlugin
+    private readonly Kernel _kernel;
+    private readonly KernelFunction? _summarizeMonsterFunction;
+
+
+    public DndPlugin(Kernel kernel)
     {
-        private readonly Kernel _kernel;
-        private readonly KernelFunction? _summarizeMonsterFunction;
-
-
-        public DndPlugin(Kernel kernel)
-        {
             _kernel = kernel;
             
         }
 
-        public DndPlugin()
-        {
+    public DndPlugin()
+    {
             _kernel = CoreKernelService.ChatCompletionKernel();
            
         }
-        [KernelFunction("RollDice"),
-         Description(
-             "Roll dice using [count]D[value]+[bonus] where [count] is number of rolls, and [value] is sides on the die. (examples: 3D6, 2D4, 1D20, etc.)")]
-        public string RollDice([Description("must be in nDv format like 3D6 or 1D20")] string countDValue)
-        {
+    [KernelFunction("RollDice"),
+     Description(
+         "Roll dice using [count]D[value]+[bonus] where [count] is number of rolls, and [value] is sides on the die. (examples: 3D6, 2D4, 1D20, etc.)")]
+    public string RollDice([Description("must be in nDv format like 3D6 or 1D20")] string countDValue)
+    {
             if (!countDValue.Contains('d', StringComparison.InvariantCultureIgnoreCase))
                 throw new ArgumentException("Invalid dice format");
             countDValue = countDValue.Trim('"');
@@ -58,10 +58,10 @@ namespace SkPluginLibrary.Plugins
             return total.ToString();
         }
 
-        [KernelFunction("GenerateMonsterDescription"),
-         Description("Generate a random monster from the Dungeons and Dragons 5e Monster Manual")]
-        public async Task<string> GenerateMonsterDescription(string input, KernelArguments arguments)
-        {
+    [KernelFunction("GenerateMonsterDescription"),
+     Description("Generate a random monster from the Dungeons and Dragons 5e Monster Manual")]
+    public async Task<string> GenerateMonsterDescription(string input, KernelArguments arguments)
+    {
             Console.WriteLine("Starting generate monster");
             var dndApiSkill =
                 await _kernel.ImportPluginFromOpenApiAsync("DndApiPlugin", Path.Combine(RepoFiles.ApiPluginDirectoryPath, "DndApiPlugin", "openapi.json"));
@@ -99,10 +99,10 @@ namespace SkPluginLibrary.Plugins
         }
         
 
-        [KernelFunction("StorySynopsis"),
-         Description("Generate a brief 1-2 sentance summary of the character details to aid in story creation")]
-        public async Task<string> StorySynopsisAsync([Description("Race, class, alignment and other character details")]string characterDetails)
-        {
+    [KernelFunction("StorySynopsis"),
+     Description("Generate a brief 1-2 sentance summary of the character details to aid in story creation")]
+    public async Task<string> StorySynopsisAsync([Description("Race, class, alignment and other character details")]string characterDetails)
+    {
             var args = new KernelArguments
             {
                 ["characterDetails"] = characterDetails
@@ -112,46 +112,45 @@ namespace SkPluginLibrary.Plugins
             return result.Result();
         }
 
-        private const string StorySynopsisPrompt = """
-            Generate a 2 sentance story synopsis for the character based on [Character Details].
-            If the character is evil, the story will be about their dark and evil deeds.
-            If the character is neutral, the story will be about their harrowing adventures.
-            If the character is good, the story will about their herioc deeds.
+    private const string StorySynopsisPrompt = """
+                                               Generate a 2 sentance story synopsis for the character based on [Character Details].
+                                               If the character is evil, the story will be about their dark and evil deeds.
+                                               If the character is neutral, the story will be about their harrowing adventures.
+                                               If the character is good, the story will about their herioc deeds.
 
-            [Character Details]
-            {{$characterDetails}}
-            story synopsis:
+                                               [Character Details]
+                                               {{$characterDetails}}
+                                               story synopsis:
 
-            """;
-    }
+                                               """;
+}
 
-    public partial class DndApiResponse
-    {
-        [JsonPropertyName("content")]
-        public MonsterList Content { get; set; }
+public partial class DndApiResponse
+{
+    [JsonPropertyName("content")]
+    public MonsterList Content { get; set; }
 
-        [JsonPropertyName("contentType")]
-        public string ContentType { get; set; }
-    }
+    [JsonPropertyName("contentType")]
+    public string ContentType { get; set; }
+}
 
-    public partial class MonsterList
-    {
-        [JsonPropertyName("count")]
-        public long Count { get; set; }
+public partial class MonsterList
+{
+    [JsonPropertyName("count")]
+    public long Count { get; set; }
 
-        [JsonPropertyName("results")]
-        public List<Monster> Monsters { get; set; }
-    }
+    [JsonPropertyName("results")]
+    public List<Monster> Monsters { get; set; }
+}
 
-    public partial class Monster
-    {
-        [JsonPropertyName("index")]
-        public string Index { get; set; }
+public partial class Monster
+{
+    [JsonPropertyName("index")]
+    public string Index { get; set; }
 
-        [JsonPropertyName("name")]
-        public string Name { get; set; }
+    [JsonPropertyName("name")]
+    public string Name { get; set; }
 
-        [JsonPropertyName("url")]
-        public string Url { get; set; }
-    }
+    [JsonPropertyName("url")]
+    public string Url { get; set; }
 }

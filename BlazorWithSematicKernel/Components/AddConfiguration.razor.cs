@@ -1,20 +1,23 @@
-﻿using SkPluginLibrary.Models.Helpers;
+﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+using SkPluginLibrary.Models.Helpers;
 using ConfigurationSection = SkPluginLibrary.Models.Helpers.ConfigurationSection;
 
 namespace BlazorWithSematicKernel.Components
 {
     public partial class AddConfiguration
     {
+        [Inject]
+        private ProtectedLocalStorage ProtectedLocalStorage { get; set; } = default!;
+        [Inject]
+        private NotificationService NotificationService { get; set; } = default!;
+        [Inject]
+        private IConfiguration Configuration { get; set; } = default!;
         private string? _originalKey;
-        private Dictionary<string, string> _modelValues = new()
-        { 
-            { nameof(TestConfiguration.OpenAI.Gpt4ModelId), TestConfiguration.OpenAI.Gpt4ModelId },
-            { nameof(TestConfiguration.OpenAI.Gpt35ModelId), TestConfiguration.OpenAI.Gpt35ModelId },
-            { nameof(TestConfiguration.OpenAI.PlannerModelId), TestConfiguration.OpenAI.PlannerModelId}
-        };
+
         protected override Task OnInitializedAsync()
         {
-            _originalKey ??= TestConfiguration.OpenAI!.ApiKey;
+            _originalKey ??= Configuration["OpenAI:ApiKey"];
             return base.OnInitializedAsync();
         }
         private readonly List<ConfigurationSection> _configurationSections = ConfigurationHelper.GetConfigurationSections();
@@ -27,10 +30,27 @@ namespace BlazorWithSematicKernel.Components
             }
             return true;
         }
-        public void SetConfigSection(ConfigurationSection section)
+        private async void SetConfigSection(ConfigurationSection section)
         {
            
             ConfigurationHelper.SetConfigurationSection(section);
+            await ProtectedLocalStorage.SetAsync(section.Name, section.ConfigurationProperties);
+            NotificationService.Notify(NotificationSeverity.Info, "Configuration Saved", $"Configuration for {section.Name} has been saved to browser local storage");
+        }
+        private async void LoadConfigFromLocalStorage(ConfigurationSection section)
+        {
+            var config = await ProtectedLocalStorage.GetAsync<IEnumerable<ConfigurationProperty>>(section.Name);
+            if (config is {Success: true, Value: not null})
+            {
+                section.ConfigurationProperties = config.Value.ToList();
+                ConfigurationHelper.SetConfigurationSection(section);
+                NotificationService.Notify(NotificationSeverity.Info, "Configuration Loaded", $"Configuration for {section.Name} has been loaded from browser local storage");
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Configuration Load Failed", $"Configuration for {section.Name} could not be loaded from browser local storage");
+            }
+            StateHasChanged();
         }
 
 

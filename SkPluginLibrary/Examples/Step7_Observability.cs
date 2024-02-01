@@ -4,7 +4,6 @@ using System.ComponentModel;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
-using SkPluginLibrary.Models.Hooks;
 
 namespace SkPluginLibrary.Examples;
 

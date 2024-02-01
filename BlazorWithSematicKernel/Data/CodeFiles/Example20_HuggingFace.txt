@@ -3,7 +3,7 @@ public static class Example20_HuggingFace
     public static async Task RunAsync()
     {
         await RunInferenceApiExampleAsync();
-        await RunLlamaExampleAsync();
+       // await RunLlamaExampleAsync();
     }
 
     /// <summary>

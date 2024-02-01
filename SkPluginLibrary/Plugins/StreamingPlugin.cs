@@ -4,13 +4,13 @@ using System.Text.Json;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 
-namespace SkPluginLibrary.Plugins
+namespace SkPluginLibrary.Plugins;
+
+public class StreamingPlugin
 {
-    public class StreamingPlugin
+    [KernelFunction, Description("Temp to see what can be returned from an SKFunction")]
+    public async IAsyncEnumerable<string> TryStreamFunction(string input)
     {
-        [KernelFunction, Description("Temp to see what can be returned from an SKFunction")]
-        public async IAsyncEnumerable<string> TryStreamFunction(string input)
-        {
             for (var i = 0; i < 100; i++)
             {
                 await Task.Delay(100);
@@ -18,11 +18,11 @@ namespace SkPluginLibrary.Plugins
             }
         }
 
-        [KernelFunction, Description("Generates a streaming chat response")]
-        public async IAsyncEnumerable<string> ExecuteChatStreamResponse([Description("User's latest input")] string input,
-            [Description("System prompt Instructions for chat model")] string systemPrompt = "",
-            [Description(HistoryDescription)] string history = "")
-        {
+    [KernelFunction, Description("Generates a streaming chat response")]
+    public async IAsyncEnumerable<string> ExecuteChatStreamResponse([Description("User's latest input")] string input,
+        [Description("System prompt Instructions for chat model")] string systemPrompt = "",
+        [Description(HistoryDescription)] string history = "")
+    {
             var chatKernel = CoreKernelService.ChatCompletionKernel();
             
 
@@ -59,15 +59,14 @@ namespace SkPluginLibrary.Plugins
             }
         }
 
-        private const string HistoryDescription = """
-            Chat history of current chat. In json format:
+    private const string HistoryDescription = """
+                                              Chat history of current chat. In json format:
 
-            [
-              {
-                user: "user input",
-                assistant: "assistant repsonse"
-              }
-            ]            
-            """;
-    }
+                                              [
+                                                {
+                                                  user: "user input",
+                                                  assistant: "assistant repsonse"
+                                                }
+                                              ]
+                                              """;
 }

@@ -1,9 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
-using System.Drawing;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
-using System.Drawing.Imaging;
 
 // This example shows how to use GPT Vision model with different content types (text and image).
 namespace SkPluginLibrary.Examples;

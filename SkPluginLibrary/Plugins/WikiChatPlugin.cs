@@ -2,11 +2,8 @@
 using Microsoft.SemanticKernel.Text;
 using System.ComponentModel;
 using System.Net.Http.Json;
-using System.Text;
 using System.Text.Json.Serialization;
 using Microsoft.SemanticKernel.Plugins.OpenApi;
-using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
 using SkPluginLibrary.Services;
 using System.Collections.Concurrent;
 using DocumentFormat.OpenXml.Wordprocessing;

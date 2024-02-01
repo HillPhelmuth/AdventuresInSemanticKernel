@@ -1,13 +1,9 @@
-﻿using System.Net;
-using Microsoft.SemanticKernel;
+﻿using Microsoft.SemanticKernel;
 using SkPluginLibrary.Plugins;
 using System.Text.Json;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Http.Resilience;
-using Microsoft.Extensions.Logging;
-using Polly;
 using SkPluginLibrary.Models.Hooks;
 
 namespace SkPluginLibrary;

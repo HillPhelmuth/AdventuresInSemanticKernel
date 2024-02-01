@@ -1,8 +1,5 @@
-﻿using System.Reflection;
-using System.Text.Json;
+﻿using System.Text.Json;
 using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
-using Microsoft.SemanticKernel.Plugins.OpenApi;
 
 namespace SkPluginLibrary.Models.Helpers
 {

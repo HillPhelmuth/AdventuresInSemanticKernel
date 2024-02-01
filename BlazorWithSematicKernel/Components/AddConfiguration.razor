@@ -8,7 +8,7 @@
                 {
 
                     <RadzenAccordionItem Text="@configSection.ConfigurationSection.Name" class="@configSection.CssClass">
-                        <RadzenCard>
+                        <RadzenCard Style="padding-top:0;padding-bottom:0">
                             <RadzenTemplateForm TItem="ConfigurationSection" Data="configSection.ConfigurationSection" Submit="SetConfigSection">
                                 @foreach (var item in configSection.ConfigurationSection.ConfigurationProperties)
                                 {
@@ -34,7 +34,8 @@
 
                                 }
                                 <br />
-                                <RadzenButton ButtonType="ButtonType.Submit" Icon="save" Text="Save"></RadzenButton>
+                                <RadzenButton Size=ButtonSize.Small ButtonType="ButtonType.Submit" Icon="save" Text="Save"></RadzenButton>
+                                <RadzenButton Size=ButtonSize.Small Click="@(() => LoadConfigFromLocalStorage(configSection.ConfigurationSection))" Text="Load From Browser"></RadzenButton>
                             </RadzenTemplateForm>
                         </RadzenCard>
 

@@ -4,7 +4,6 @@ using Microsoft.SemanticKernel.Plugins.Memory;
 using Microsoft.SemanticKernel.Plugins.Web;
 using Microsoft.SemanticKernel.Plugins.Web.Bing;
 using SkPluginLibrary.Plugins;
-using System.Net.Http.Json;
 using System.Text.Json;
 using SkPluginComponents;
 using SkPluginComponents.Models;
@@ -207,7 +206,7 @@ public partial class CoreKernelService
         var systemPrompt = "You are a helpful assistant. Use the tools available to fulfill the user's request";
         var kernel = CreateKernelWithPlugins(requestModel.SelectedPlugins);
         var functionHook = new FunctionFilterHook();
-        functionHook.FunctionInvoking += (_, e) =>
+        functionHook.FunctionInvoking += (_, e) => 
         {
             var soemthing = e.Function;
             YieldAdditionalText?.Invoke($"\n<h4> Executing {soemthing.Name} {soemthing.Metadata.PluginName}</h4>\n\n");
@@ -264,8 +263,10 @@ public partial class CoreKernelService
 
 
         yield return "<br/><h3>Executing plan...</h3><br/>";
+        //These Do Not Fire
         functionHook.FunctionInvoking += HandleFunctionInvokingFilter;
         functionHook.FunctionInvoked += HandleFunctionInvokedFilter;
+        //These Fire
         kernel.FunctionInvoking += HandleFunctionInvoking;
         kernel.FunctionInvoked += HandleFunctionInvoked;
         var planResults = await planner.ExecuteAsync(kernel, askOverride, cancellationToken);
@@ -311,6 +312,8 @@ public partial class CoreKernelService
         var kernel = CreateKernelWithPlugins(chatRequestModel.SelectedPlugins);
         var functionHook = new FunctionFilterHook();
         kernel.FunctionFilters.Add(functionHook);
+        functionHook.FunctionInvoking += HandleFunctionInvokingFilter;
+        functionHook.FunctionInvoked += HandleFunctionInvokedFilter;
         var planner = CreateHandlebarsPlanner(chatRequestModel);
         yield return "<h2> Generating Plan</h2>\n\n";
         HandlebarsPlan? plan = null;
@@ -362,8 +365,7 @@ public partial class CoreKernelService
 
         yield return "\n<h3>Executing plan...</h3>\n\n";
         var finalResult = "";
-        functionHook.FunctionInvoking += HandleFunctionInvokingFilter;
-        functionHook.FunctionInvoked += HandleFunctionInvokedFilter;
+       
         Console.WriteLine($"Handlebars plan: {plan}");
         var result = await plan!.InvokeAsync(kernel, kernelArgs, cancellationToken);
 

@@ -1,10 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Abstractions;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 
@@ -24,7 +18,7 @@ namespace SkPluginLibrary.Models.Helpers
     }
     public class CustomApplicationInsightsLogger(TelemetryClient telemetryClient) : ILogger
     {
-        public IDisposable BeginScope<TState>(TState state)
+        public IDisposable? BeginScope<TState>(TState state)
         {
             return null;
         }
@@ -34,10 +28,29 @@ namespace SkPluginLibrary.Models.Helpers
             return true;
         }
 
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
         {
-            var traceTelemetry = new TraceTelemetry(formatter(state, exception), logLevel.ToSeverityLevel());
-            telemetryClient.TrackTrace(traceTelemetry);
+            SeverityLevel severityLevel = logLevel.ToSeverityLevel();
+            TraceTelemetry? traceTelemetry;
+            if (severityLevel is SeverityLevel.Error or SeverityLevel.Critical)
+            {
+                traceTelemetry = new TraceTelemetry("App Exception", severityLevel);
+                telemetryClient.Context.GlobalProperties["HResult"] = exception?.HResult.ToString();
+                telemetryClient.Context.GlobalProperties["ErrorMessage"] = exception?.Message ?? "No message";
+                telemetryClient.Context.GlobalProperties["StackTrace"] = exception?.StackTrace ?? string.Empty;
+                var metrics = new Dictionary<string, double>
+                {
+                    { "Timestamp", DateTimeOffset.UtcNow.ToUnixTimeSeconds() }
+                };
+                telemetryClient.GetMetric("Timestamp")?.TrackValue(metrics["Timestamp"]);
+                telemetryClient.TrackException(exception);
+                telemetryClient.TrackTrace(traceTelemetry);
+            }
+            else
+            {
+                traceTelemetry = new TraceTelemetry(formatter(state, exception), severityLevel);
+                telemetryClient.TrackTrace(traceTelemetry);
+            }
         }
     }
 

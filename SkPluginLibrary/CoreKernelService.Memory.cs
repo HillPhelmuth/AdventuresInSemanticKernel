@@ -7,7 +7,6 @@ using System.Text.Json.Serialization;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.SemanticKernel.Connectors.Sqlite;
 using UglyToad.PdfPig;
-using SkPluginLibrary.Models.Helpers;
 
 namespace SkPluginLibrary;
 
