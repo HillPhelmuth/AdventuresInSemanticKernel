@@ -43,18 +43,24 @@ services.AddApplicationInsightsTelemetry(options =>
 {
     options.ConnectionString = appInsightsConnectionString;
     options.EnableDebugLogger = true;
+    options.EnableAdaptiveSampling = false;
 });
 
-
-builder.Logging.AddFilter<ApplicationInsightsLoggerProvider>("Default", LogLevel.Debug);
+builder.Logging.AddApplicationInsights(
+    configureTelemetryConfiguration: (config) =>
+        config.ConnectionString = builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"],
+    configureApplicationInsightsLoggerOptions: (options) => { }
+);
+builder.Logging.AddFilter<ApplicationInsightsLoggerProvider>("Default", LogLevel.Trace);
+builder.Logging.Services.AddSingleton<CustomApplicationInsightsLoggerProvider>();
 services.AddLogging(config =>
 {
-    config.AddProvider(new StringEventWriterLoggerProvider(stringEventWriter));    
     config.Services.AddSingleton<ILoggerProvider, CustomApplicationInsightsLoggerProvider>();
     config.AddFilter<CustomApplicationInsightsLoggerProvider>("Default", LogLevel.Information);
 });
+
 services.AddCascadingAuthenticationState();
-services.AddSingleton<ActivityLogging>();
+//services.AddSingleton<ActivityLogging>();
 
 var app = builder.Build();
 
