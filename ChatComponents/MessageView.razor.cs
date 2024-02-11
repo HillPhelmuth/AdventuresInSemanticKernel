@@ -9,6 +9,7 @@ namespace ChatComponents
         [Parameter]
         [EditorRequired]
         public Message Message { get; set; } = default!;
+        private string _previousContent = "";
 
         [Inject] private IJSRuntime JsRuntime { get; set; } = default!;
 
@@ -21,6 +22,11 @@ namespace ChatComponents
 
         protected override Task OnParametersSetAsync()
         {
+            if (Message.Content != _previousContent)
+            {
+                _previousContent = Message.Content ?? "";
+                _shouldRender = true;
+            }
             if (Message.IsActiveStreaming || string.IsNullOrEmpty(Message.Content))
             {
                 _shouldRender = true;
