@@ -6,6 +6,10 @@ namespace SkPluginLibrary.Models.Helpers
     public static class StringHelpers
     {
         private static Encoding? _tokenizer;
+        static StringHelpers()
+        {
+            _tokenizer = Encoding.ForModel("gpt-3.5-turbo");
+        }
         public static List<TokenString> EncodeDecodeWithSpaces(string? input)
         {
             if (input == null) return new List<TokenString>();

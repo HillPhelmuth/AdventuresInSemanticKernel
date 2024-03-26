@@ -4,6 +4,8 @@
         <RadzenText TextStyle="TextStyle.Subtitle2"> Use one of the following examples or create your agent</RadzenText>
         <RadzenButton Size="ButtonSize.ExtraSmall" Text="Medium.com Api Helper" Click="UseMediumExample"></RadzenButton>
         <RadzenButton Size="ButtonSize.ExtraSmall" Text="Web Chat Agent" Click="UseWebChatExample"></RadzenButton>
+        <RadzenButton Size="ButtonSize.ExtraSmall" Text="Mad Lib Agent" Click="() => UseMadLibExample()"></RadzenButton>
+        @* <RadzenButton Size="ButtonSize.ExtraSmall" Text="Code Interpreter Agent" Click="UseCodeInterpreterExample"></RadzenButton> *@
     </RadzenText>
     <RadzenTemplateForm Data="_agentForm" TItem="AgentForm" Submit="GenerateAgent">
         <RadzenFormField Text="Name" Style="width:100%">
@@ -32,10 +34,10 @@
                     <Columns>
                         <RadzenDropDownDataGridColumn Property="KernelPlugin.Name" Title="Name" Width="50%"></RadzenDropDownDataGridColumn>
                         <RadzenDropDownDataGridColumn Property="@(nameof(PluginData.PluginType))" Title="Type" Width="30%"></RadzenDropDownDataGridColumn>
-                        <RadzenDropDownDataGridColumn Width="30%">
+                        <RadzenDropDownDataGridColumn Width="30%" >
                             <Template Context="plugin">
                                 @{var kernelPlugin = (plugin as PluginData).KernelPlugin;}
-                                <RadzenButton Size=ButtonSize.ExtraSmall Text="Functions" Icon="functions" Click="@(() => ShowFunctions(kernelPlugin))"></RadzenButton>
+                                <RadzenButton Size=ButtonSize.ExtraSmall Text="Functions" Icon="functions" @onclick:stopPropagation Click="@(() => ShowFunctions(kernelPlugin))"></RadzenButton>
                             </Template>
                         </RadzenDropDownDataGridColumn>
                     </Columns>

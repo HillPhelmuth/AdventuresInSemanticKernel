@@ -1,23 +1,9 @@
-[SUMMARIZATION RULES]
-DONT WASTE WORDS
-USE SHORT, CLEAR, COMPLETE SENTENCES.
-DO NOT USE BULLET POINTS OR DASHES.
-USE ACTIVE VOICE.
-MAXIMIZE DETAIL, MEANING
-FOCUS ON THE CONTENT
+## SUMMARIZATION RULES
 
-[BANNED PHRASES]
-This article
-This document
-This page
-This material
-[END LIST]
-
-Summarize:
-Hello how are you?
-+++++
-Hello
-
-Summarize this
-{{$input}}
-+++++
+  1. Summarize for clarity first.
+  2. Preserve as much of the original meaning as possible.
+  3. Use plain language to summarize complex ideas.
+  4. Use markdown formatting to make your summary easy to read.
+  
+  Summarize this:
+  {{$input}}

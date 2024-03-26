@@ -11,7 +11,7 @@ public static class Example66_FunctionCallingStepwisePlanner
 
         var kernel = InitializeKernel();
 
-        var config = new FunctionCallingStepwisePlannerConfig
+        var config = new FunctionCallingStepwisePlannerOptions
         {
             MaxIterations = 15,
             MaxTokens = 4000,

@@ -8,8 +8,6 @@ namespace BlazorWithSematicKernel.Components.AgentComponents;
 
 public partial class AgentBuilder
 {
-    [Inject]
-    private AssistantAgentService AgentBuilderService { get; set; } = default!;
     [Inject] private ICoreKernelExecution CoreKernelService { get; set; } = default!;
     [Inject]
     private DialogService DialogService { get; set; } = default!;
@@ -58,8 +56,11 @@ public partial class AgentBuilder
         public string Instructions { get; set; } = "";
         public IEnumerable<PluginData> Plugins { get; set; } = [];
         public bool IsPrimary { get; set; }
+        public string? Model { get; set; } = "Gpt4";
 
     }
+
+    private List<string> _models = ["Gpt4", "Gpt35"];
     private AgentForm _agentForm = new();
    
     private async void GenerateAgent(AgentForm agentForm)
@@ -71,7 +72,8 @@ public partial class AgentBuilder
             Instructions = agentForm.Instructions,
             Name = agentForm.Name,
             Plugins = agentForm.Plugins.Select(x => x.KernelPlugin).ToList(),
-            IsPrimary = agentForm.IsPrimary
+            IsPrimary = agentForm.IsPrimary,
+            GptModel = agentForm.Model
         };
         //Console.WriteLine($"Agent Generated:\n {proxy.AsJson()}");
         AgentsGenerated.Add(proxy);
@@ -81,12 +83,14 @@ public partial class AgentBuilder
         _agentForm = new AgentForm();
         StateHasChanged();
     }
-    private void UpdateAgent(AgentProxy agentProxy)
+    private async Task UpdateAgent(AgentProxy agentProxy)
     {
         _agentForm = new AgentForm { Name = agentProxy.Name, Description = agentProxy.Description, Instructions = agentProxy.Instructions, Plugins = agentProxy.Plugins.Select(x => new PluginData(PluginType.Prompt, x)) };
         AgentsGenerated.Remove(agentProxy);
-        AgentsGeneratedChanged.InvokeAsync(AgentsGenerated);
+        await AgentsGeneratedChanged.InvokeAsync(AgentsGenerated);
         StateHasChanged();
+        if (_agentGrid is not null)
+            await _agentGrid.Reload();
     }
     private void DeleteAgent(AgentProxy agent)
     {
@@ -116,6 +120,12 @@ public partial class AgentBuilder
             return !AgentsGenerated.Any(x => x.IsPrimary);
         }
         return true;
+    }
+    private void ShowFunctions(KernelPlugin kernelFunctions)
+    {
+        var paramters = new Dictionary<string, object> { { "Plugin", kernelFunctions } };
+        var dialogOptions = new DialogOptions { Draggable = true, ShowClose = true, Style = "width:40vw; height:max-content" };
+        DialogService.Open<ViewFunctions>($"Plugin {kernelFunctions.Name} - Functions", paramters, dialogOptions);
     }
     private void Finish()
     {

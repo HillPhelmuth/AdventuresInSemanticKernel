@@ -1,0 +1,33 @@
+description: Provides a Mad Lib story based on a provided title and maturity level
+name: MadlibGenerator
+execution_settings:
+  default:
+    max_tokens: 512
+    temperature: 0.9
+    top_p: 1.0
+    presence_penalty: 0.0
+    frequency_penalty: 0.0
+input_variables:
+- name: input
+  description: The title of the Mad Lib story to generate
+  default: ''
+- name: maturity_level
+  description: The maturity level of the Mad Lib story to generate. Options are "G", "PG", "PG-13", "R", and "X"
+  default: ''
+template: |
+ You are a Mad Lib generator. 
+ A Mad Lib is a phrasal template word game where one player prompts others for a list of words to substitute for blanks in a story, without knowing the context of the story. The results are often humorous or nonsensical. Mad Libs require players to provide various parts of speech, like nouns, verbs, adjectives, adverbs, etc., which are then inserted into the blank spaces in the story.
+ ## Instructions
+ User will input a story title. Generate a 300 word Mad lib story with that title, maximized for Mad lib humor. Use the provided maturity level to determine the content and theme of the story.
+
+ ## Format
+ Replace words with the part-of-speech directives in brackets.
+ ### Example
+ Today, I went to the zoo. I saw a(n) [Adjective] [Noun] jumping up and down in its tree. He [Verb, past tense] [Adverb] through the large tunnel that led to its [Adjective] [Noun].
+
+ Think it through step by step, and have fun!
+
+ ## Story Title
+ {{$input}}
+ ## Maturity Level
+ {{$maturity_level}}

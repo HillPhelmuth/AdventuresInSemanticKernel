@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<TargetFramework>net8.0</TargetFramework>
-		<NoWarn>CA1050,CA1707,CA2007,VSTHRD111,CS1591,SKEXP0001,SKEXP0004,SKEXP0042,SKEXP0002,SKEXP0003,SKEXP0010,SKEXP0011,SKEXP0012,SKEXP0020,SKEXP0021,SKEXP0022,SKEXP0023,SKEXP0024,SKEXP0025,SKEXP0026,SKEXP0027,SKEXP0028,SKEXP0029,SKEXP0030,SKEXP0031,SKEXP0032,SKEXP0040,SKEXP0041,SKEXP0050,SKEXP0051,SKEXP0052,SKEXP0053,SKEXP0054,SKEXP0055,SKEXP0060,SKEXP0061,SKEXP0101,SKEXP0102</NoWarn>
+		<NoWarn>SKEXP0001,SKEXP0010,SKEXP0020,SKEXP0030,SKEXP0040,SKEXP0050,SKEXP0060,SKEXP0090,SKEXP0100,SKEXP0101</NoWarn>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<UserSecretsId>bcf24016-4cee-420b-b680-d7b179c6e56a</UserSecretsId>
@@ -11,13 +11,17 @@
 	<ItemGroup>
 		<Compile Remove="Data\**" />
 		<Compile Remove="SemanticPlugins\DecisionPlugin\**" />
+		<Compile Remove="YamlPlugins\CodeInterpreterPlugin\**" />
 		<EmbeddedResource Remove="Data\**" />
 		<EmbeddedResource Remove="SemanticPlugins\DecisionPlugin\**" />
+		<EmbeddedResource Remove="YamlPlugins\CodeInterpreterPlugin\**" />
 		<None Remove="Data\**" />
 		<None Remove="SemanticPlugins\DecisionPlugin\**" />
+		<None Remove="YamlPlugins\CodeInterpreterPlugin\**" />
 	</ItemGroup>
 
 	<ItemGroup>
+		<None Remove="agentsExample.json" />
 		<None Remove="Agents\ParrotAgent.yaml" />
 		<None Remove="Agents\ToolAgent.yaml" />
 		<None Remove="ApiPlugins\ChatGptPlugins\openapi.json" />
@@ -31,58 +35,63 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Azure.AI.FormRecognizer" Version="4.1.0" />
 		<PackageReference Include="Azure.Storage.Blobs" Version="12.19.1" />
 		<PackageReference Include="Azure.Storage.Files.Shares" Version="12.17.1" />
 		<PackageReference Include="Azure.Storage.Queues" Version="12.17.1" />
 		<PackageReference Include="AI.Dev.OpenAI.GPT" Version="1.0.2" />
-		<PackageReference Include="Google.Apis.YouTube.v3" Version="1.64.0.3205" />
+		<PackageReference Include="Docker.DotNet" Version="3.125.15" />
+		<PackageReference Include="Google.Apis.YouTube.v3" Version="1.67.0.3358" />
 		<PackageReference Include="HdbscanSharp" Version="2.0.0" />
-		<PackageReference Include="Html2Markdown" Version="5.1.0.703" />
+		<PackageReference Include="Html2Markdown" Version="6.2.0.3" />
 		<PackageReference Include="Microsoft.ApplicationInsights" Version="2.22.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging.ApplicationInsights" Version="2.22.0" />
 		<PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.22.0" />
-		<PackageReference Include="Microsoft.DeepDev.TokenizerLib" Version="1.3.2" />
-		<PackageReference Include="Microsoft.Extensions.Azure" Version="1.7.1" />
+		<PackageReference Include="Microsoft.DeepDev.TokenizerLib" Version="1.3.3" />
+		<PackageReference Include="Microsoft.Extensions.Azure" Version="1.7.2" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="8.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="8.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="8.3.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.0" />
-		<PackageReference Include="Microsoft.ML.Tokenizers" Version="0.21.0" />
-		<PackageReference Include="Microsoft.SemanticKernel" Version="1.3.0" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.AzureAISearch" Version="1.3.0-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Chroma" Version="1.3.0-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.HuggingFace" Version="1.3.0-preview" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Pinecone" Version="1.3.0-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Qdrant" Version="1.3.0-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Redis" Version="1.3.0-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Sqlite" Version="1.3.0-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Weaviate" Version="1.3.0-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Experimental.Agents" Version="1.3.0-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Planners.Handlebars" Version="1.3.0-preview" />
-		<PackageReference Include="Microsoft.SemanticKernel.Planners.OpenAI" Version="1.3.0-preview" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Core" Version="1.3.0-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Document" Version="1.3.0-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Grpc" Version="1.3.0-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Memory" Version="1.3.0-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.MsGraph" Version="1.3.0-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.OpenApi" Version="1.3.0-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Web" Version="1.3.0-alpha" />
-		<PackageReference Include="PdfPig" Version="0.1.9-alpha-20240117-096eb" />
-		<PackageReference Include="ReverseMarkdown" Version="4.1.0" />
-		<PackageReference Include="SharpToken" Version="1.2.14" />
+		<PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="7.3.1" />
+		<PackageReference Include="Microsoft.ML" Version="3.0.1" />
+		<PackageReference Include="Microsoft.ML.Tokenizers" Version="0.21.1" />
+		<PackageReference Include="Microsoft.SemanticKernel" Version="1.6.3" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.AzureAISearch" Version="1.6.3-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Chroma" Version="1.6.3-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.HuggingFace" Version="1.6.3-preview" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Pinecone" Version="1.6.3-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Qdrant" Version="1.6.3-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Redis" Version="1.6.3-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Sqlite" Version="1.6.3-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Weaviate" Version="1.6.3-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Experimental.Agents" Version="1.6.3-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Planners.Handlebars" Version="1.6.3-preview" />
+		<PackageReference Include="Microsoft.SemanticKernel.Planners.OpenAI" Version="1.6.3-preview" />
+		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Core" Version="1.6.3-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Document" Version="1.6.3-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Grpc" Version="1.6.3-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Memory" Version="1.6.3-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Plugins.MsGraph" Version="1.6.3-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Plugins.OpenApi" Version="1.6.3-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Web" Version="1.6.3-alpha" />
+		<PackageReference Include="PdfPig" Version="0.1.9-alpha-20240215-3bdc9" />
+		<PackageReference Include="ReverseMarkdown" Version="4.3.0" />
+		<PackageReference Include="SharpToken" Version="1.2.17" />
+		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.3.1" />
 		<PackageReference Include="System.Linq.Async" Version="6.0.1" />
 		<PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
-		<PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.8.0" />
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0" />
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="4.8.0" />
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.8.0" />
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.8.0" />
+		<PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.9.2" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.9.2" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="4.9.2" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.9.2" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.9.2" />
 		<PackageReference Include="AbotX" Version="2.1.12" />
-		<PackageReference Include="HtmlAgilityPack" Version="1.11.57" />
+		<PackageReference Include="HtmlAgilityPack" Version="1.11.59" />
 		
 		<PackageReference Include="System.Numerics.Tensors" Version="8.0.0" />
 
-		<PackageReference Include="Tiktoken" Version="1.1.3" />
+		<PackageReference Include="Tiktoken" Version="1.2.0" />
 	</ItemGroup>
 	<ItemGroup>
 		<None Include="YamlPlugins\**\*.yaml">
@@ -93,6 +102,7 @@
 		</None>
 	</ItemGroup>
 	<ItemGroup>
+		<EmbeddedResource Include="agentsExample.json" />
 		<EmbeddedResource Include="Agents\ParrotAgent.yaml" />
 		<EmbeddedResource Include="Agents\ToolAgent.yaml" />
 		<EmbeddedResource Include="ChatGptPluginManifests.json">
@@ -112,10 +122,17 @@
 	</ItemGroup>
 	<ItemGroup>
 	  <Compile Remove="Models\Helpers\ConversionHelperModels.cs" />
+	  <Compile Remove="Models\NoThrowCancellationDelegatingHandler.cs" />
 	  <Compile Remove="Plugins\FineTuneEvalPlugin.cs" />
+	</ItemGroup>
+	<ItemGroup>
+	  <None Remove="YamlPlugins\CodeInterpreterPlugin\CodeInterpreter.yaml" />
+	  <None Remove="YamlPlugins\CodeInterpreterPlugin\CodeInterpreter.yaml" />
 	</ItemGroup>
 	
 	<ItemGroup>
+		<ProjectReference Include="..\MathAdvancedPlugins\MathAdvancedPlugins.csproj" />
+		<ProjectReference Include="..\PromptFlowEvalsAsPlugins\PromptFlowEvalsAsPlugins.csproj" />
 		<ProjectReference Include="..\SkPluginComponents\SkPluginComponents.csproj" />
 	</ItemGroup>
 	<ItemGroup>
@@ -124,6 +141,14 @@
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 		
+	</ItemGroup>
+	<ItemGroup>
+	  <None Update="AbotX.lic">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	</ItemGroup>
+	<ItemGroup>
+	  <Folder Include="YamlPlugins\MadLibPlugin\" />
 	</ItemGroup>
 
 </Project>

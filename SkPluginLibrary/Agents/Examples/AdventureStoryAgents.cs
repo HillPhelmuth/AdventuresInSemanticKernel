@@ -19,7 +19,7 @@ namespace SkPluginLibrary.Agents.Examples;
 public class AdventureStoryAgents(AskUserService askUserService) : IAsyncDisposable
 {
     private static readonly List<IAgent> Agents = [];
-    public event Action<AgentMessage>? ChatMessage;
+    public event Action<AgentChatMessage>? ChatMessage;
     public event Action<ChatHistory>? ChatHistoryUpdate;
     private readonly AskUserPlugin _askUserPlugin = new(askUserService);
     private IAgent? _astra;
@@ -105,14 +105,14 @@ public class AdventureStoryAgents(AskUserService askUserService) : IAsyncDisposa
             var askuserPlugin = KernelPluginFactory.CreateFromObject(_askUserPlugin);
             var askUser = askuserPlugin["AskUser"];
             var kernel = Kernel.CreateBuilder().Build();
-            await thread.AddUserMessageAsync(input, cancellationToken);
+            await thread.AddUserMessageAsync(input,cancellationToken: cancellationToken);
             while (true)
             {
                 
                 var chatMessages = await thread.InvokeAsync(commander, cancellationToken: cancellationToken).ToListAsync(cancellationToken);
                 Console.WriteLine($"Commander Astra has {chatMessages.Count} messages");
                 var message = chatMessages.First();
-                ChatMessage?.Invoke(AgentMessage.FromChatMessage(message, commander.Name!));
+                ChatMessage?.Invoke(AgentChatMessage.FromChatMessage(message, commander.Name!));
                 if (message.Content.Contains("[Engineer Zanar]"))
                 {
                     chatMessages = await thread.InvokeAsync(zanar, cancellationToken: cancellationToken).ToListAsync(cancellationToken);
@@ -127,7 +127,7 @@ public class AdventureStoryAgents(AskUserService askUserService) : IAsyncDisposa
                 {
                     var userResponse = await askUser.InvokeAsync(kernel, new KernelArguments { ["question"] = message.Content }, cancellationToken);
                     if (userResponse.Result().Contains("user refused to answer")) { break; }
-                    var userMessage = await thread.AddUserMessageAsync(userResponse.Result(), cancellationToken);
+                    var userMessage = await thread.AddUserMessageAsync(userResponse.Result(), cancellationToken: cancellationToken);
                     var name = "You";
                     SendChatMessage(userMessage, name);
                 }
@@ -135,8 +135,8 @@ public class AdventureStoryAgents(AskUserService askUserService) : IAsyncDisposa
                 {
                     var userResponse = await askUser.InvokeAsync(kernel, new KernelArguments {["question"] = message.Content }, cancellationToken);
                     if (userResponse.Result().Contains("user refused to answer")) { break; }
-                    var userMessage = await thread.AddUserMessageAsync(userResponse.Result(), cancellationToken);
-                    ChatMessage?.Invoke(AgentMessage.FromChatMessage(userMessage, "You"));
+                    var userMessage = await thread.AddUserMessageAsync(userResponse.Result(), cancellationToken: cancellationToken);
+                    ChatMessage?.Invoke(AgentChatMessage.FromChatMessage(userMessage, "You"));
                 }
             }
             return "Conversation complete";
@@ -159,7 +159,7 @@ public class AdventureStoryAgents(AskUserService askUserService) : IAsyncDisposa
     }
     private void SendChatMessage(IChatMessage message, string name)
     {
-        ChatMessage?.Invoke(AgentMessage.FromChatMessage(message, name));
+        ChatMessage?.Invoke(AgentChatMessage.FromChatMessage(message, name));
     }
     public static async Task<List<AgentProxy>> GetAgents()
     {
@@ -327,14 +327,14 @@ public record MissionSection(string Name, string Description, string Instruction
 {
     public bool IsCompleted { get; set; }
 }
-public class AgentMessage(string name, string content, string role, string id)
+public class AgentChatMessage(string name, string content, string role, string id)
 {
     public string Name { get; set; } = name;
     public string Content { get; set; } = content;
     public string Role { get; set; } = role;
     public string Id { get; set; } = id;
-    public static AgentMessage FromChatMessage(IChatMessage message, string name)
+    public static AgentChatMessage FromChatMessage(IChatMessage message, string name)
     {
-        return new AgentMessage(name, message.Content, message.Role, message.Id);
+        return new AgentChatMessage(name, message.Content, message.Role, message.Id);
     }
 }

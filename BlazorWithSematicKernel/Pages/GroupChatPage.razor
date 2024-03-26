@@ -1,0 +1,52 @@
+﻿@page "/groupChat"
+<RadzenSteps @bind-SelectedIndex="_step">
+    <Steps>
+        <RadzenStepsItem Text="Intro" NextText="Build Agent">
+            <RadzenRow>
+                <RadzenColumn Size="8" Offset="2">
+                    <RadzenCard>
+                        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle1">The core building blocks of an agent are <em>plugins</em>, <em>planners</em>, and a <em>persona</em>.</RadzenText>
+                        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle2">Plugins</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2">Plugins are the skills of your agent. For example, you can create a plugin that sends emails, retrieves information from the web, asks for help, or even saves and retrieves memories from previous conversations. The <strong>Agent Builder</strong> allows you to select from a large list of built-in and pre-made plugins.</RadzenText>
+                        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle2">Planners</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2">Planners are the brains of your agent. They allow your agent to generate a plan to complete a task. The <strong>Agent Builder</strong> uses OpenAI's function calling feature as it's planner, allowing the agent to determine which plugins are required to complete a task. For more advanced planners, you can ask an LLM to generate code that can be executed to complete a task (Handlebars Planner).</RadzenText>
+                        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle2">Persona</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2">Persona is the personality of your agent. It is a prompt that is used to influence how the agent responds to stimuli. For example, you can use the persona to change its personality, such as friendly, sarcastic, or helpful. You can also use the persona to influence how the agent responds to certain situations, such as asking for help, being more verbose, or following the rules.</RadzenText>
+                        <RadzenLink Path="https://learn.microsoft.com/en-us/semantic-kernel/agents/" Target="_blank" Text="Read More about Agents"></RadzenLink><br />
+                        <RadzenButton Style="margin-left:45%" Text="Get Started" Click="GetStarted"></RadzenButton>
+                    </RadzenCard>
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenStepsItem>
+        <RadzenStepsItem Text="Build Agent" NextText="Start Agent Chat">
+            <RadzenRow>
+                <RadzenColumn>
+                    <RadzenButton Size=ButtonSize.Small Click="UseLast" Text="Use Moderated Debate Example"></RadzenButton>
+                    <AgentBuilder @bind-AgentsGenerated=_agentProxies AgentsCompleted="HandleAgentProxies"></AgentBuilder>
+                </RadzenColumn>
+            </RadzenRow>
+           @*  <RadzenRow>
+                <RadzenColumn Size="8" Offset="0">
+                    <CreateAgentForm @ref=_create Agent=_agentProxy AgentChanged="HandleAgentProxy"></CreateAgentForm>
+                </RadzenColumn>
+                <RadzenColumn Size="4">
+                   <RadzenTemplateForm Data="_selectAgentForm" TItem="SelectAgentForm" Submit="SelectAgent">
+                       <RadzenFormField Text="Select Admin">
+                           <RadzenRadioButtonList Data="_agentProxies" Orientation="Radzen.Orientation.Vertical" @bind-Value=_selectAgentForm.AdminAgent TextProperty="Name"></RadzenRadioButtonList>
+                       </RadzenFormField><br />
+                       <RadzenButton Size=ButtonSize.Small ButtonType="ButtonType.Submit" Text="Select Admin"></RadzenButton>
+                   </RadzenTemplateForm>
+                   <RadzenButton Click="UseLast" Text="Use Last"></RadzenButton>
+                </RadzenColumn>
+            </RadzenRow> *@
+        </RadzenStepsItem>
+        <RadzenStepsItem Text="Execute Agent">
+            <RadzenButton Text="Reset" Size="ButtonSize.ExtraSmall" Click="Reset"></RadzenButton>
+            <RadzenButton Text="Download" Size="ButtonSize.ExtraSmall" Click="DownloadToFile"></RadzenButton>
+            <RadzenCard>
+                <ChatView @ref=_chatView ViewId="simpleagentchat" MathMode=false></ChatView>
+            </RadzenCard>
+            <UserInput UserInputSubmit="HandleUserInput" ButtonLabel="Send" HelperText="User Input" IsBusy=_isBusy CancelRequest="Cancel"></UserInput>
+        </RadzenStepsItem>
+    </Steps>
+</RadzenSteps>

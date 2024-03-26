@@ -29,7 +29,7 @@ public class WebCrawlPlugin
 
     }
 
-   
+
     [KernelFunction, Description("Extract a web search query from a question")]
     public async Task<string> ExtractWebSearchQuery(string input)
     {
@@ -42,13 +42,13 @@ public class WebCrawlPlugin
     public async Task<string> SearchAndCiteWeb([Description("Web search query")] string input, [Description("Number of web search results to use")] int resultCount = 2)
     {
         var results = await _searchService!.SearchAsync(input, resultCount) ?? [];
-        var scrapeList = new List<Task<List<SearchResultItem>>>();
+        var scraperTaskList = new List<Task<List<SearchResultItem>>>();
         foreach (var result in results.Take(Math.Min(results.Count, 5)))
         {
 
             try
             {
-                scrapeList.Add(ScrapeChunkAndSummarize(result.Url, result.Name, input, result.Snippet));
+                scraperTaskList.Add(ScrapeChunkAndSummarize(result.Url, result.Name, input, result.Snippet));
             }
             catch (Exception ex)
             {
@@ -56,15 +56,33 @@ public class WebCrawlPlugin
             }
 
         }
-        var scrapeResults = new ConcurrentBag<List<SearchResultItem>>();
-      
-        foreach (var task in scrapeList)
+       
+        var scrapeResults = await Task.WhenAll(scraperTaskList);
+        var searchResultItems = scrapeResults.SelectMany(x => x).ToList();
+        var resultItems = new List<SearchResultItem>();
+        foreach (var group in searchResultItems.GroupBy(x => x.Url))
         {
-            var result = await task;
-            scrapeResults.Add(result);
+            var count = group.Count();
+            if (count > 1)
+            {
+                var index = 1;
+                var groupItem = new SearchResultItem(group.Key)
+                {
+                    Title = group.First().Title,
+                    Content = ""
+                };
+                foreach (var item in group)
+                {
+                    groupItem.Content += $"{item.Content}\n";
+                }
+                resultItems.Add(groupItem);
+            }
+            else
+            {
+                resultItems.Add(new SearchResultItem(group.Key) { Title = group.First().Title, Content = group.First().Content });
+            }
         }
-        //var scrapeResults = await Task.WhenAll(scrapeList);
-        var searchCiteJson = JsonSerializer.Serialize(scrapeResults.SelectMany(x => x), new JsonSerializerOptions { WriteIndented = true });
+        var searchCiteJson = JsonSerializer.Serialize(resultItems, new JsonSerializerOptions { WriteIndented = true });
         return searchCiteJson;
     }
 
@@ -106,7 +124,7 @@ public class WebCrawlPlugin
                 var result = await _kernel.InvokeAsync(_summarizeWebContent, arg);
                 summaryResults.Add(result);
             }
-           
+
             return summaryResults.Select(x => new SearchResultItem(url) { Title = title, Content = x.Result() }).ToList();
         }
         catch (Exception ex)

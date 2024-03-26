@@ -22,18 +22,11 @@ public class AssistantAgentService : IAsyncDisposable
     private AgentProxy? _chatAgent; 
     private string _currentRespondent = "Chat Agent";
     public bool IsRunning => Agents.Count > 0;
-
-    public async Task GenerateAgents(List<AgentProxy> agentProxies)
+    private readonly ILogger<AssistantAgentService> _logger;
+    public AssistantAgentService(ILogger<AssistantAgentService> logger)
     {
-        await RemoveAgents();
-        if (agentProxies.Any(x => !x.Name.Equals("Chat", StringComparison.InvariantCultureIgnoreCase)))
-        {
-            _chatAgent = agentProxies.FirstOrDefault(x => x.IsPrimary || x.Name.Equals("Chat", StringComparison.InvariantCultureIgnoreCase));
-        }
-        foreach(var agentProxy in agentProxies.Where(x => !x.IsPrimary && !x.Name.Equals("Chat", StringComparison.InvariantCultureIgnoreCase)))
-        {
-           await GenerateAgent(agentProxy.Name!, agentProxy.Description, agentProxy.Instructions, agentProxy.Plugins);
-        }
+        _logger = logger;
+        logger.LogInformation("Assistant Agent Service Started");
     }
     public async IAsyncEnumerable<string> ExecuteSimpleAgentChatStream(string input, AgentProxy agent, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {

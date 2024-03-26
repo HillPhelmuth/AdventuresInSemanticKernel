@@ -48,9 +48,11 @@ public static class Example56_TemplateMethodFunctionsWithMultipleArguments
         kernel.ImportPluginFromType<TextPlugin>("text");
 
         // Prompt Function invoking text.Concat method function with named arguments input and input2 where input is a string and input2 is set to a variable from context called word2.
-        const string FunctionDefinition = @"
- Write a haiku about the following: {{text.Concat input='Harry' input2=$word2}}
-";
+        const string FunctionDefinition = """
+                                          
+                                           Write a haiku about the following: {{text.Concat input='Harry' input2=$word2}}
+
+                                          """;
 
         // This allows to see the prompt before it's sent to OpenAI
         Console.WriteLine("--- Rendered Prompt");
@@ -66,17 +68,6 @@ public static class Example56_TemplateMethodFunctionsWithMultipleArguments
         Console.WriteLine("--- Prompt Function result");
         var result = await kernel.InvokeAsync(haiku, arguments);
         Console.WriteLine(result.GetValue<string>());
-
-        /* OUTPUT:
-
---- Rendered Prompt
-
-Write a haiku about the following: Harry Potter
-
---- Prompt Function result
-A boy with a scar,
-Wizarding world he explores,
-Harry Potter's tale.
-     */
+     
     }
 }

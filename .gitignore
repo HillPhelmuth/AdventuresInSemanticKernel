@@ -380,3 +380,4 @@ FodyWeavers.xsd
 /SkPluginLibrary/Plugins/FineTuneEvalPlugin.cs
 /SkPluginLibrary/Resources/TrainingData_textTosql_shuffled2.jsonl
 /SkPluginLibrary/YamlPlugins/EvalPlugin/SqlQueryEval.yaml
+/SkPluginLibrary/AbotX.lic

@@ -19,6 +19,9 @@ public sealed class TestConfiguration
     public static void Initialize(IConfiguration configRoot)
     {
         s_instance = new TestConfiguration(configRoot);
+        var (isValid, message) = Validate();
+        if (!isValid)
+            throw new ConfigurationNotFoundException(message);
         
     }
     private static CoreAISettings SetCore()

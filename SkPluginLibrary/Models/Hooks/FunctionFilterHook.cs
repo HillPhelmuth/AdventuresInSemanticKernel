@@ -16,4 +16,18 @@ namespace SkPluginLibrary.Models.Hooks
             FunctionInvoked?.Invoke(this, context);
         }
     }
+    public class PromptFilterHook : IPromptFilter
+    {
+        public event EventHandler<PromptRenderedContext>? PromptRendered;
+        public event EventHandler<PromptRenderingContext>? PromptRendering;
+        public void OnPromptRendering(PromptRenderingContext context)
+        {
+            PromptRendering?.Invoke(this, context);
+        }
+
+        public void OnPromptRendered(PromptRenderedContext context)
+        {
+            PromptRendered?.Invoke(this, context);
+        }
+    }
 }

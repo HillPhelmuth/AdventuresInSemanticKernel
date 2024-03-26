@@ -12,7 +12,7 @@ input_variables:
   default: ''
 name: Summarize
 template: |
-  [SUMMARIZATION RULES]
+  ## SUMMARIZATION RULES
 
   1. Summarize for clarity first.
   2. Preserve as much of the original meaning as possible.
