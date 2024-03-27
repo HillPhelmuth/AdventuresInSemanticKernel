@@ -17,8 +17,21 @@ public abstract class InteractiveAgentBase(AgentProxy agent, Kernel kernel) : II
     public string Description => Agent.Description;
     public string SystemPrompt => Agent.SystemPrompt;
     public Kernel Kernel { get; } = kernel;
+    protected List<Func<IEnumerable<AgentMessage>, Task<IEnumerable<AgentMessage>>>>? PreReplyHooks { get; set; }
+    public void RegisterPreReplyHook(Func<IEnumerable<AgentMessage>, Task<IEnumerable<AgentMessage>>> hook)
+    {
+        PreReplyHooks ??= new();
+        PreReplyHooks.Add(hook);
+    }
+    protected List<Func<IEnumerable<AgentMessage>, AgentMessage, Task<AgentMessage>>>? PostReplyHooks { get; set; }
+    public void RegisterPostReplyHook(Func<IEnumerable<AgentMessage>, AgentMessage, Task<AgentMessage>> hook)
+    {
+        PostReplyHooks ??= new();
+        PostReplyHooks.Add(hook);
+    }
     public event AgentInputRequestEventHandler? AgentInputRequest;
     public event AgentResponseEventHandler? AgentResponse;
+    public float Temperature { get; set; } = 0.7f;
     // ReSharper disable ValueParameterNotUsed
     public virtual event AgentStreamingResponseEventHandler? AgentStreamingResponse { add { } remove { } }
 
@@ -27,7 +40,7 @@ public abstract class InteractiveAgentBase(AgentProxy agent, Kernel kernel) : II
         var chat = Kernel.Services.GetRequiredService<IChatCompletionService>();
         var chatmessageHistory = new ChatHistory(SystemPrompt);
         chatmessageHistory.AddRange(chatHistory.AsChatHistory());
-        settings ??= new OpenAIPromptExecutionSettings() { ChatSystemPrompt = SystemPrompt, ToolCallBehavior = Kernel.Plugins.Count > 0 ? ToolCallBehavior.AutoInvokeKernelFunctions : null };
+        settings ??= new OpenAIPromptExecutionSettings() { Temperature = Temperature, ChatSystemPrompt = SystemPrompt, ToolCallBehavior = Kernel.Plugins.Count > 0 ? ToolCallBehavior.AutoInvokeKernelFunctions : null };
 
         var result = await chat.GetChatMessageContentAsync(chatmessageHistory, settings, Kernel, cancellationToken);
         

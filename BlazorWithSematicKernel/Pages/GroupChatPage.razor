@@ -44,7 +44,7 @@
             <RadzenButton Text="Reset" Size="ButtonSize.ExtraSmall" Click="Reset"></RadzenButton>
             <RadzenButton Text="Download" Size="ButtonSize.ExtraSmall" Click="DownloadToFile"></RadzenButton>
             <RadzenCard>
-                <ChatView @ref=_chatView ViewId="simpleagentchat" MathMode=false></ChatView>
+                <ChatView @ref=_chatView ViewId="simpleagentchat"></ChatView>
             </RadzenCard>
             <UserInput UserInputSubmit="HandleUserInput" ButtonLabel="Send" HelperText="User Input" IsBusy=_isBusy CancelRequest="Cancel"></UserInput>
         </RadzenStepsItem>

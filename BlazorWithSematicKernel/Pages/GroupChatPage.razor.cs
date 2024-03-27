@@ -46,11 +46,14 @@ public partial class GroupChatPage : ComponentBase
     }
     private void SelectAgent(SelectAgentForm selectAgentForm)
     {
+#if DEBUG
         File.WriteAllText("agents.json", JsonSerializer.Serialize(_agentProxies, JsonSerializerOptions));
+#endif 
         var adminProxy = selectAgentForm.AdminAgent!;
         var interactiveAgents = new List<InteractiveAgentBase>();
         foreach (var agent in _agentProxies)
         {
+            if (agent.Name == adminProxy.Name) continue;
             AIModel model = agent.GptModel switch
             {
                 "Gpt4" => AIModel.Gpt4,

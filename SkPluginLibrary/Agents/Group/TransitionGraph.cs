@@ -18,9 +18,9 @@ public class TransitionGraph
     /// <param name="fromAgent">the from agent</param>
     /// <param name="messages">messages</param>
     /// <returns>A list of agents that the messages can be transit to</returns>
-    public async Task<IEnumerable<IInteractiveAgent>> TransitToNextAvailableAgentsAsync(IInteractiveAgent fromAgent, IEnumerable<AgentMessage> messages)
+    public async Task<IEnumerable<InteractiveAgentBase>> TransitToNextAvailableAgentsAsync(InteractiveAgentBase fromAgent, IEnumerable<AgentMessage> messages)
     {
-        var nextAgents = new List<IInteractiveAgent>();
+        var nextAgents = new List<InteractiveAgentBase>();
         var availableTransitions = _transitions.FindAll(t => t.From == fromAgent) ?? Enumerable.Empty<Transition>();
         foreach (var transition in availableTransitions)
         {
@@ -35,10 +35,10 @@ public class TransitionGraph
 }
 public class Transition
 {
-    private readonly Func<IInteractiveAgent, IInteractiveAgent, IEnumerable<AgentMessage>, Task<bool>>? _canTransition;
+    private readonly Func<InteractiveAgentBase, InteractiveAgentBase, IEnumerable<AgentMessage>, Task<bool>>? _canTransition;
 
    
-    internal Transition(IInteractiveAgent from, IInteractiveAgent to, Func<IInteractiveAgent, IInteractiveAgent, IEnumerable<AgentMessage>, Task<bool>>? canTransitionAsync = null)
+    internal Transition(InteractiveAgentBase from, InteractiveAgentBase to, Func<InteractiveAgentBase, InteractiveAgentBase, IEnumerable<AgentMessage>, Task<bool>>? canTransitionAsync = null)
     {
         From = from;
         To = to;
@@ -47,15 +47,15 @@ public class Transition
 
    
     public static Transition Create<TFrom, TToAgent>(TFrom from, TToAgent to, Func<TFrom, TToAgent, IEnumerable<AgentMessage>, Task<bool>>? transitionRuleAsync = null)
-        where TFrom : IInteractiveAgent
-        where TToAgent : IInteractiveAgent
+        where TFrom : InteractiveAgentBase
+        where TToAgent : InteractiveAgentBase
     {
         return new Transition(from, to, (fromAgent, toAgent, messages) => transitionRuleAsync?.Invoke((TFrom)fromAgent, (TToAgent)toAgent, messages) ?? Task.FromResult(true));
     }
 
-    public IInteractiveAgent From { get; }
+    public InteractiveAgentBase From { get; }
 
-    public IInteractiveAgent To { get; }
+    public InteractiveAgentBase To { get; }
 
     /// <summary>
     /// Check if the transition is allowed.

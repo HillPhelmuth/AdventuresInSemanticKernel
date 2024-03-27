@@ -250,7 +250,7 @@ public partial class CoreKernelService
         var kernel = CreateKernelWithPlugins(chatRequestModel.SelectedPlugins);
         var functionHook = new FunctionFilterHook();
         kernel.FunctionFilters.Add(functionHook);
-        var config = new FunctionCallingStepwisePlannerConfig
+        var config = new FunctionCallingStepwisePlannerOptions
         {
             MaxIterations = 15,
             MaxTokens = 5500,
@@ -323,7 +323,7 @@ public partial class CoreKernelService
         var planPrompt = "";
         try
         {
-            plan = await planner.CreatePlanAsync(kernel, ask, cancellationToken);
+            plan = await planner.CreatePlanAsync(kernel, ask, cancellationToken: cancellationToken);
             planPrompt = $"""
 
                                     <details>
@@ -403,7 +403,10 @@ public partial class CoreKernelService
     {
         var config = new HandlebarsPlannerOptions
         {
-            MaxTokens = 2000,
+            ExecutionSettings = new OpenAIPromptExecutionSettings
+            {
+                MaxTokens = 2000
+            },
             AllowLoops = true
         };
         foreach (var exclude in requestModel.ExcludedFunctions ?? new List<string>())

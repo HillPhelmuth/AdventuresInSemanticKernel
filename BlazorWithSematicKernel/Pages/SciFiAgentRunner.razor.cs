@@ -7,6 +7,7 @@ using Microsoft.SemanticKernel.Experimental.Agents;
 using Microsoft.SemanticKernel.ChatCompletion;
 using AngleSharp.Browser.Dom;
 using SkPluginLibrary.Agents.Examples;
+using SkPluginLibrary.Agents.Models;
 
 namespace BlazorWithSematicKernel.Pages;
 
@@ -15,7 +16,7 @@ public partial class SciFiAgentRunner
     [Inject]
     private AdventureStoryAgents CommanderAstraAgent { get; set; } = default!;
     private ExternalServiceAgent _externalServiceAgent = new();
-    private List<AgentMessage> _agentMessages = [];
+    private List<AgentChatMessage> _agentMessages = [];
     private bool _isBusy;
     private bool _isRunning;
     private CancellationTokenSource _cancellationTokenSource = new();
@@ -27,7 +28,7 @@ public partial class SciFiAgentRunner
         CommanderAstraAgent.ChatMessage += ChatMessage;
         return base.OnInitializedAsync();
     }
-    private void ChatMessage(AgentMessage message)
+    private void ChatMessage(AgentChatMessage message)
     {
         Console.WriteLine($"{message.Name} says {message.Content}");
         _agentMessages.Add(message);

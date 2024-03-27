@@ -33,8 +33,8 @@ namespace SkPluginLibrary.Agents.Models
         {
             var chat = Kernel.Services.GetRequiredService<IChatCompletionService>();
             var chatmessageHistory = chatHistory.AsChatHistory();
-            chatmessageHistory.AddSystemMessage(Agent.SystemPrompt);
-            settings ??= new OpenAIPromptExecutionSettings() { ToolCallBehavior = Kernel.Plugins.Count > 0 ? ToolCallBehavior.AutoInvokeKernelFunctions : null };
+            chatmessageHistory.AddSystemMessage(SystemPrompt);
+            settings ??= new OpenAIPromptExecutionSettings() { Temperature = Temperature, ToolCallBehavior = Plugins.Count > 0 ? ToolCallBehavior.AutoInvokeKernelFunctions : null, ChatSystemPrompt = SystemPrompt };
             AgentMessage? message = null;
             AgentMessageStreamUpdate? finalMessage = null;
             var hasStarted = false;

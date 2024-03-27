@@ -95,7 +95,7 @@ public class GroupChat : IGroupChat
         var round = 0;
         var adminResponse = await Admin.RunAgentAsync(groupConversion, cancellationToken: ct);
         groupConversion.Add(adminResponse);
-        IInteractiveAgent lastSpeaker = Admin;
+        InteractiveAgentBase lastSpeaker = Admin;
         while (round < maxRound)
         {
             if (ct.IsCancellationRequested) break;
@@ -108,10 +108,10 @@ public class GroupChat : IGroupChat
         return groupConversion;
     }
 
-    private async Task<IInteractiveAgent> SelectNextSpeaker(IInteractiveAgent lastSpeaker, IEnumerable<AgentMessage> groupConversion, IEnumerable<InteractiveAgentBase> agents,
+    private async Task<InteractiveAgentBase> SelectNextSpeaker(InteractiveAgentBase lastSpeaker, IEnumerable<AgentMessage> groupConversion, IEnumerable<InteractiveAgentBase> agents,
         CancellationToken ct)
     {
-        IInteractiveAgent nextSpeaker;
+        InteractiveAgentBase nextSpeaker;
         if (_transitionGraph != null)
         {
             var availableNextAgents = await _transitionGraph.TransitToNextAvailableAgentsAsync(lastSpeaker, groupConversion);
