@@ -1,8 +1,10 @@
-﻿using Microsoft.SemanticKernel.Memory;
-using Microsoft.SemanticKernel.Text;
-using System.Text.Json;
+﻿using Azure.AI.OpenAI;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
+using Microsoft.SemanticKernel.Memory;
+using Microsoft.SemanticKernel.Text;
+using System.Text.Json;
+
 
 namespace SkPluginLibrary;
 
@@ -81,6 +83,21 @@ public partial class CoreKernelService
     {
         var results = await _chunkMemory.SearchAsync("chunkCollection", query, limit, threshold).ToListAsync();
         return results;
+    }
+
+    #endregion
+
+    #region LogProbs
+
+    public async Task<ChatChoice> GetLogProbs(string input, float temp, float topP, string systemPrompt = "You are a helpful AI model", string model = "gpt-3.5-turbo")
+    {
+        var options = new ChatCompletionsOptions { LogProbabilitiesPerToken = 5, EnableLogProbabilities = true, Temperature = temp, NucleusSamplingFactor = topP, DeploymentName = model };
+        options.Messages.Add(new ChatRequestSystemMessage(systemPrompt));
+        options.Messages.Add(new ChatRequestUserMessage(input));
+        var chat = new OpenAIClient(TestConfiguration.OpenAI.ApiKey);
+        var response = await chat.GetChatCompletionsAsync(options);
+        var chatChoice = response.Value.Choices[0];
+        return chatChoice;
     }
 
     #endregion

@@ -46,7 +46,7 @@ public static class Example20_HuggingFace
         const string Model = "meta-llama/Llama-2-7b-hf";
 
         // HuggingFace local HTTP server endpoint
-        const string Endpoint = "http://localhost:5000/completions";
+        var Endpoint = new Uri("http://localhost:5000/completions");
 
         Kernel kernel = Kernel.CreateBuilder()
             .AddHuggingFaceTextGeneration(

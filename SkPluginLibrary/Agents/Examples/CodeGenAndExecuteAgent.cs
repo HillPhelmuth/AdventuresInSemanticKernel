@@ -19,12 +19,14 @@ public class CodeGenAndExecuteAgent
         var consoleFunction = kernel.CreateFunctionFromPromptYaml(consoleCodeText);
         var scriptText = await File.ReadAllTextAsync(Path.Combine(yamlPath, "CodingPlugin", "CSharpScript.yaml"));
         var scriptFunc = kernel.CreateFunctionFromPromptYaml(scriptText);
-        var coderAsPlugin = KernelPluginFactory.CreateFromFunctions("Coder", "Writes c# code that's ready for execution", new[] { consoleFunction, scriptFunc });
+        var coderAsPlugin = KernelPluginFactory.CreateFromFunctions("Coder", "Writes c# code that's ready for execution", [consoleFunction, scriptFunc]);
         
       
         if (!string.IsNullOrEmpty(agentId))
         {
-            var agent = await AgentBuilder.GetAgentAsync(TestConfiguration.OpenAI.ApiKey, agentId, [coderAsPlugin]);
+            var agent = await new AgentBuilder().GetAsync(agentId);
+            agent.Plugins.Add(coderAsPlugin);
+                /* await AgentBuilder.GetAgentAsync(TestConfiguration.OpenAI.ApiKey, agentId, [coderAsPlugin]);*/
             Agents.Add(agent);
             return;
         }
@@ -42,7 +44,8 @@ public class CodeGenAndExecuteAgent
         var executerPlugin = KernelPluginFactory.CreateFromType<CodeExecuterPlugin>("CodeExecuter");
         if (!string.IsNullOrEmpty(agentId))
         {
-            var agent = await AgentBuilder.GetAgentAsync(TestConfiguration.OpenAI.ApiKey, agentId, [executerPlugin]);
+            var agent = await new AgentBuilder().GetAsync(agentId);
+            agent.Plugins.Add(executerPlugin);
             Agents.Add(agent);
             return;
         }
@@ -58,7 +61,7 @@ public class CodeGenAndExecuteAgent
     {
         if (!string.IsNullOrEmpty(agentId))
         {
-            var agent = await AgentBuilder.GetAgentAsync(TestConfiguration.OpenAI.ApiKey, agentId);
+            var agent = await new AgentBuilder().GetAsync(agentId);
             Agents.Add(agent);
             return;
         }

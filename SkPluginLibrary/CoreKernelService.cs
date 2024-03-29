@@ -242,7 +242,7 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
         var askUserplugin = new AskUserPlugin(_askUserService);
         var askUser = kernel.ImportPluginFromObject(askUserplugin, "AskUserPlugin");
 
-        var config = new FunctionCallingStepwisePlannerConfig
+        var config = new FunctionCallingStepwisePlannerOptions
         {
             MaxTokens = 9500,
             MaxIterations = 15,

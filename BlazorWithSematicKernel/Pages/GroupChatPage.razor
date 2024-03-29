@@ -1,0 +1,38 @@
+﻿@page "/groupChat"
+<RadzenSteps @bind-SelectedIndex="_step">
+    <Steps>
+        <RadzenStepsItem Text="Intro" NextText="Build Agent">
+            <RadzenRow>
+                <RadzenColumn Size="8" Offset="2">
+                    <RadzenCard>
+                        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle1">The core building blocks of an agent are <em>plugins</em>, <em>planners</em>, and a <em>persona</em>.</RadzenText>
+                        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle2">Agent Groups</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2">Agent Groups are collections of individual agents that are designed to work together towards achieving common or complementary goals. Just like a single agent, each member of a group is equipped with its own set of plugins, planners, and a persona, but with the added ability to collaborate with peers. This collective effort is coordinated through the use of Transition Graphs, allowing for a seamless flow of tasks and information between agents.</RadzenText>
+                        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle2">Transition Graphs</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2"><string>Transition Graphs</string> represent the sophisticated mechanism behind the scene, functioning like a rule-based Finite State Machine that dictates the interactions and transitions between agents within a group. These graphs enable the definition of conditions under which specific transitions should occur, effectively guiding the flow of activities and decision-making processes among the agents. By leveraging Transition Graphs, users can design intricate patterns of behavior and interaction, from simple sequences to complex, conditional workflows, enhancing the agents' ability to tackle more sophisticated tasks collectively.</RadzenText>
+                        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle2">Enhanced Collaboration and Efficiency</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2">With the introduction of Agent Groups and Transition Graphs, users can now build systems where agents not only operate independently but also work in concert, exchanging skills and knowledge. This collaborative framework opens up new possibilities for solving complex problems and performing multifaceted tasks with increased efficiency and creativity. Whether it's coordinating a group of agents to manage different aspects of a project or orchestrating a seamless workflow across various tasks, the new component enriches the Agent Builder's ecosystem, offering unparalleled flexibility and power in the creation and management of intelligent agent-based systems.</RadzenText>
+                        <br />
+                        <RadzenButton Style="margin-left:45%" Text="Get Started" Click="GetStarted"></RadzenButton>
+                    </RadzenCard>
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenStepsItem>
+        <RadzenStepsItem Text="Build Agent" NextText="Start Agent Chat">
+            <RadzenRow>
+                <RadzenColumn>
+                    <RadzenButton Size=ButtonSize.Small Click="UseLast" Text="Use Moderated Debate Example"></RadzenButton>
+                    <AgentBuilder @bind-AgentsGenerated=_agentProxies AgentsCompleted="HandleAgentProxies"></AgentBuilder>
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenStepsItem>
+        <RadzenStepsItem Text="Execute Agent">
+            <RadzenButton Text="Reset" Size="ButtonSize.ExtraSmall" Click="Reset"></RadzenButton>
+            <RadzenButton Text="Download" Size="ButtonSize.ExtraSmall" Click="DownloadToFile"></RadzenButton>
+            <RadzenCard>
+                <ChatView @ref=_chatView ViewId="simpleagentchat"></ChatView>
+            </RadzenCard>
+            <UserInput UserInputSubmit="HandleUserInput" ButtonLabel="Send" HelperText="User Input" IsBusy=_isBusy CancelRequest="Cancel"></UserInput>
+        </RadzenStepsItem>
+    </Steps>
+</RadzenSteps>

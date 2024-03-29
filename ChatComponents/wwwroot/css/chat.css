@@ -9,7 +9,7 @@
 }
 
 .assistant {
-    background: radial-gradient(ellipse, black, #331d00, #181000, #000000);
+    background: radial-gradient(ellipse, black, #181000, #181000, #000000);
     background-size: 50% 50%;
     color: white;
     width: 93%;

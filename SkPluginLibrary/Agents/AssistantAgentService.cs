@@ -22,18 +22,11 @@ public class AssistantAgentService : IAsyncDisposable
     private AgentProxy? _chatAgent; 
     private string _currentRespondent = "Chat Agent";
     public bool IsRunning => Agents.Count > 0;
-
-    public async Task GenerateAgents(List<AgentProxy> agentProxies)
+    private readonly ILogger<AssistantAgentService> _logger;
+    public AssistantAgentService(ILogger<AssistantAgentService> logger)
     {
-        await RemoveAgents();
-        if (agentProxies.Any(x => !x.Name.Equals("Chat", StringComparison.InvariantCultureIgnoreCase)))
-        {
-            _chatAgent = agentProxies.FirstOrDefault(x => x.IsPrimary || x.Name.Equals("Chat", StringComparison.InvariantCultureIgnoreCase));
-        }
-        foreach(var agentProxy in agentProxies.Where(x => !x.IsPrimary && !x.Name.Equals("Chat", StringComparison.InvariantCultureIgnoreCase)))
-        {
-           await GenerateAgent(agentProxy.Name!, agentProxy.Description, agentProxy.Instructions, agentProxy.Plugins);
-        }
+        _logger = logger;
+        logger.LogInformation("Assistant Agent Service Started");
     }
     public async IAsyncEnumerable<string> ExecuteSimpleAgentChatStream(string input, AgentProxy agent, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
@@ -103,21 +96,23 @@ public class AssistantAgentService : IAsyncDisposable
         }
     }
 
+/*
     private IAgentThread? _agentThread;
-    public async Task<string> ExecuteAgentThread(string input, AgentExecutionRequest agentExecutionRequest, CancellationToken cancellationToken = default)
-    {
-        var primary = await GenerateAgent(_chatAgent?.Name ?? "Chat", _chatAgent?.Description ?? "Chat Agent", _chatAgent?.Instructions ?? "Use the tools available to respond to the user input. Take a deep breath and think step by step.");
-        primary.Plugins.AddRange(Agents.Select(x => x.AsPlugin()));
-        _agentThread = await primary.NewThreadAsync(cancellationToken);
-        await _agentThread.AddUserMessageAsync(input, cancellationToken);
-        var response = _agentThread.InvokeAsync(primary, cancellationToken: cancellationToken);
-        var responseString = new StringBuilder();
-        await foreach (var message in response)
-        {
-            responseString.AppendLine(message.Content);
-        }
-        return responseString.ToString();
-    }
+*/
+    //public async Task<string> ExecuteAgentThread(string input, AgentExecutionRequest agentExecutionRequest, CancellationToken cancellationToken = default)
+    //{
+    //    var primary = await GenerateAgent(_chatAgent?.Name ?? "Chat", _chatAgent?.Description ?? "Chat Agent", _chatAgent?.Instructions ?? "Use the tools available to respond to the user input. Take a deep breath and think step by step.");
+    //    primary.Plugins.AddRange(Agents.Select(x => x.AsPlugin()));
+    //    _agentThread = await primary.NewThreadAsync(cancellationToken);
+    //    await _agentThread.AddUserMessageAsync(input, cancellationToken);
+    //    var response = _agentThread.InvokeAsync(primary, cancellationToken: cancellationToken);
+    //    var responseString = new StringBuilder();
+    //    await foreach (var message in response)
+    //    {
+    //        responseString.AppendLine(message.Content);
+    //    }
+    //    return responseString.ToString();
+    //}
     private Kernel GenerateKernel(bool hasAgents = true, List<KernelPlugin>? plugins = null)
     {
         var kernelBuilder = Kernel.CreateBuilder();

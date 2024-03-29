@@ -6,10 +6,19 @@ namespace BlazorWithSematicKernel.Components.AgentComponents
 {
     public partial class CreateAgentForm : ComponentBase
     {
+        private const string MadLibAgentInstructions = """
+                                                       Use the tools available to generate a madlib story and then help the user complete the mad lib by asking for one word at a time.
+                                                       DO NOT TRY TO COMPLETE THE MAD LIB YOURSELF.
+                                                       use the responses from the user to complete the mad lib. When the mad lib is complete, provide the full story to the user.
+                                                       Take a deep breath and think step by step.
+                                                       """;
+
         [Parameter]
         public AgentProxy? Agent { get; set; }
         [Parameter]
         public EventCallback<AgentProxy> AgentChanged { get; set; }
+        [Parameter]
+        public List<AgentProxy> PreMadeAgents { get; set; } = [];
         [Inject] private ICoreKernelExecution CoreKernelService { get; set; } = default!;
         [Inject]
         private DialogService DialogService { get; set; } = default!;
@@ -43,6 +52,7 @@ namespace BlazorWithSematicKernel.Components.AgentComponents
             public string Description { get; set; } = "";
             public string Instructions { get; set; } = "";
             public IEnumerable<PluginData> Plugins { get; set; } = [];
+            public bool Save { get; set; }
 
         }
         private AgentForm _agentForm = new();
@@ -75,6 +85,16 @@ namespace BlazorWithSematicKernel.Components.AgentComponents
             _agentForm.Plugins = [webCrawlPlugin];
             StateHasChanged();
         }
+        private void UseMadLibExample(string madLibAgentInstructions = MadLibAgentInstructions, string description = "You are a Mad Libs assistant. You will help users fill in the blanks of a story.", string? agentName = "Mad Lib Agent")
+        {
+            _agentForm.Name = agentName;
+            _agentForm.Description = description;
+            _agentForm.Instructions = madLibAgentInstructions;
+            var madLibPlugin = _allPlugins.Find(x => x.Name.Equals("MadLibPlugin", StringComparison.InvariantCultureIgnoreCase));
+            _agentForm.Plugins = [madLibPlugin];
+            StateHasChanged();
+        }
+        
         private class PluginData(PluginType pluginType, KernelPlugin kernelPlugin)
         {
             public PluginType PluginType { get; set; } = pluginType;
@@ -111,6 +131,11 @@ namespace BlazorWithSematicKernel.Components.AgentComponents
             var paramters = new Dictionary<string, object> { { "Plugin", kernelFunctions } };
             var dialogOptions = new DialogOptions { Draggable = true, ShowClose = true, Style="width:40vw; height:max-content" };
             DialogService.Open<ViewFunctions>($"Plugin {kernelFunctions.Name} - Functions", paramters, dialogOptions);
+        }
+        public void Clear()
+        {
+            _agentForm = new AgentForm();
+            StateHasChanged();
         }
     }
 }

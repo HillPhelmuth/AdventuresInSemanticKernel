@@ -16,12 +16,12 @@ namespace SkPluginLibrary.Services
         private readonly CrawlerX _crawlerX;
         private readonly TaskCompletionSource<string> _taskCompletionSource = new();
         public event PageCrawlEventHandler? OnPageCrawlCompleted;
-        public event Action<string>? OnPageCrawlCompletedEventCall;
+        public event Action? OnPagesCrawlComplete;
         private readonly ILoggerFactory _loggerFactory;
         private readonly ILogger<CrawlService> _logger;
-        public CrawlService(bool useEventResult = false, ILoggerFactory? loggerFactory = null)
+        public CrawlService(ILoggerFactory? loggerFactory = null)
         {
-            _loggerFactory = loggerFactory ?? ConsoleLogger.LogBuilder();
+            _loggerFactory = loggerFactory ?? ConsoleLogger.LoggerFactory;
             _logger = _loggerFactory.CreateLogger<CrawlService>();
             var crawlConfigurationX = new CrawlConfigurationX
             {
@@ -36,30 +36,12 @@ namespace SkPluginLibrary.Services
             _crawlerX = new CrawlerX(crawlConfigurationX);
 
             _crawlerX.PageCrawlStarting += ProcessPageCrawlStarting;
-            _crawlerX.PageCrawlCompleted += ProcessPageCrawlCompletedEventCall;
-            _crawlerX.PageCrawlDisallowed += PageCrawlDisallowed;
-
-
-        }
-
-        public CrawlService(int maxPages, int maxDepth)
-        {
-            var crawlConfigurationX = new CrawlConfigurationX
-            {
-                MaxPagesToCrawl = maxPages,
-                MaxCrawlDepth = maxDepth,
-                //AutoTuning = new AutoTuningConfig
-                //{
-                //    IsEnabled = true
-                //}
-            };
-
-            _crawlerX = new CrawlerX(crawlConfigurationX);
-
-            _crawlerX.PageCrawlStarting += ProcessPageCrawlStarting;
             _crawlerX.PageCrawlCompleted += ProcessPageCrawlCompleted;
             _crawlerX.PageCrawlDisallowed += PageCrawlDisallowed;
+
+
         }
+
         private bool _convertToMarkdown;
 
         public async Task<string> CrawlAsync(string url, bool convertToMarkdown = true)
@@ -105,43 +87,35 @@ namespace SkPluginLibrary.Services
 
             var doc = new HtmlDocument();
             doc.LoadHtml(html);
-            string text = "";
-            if (_convertToMarkdown)
+            var config = new Config
             {
-                var config = new Config
-                {
-                    // Include the unknown tag completely in the result (default as well)
-                    UnknownTags = Config.UnknownTagsOption.Drop,
-                    // generate GitHub flavoured markdown, supported for BR, PRE and table tags
-                    GithubFlavored = true,
-                    // will ignore all comments
-                    RemoveComments = true,
-                    // remove markdown output for links where appropriate
-                    SmartHrefHandling = true
-                };
+                // Include the unknown tag completely in the result (default as well)
+                UnknownTags = Config.UnknownTagsOption.Drop,
+                // generate GitHub flavoured markdown, supported for BR, PRE and table tags
+                GithubFlavored = true,
+                // will ignore all comments
+                RemoveComments = true,
+                // remove markdown output for links where appropriate
+                SmartHrefHandling = true
+            };
 
-                var converter = new Converter(config);
-                var htmlBuilder = new StringBuilder();
-                foreach (var child in doc.DocumentNode?.DescendantsAndSelf().Where(x => x.Name?.ToLower() == "p" || IsValidHeader(x.Name?.ToLower())) ?? new List<HtmlNode>())
-                {
-                    htmlBuilder.Append(child.OuterHtml);
-                }
-                var tidyHtml = Cleaner.PreTidy(htmlBuilder.ToString(), true);
-                var mkdwnText = converter.Convert(tidyHtml);
-                var cleanUpContent = CleanUpContent(mkdwnText);
-                Console.WriteLine($"{crawledPage.Uri}\n----------------\n Crawled for {StringHelpers.GetTokens(cleanUpContent)} Tokens");
-                _taskCompletionSource.SetResult(cleanUpContent);
-                return;
+            var converter = new Converter(config);
+            var htmlBuilder = new StringBuilder();
+            foreach (var child in doc.DocumentNode?.DescendantsAndSelf().Where(x => x.Name?.ToLower() == "p" || IsValidHeader(x.Name?.ToLower()) || x.Name == "table") ?? new List<HtmlNode>())
+            {
+                htmlBuilder.Append(child.OuterHtml);
             }
-            if (crawledPage.Uri.AbsoluteUri.EndsWith("/html"))
-                text = html;
-            else if (crawledPage.Uri.AbsoluteUri.Contains("wikipedia.org"))
-                text = ParseWikiHtmlToText(doc);
-            else if (crawledPage.Uri.AbsoluteUri.Contains("open5e.com"))
-                text = ParseMainOrSection(doc);
-            else
-                text = ParseGenericHtmlToText(doc);
-            _taskCompletionSource.SetResult(CleanUpContent(text));
+            var tidyHtml = Cleaner.PreTidy(htmlBuilder.ToString(), true);
+           
+            var mkdwnText = converter.Convert(tidyHtml);
+            //ToDo Temp for Testing -----------------------------------
+            //var id = Guid.NewGuid();
+            //File.WriteAllText($"{id}_crawlText.html", tidyHtml);
+            //File.WriteAllText($"{id}_crawlText.md", mkdwnText);
+            //-------------------------------------------------------
+            var cleanUpContent = CleanUpContent(mkdwnText);
+            Console.WriteLine($"{crawledPage.Uri}\n----------------\n Crawled for {StringHelpers.GetTokens(cleanUpContent)} Tokens");
+            _taskCompletionSource.SetResult(cleanUpContent);
         }
 
         private void ProcessPageCrawlCompletedEventCall(object? sender, PageCrawlCompletedArgs e)
@@ -188,7 +162,7 @@ namespace SkPluginLibrary.Services
 
                 var converter = new Converter(config);
                 var htmlBuilder = new StringBuilder();
-                foreach (var child in doc.DocumentNode?.DescendantsAndSelf().Where(x => x.Name?.ToLower() == "p" || IsValidHeader(x.Name?.ToLower())) ?? new List<HtmlNode>())
+                foreach (var child in doc.DocumentNode?.DescendantsAndSelf().Where(x => x.Name?.ToLower() == "p" || IsValidHeader(x.Name?.ToLower()) || x.Name == "table") ?? new List<HtmlNode>())
                 {
                     htmlBuilder.Append(child.OuterHtml);
                 }
@@ -196,6 +170,7 @@ namespace SkPluginLibrary.Services
                 var mkdwnText = converter.Convert(tidyHtml);
                 var cleanUpContent = CleanUpContent(mkdwnText);
                 Console.WriteLine($"{crawledPage.Uri}\n----------------\n Crawled for {StringHelpers.GetTokens(cleanUpContent)} Tokens");
+                OnPageCrawlCompleted?.Invoke(this, new PageCrawlEventArgs(cleanUpContent));
                 _taskCompletionSource.SetResult(cleanUpContent);
                 return;
             }
@@ -205,16 +180,16 @@ namespace SkPluginLibrary.Services
                 text = ParseWikiHtmlToText(doc);
             else
                 text = ParseBodyAsHtml(doc);
-            if (OnPageCrawlCompleted == null && OnPageCrawlCompletedEventCall == null)
+            var cleanContent = CleanUpContent(text);
+            if (OnPageCrawlCompleted == null)
             {
-                _taskCompletionSource.SetResult(CleanUpContent(text));
+                _taskCompletionSource.SetResult(cleanContent);
                 return;
             }
 
-            OnPageCrawlCompletedEventCall?.Invoke(text);
-            OnPageCrawlCompleted?.Invoke(this, new PageCrawlEventArgs(text));
+            OnPageCrawlCompleted?.Invoke(this, new PageCrawlEventArgs(cleanContent));
 
-            _taskCompletionSource.SetResult(CleanUpContent(text));
+            _taskCompletionSource.SetResult(cleanContent);
         }
         private static List<string> ParseWikiApiToText(HtmlDocument doc)
         {

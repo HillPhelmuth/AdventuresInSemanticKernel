@@ -1,19 +1,26 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
-using System.Text;
-using System.Text.Json;
 using Azure.AI.OpenAI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
+using System.Text;
+using System.Text.Json;
 
 // This example shows how to use OpenAI's tool calling capability via the chat completions interface.
 namespace SkPluginLibrary.Examples;
 
+/// <summary>
+/// Example class for OpenAI function calling.
+/// </summary>
 public static class Example59_OpenAIFunctionCalling
 {
+    /// <summary>
+    /// Runs the OpenAI function calling example asynchronously.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
     public static async Task RunAsync()
     {
         // Create kernel.
@@ -40,23 +47,61 @@ public static class Example59_OpenAIFunctionCalling
                 }, "GetWeatherForCity", "Gets the current weather for the specified city"),
         }));
 
-        Console.WriteLine("======== Example 1: Use automated function calling with a non-streaming prompt ========");
-        {
-            OpenAIPromptExecutionSettings settings = new() { ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions };
-            Console.WriteLine(await kernel.InvokePromptAsync("Given the current time of day and weather, what is the likely color of the sky in Boston?", new(settings)));
-            Console.WriteLine();
-        }
+        await AutomatedWithNonStreaming(kernel);
 
-        Console.WriteLine("======== Example 2: Use automated function calling with a streaming prompt ========");
+        await AutomatedWithStreamingPrompt(kernel);
+
+        await ManualNonStreamingFunctionCall(kernel);
+
+
+        await AutomaticStreamingFunctionCall(kernel);
+    }
+
+    /// <summary>
+    /// Performs automated function calling with a streaming chat.
+    /// </summary>
+    /// <param name="kernel">The kernel instance.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    public static async Task AutomaticStreamingFunctionCall(Kernel kernel)
+    {
+        Console.WriteLine("======== Example 4: Use automated function calling with a streaming chat ========");
         {
             OpenAIPromptExecutionSettings settings = new() { ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions };
-            await foreach (var update in kernel.InvokePromptStreamingAsync("Given the current time of day and weather, what is the likely color of the sky in Boston?", new KernelArguments(settings)))
+            var chat = kernel.GetRequiredService<IChatCompletionService>();
+            var chatHistory = new ChatHistory();
+
+            while (true)
             {
-                Console.Write(update);
-            }
-            Console.WriteLine();
-        }
+                Console.Write("Question: ");
+                string question = Console.ReadLine() ?? string.Empty;
+                if (question == "done")
+                {
+                    break;
+                }
 
+                chatHistory.AddUserMessage(question);
+                StringBuilder sb = new();
+                await foreach (var update in chat.GetStreamingChatMessageContentsAsync(chatHistory, settings, kernel))
+                {
+                    if (update.Content is not null)
+                    {
+                        Console.Write(update.Content);
+                        sb.Append(update.Content);
+                    }
+                }
+                chatHistory.AddAssistantMessage(sb.ToString());
+                Console.WriteLine();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Performs manual function calling with a non-streaming prompt.
+    /// </summary>
+    /// <param name="kernel">The kernel instance.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    public static async Task ManualNonStreamingFunctionCall(Kernel kernel)
+    {
         Console.WriteLine("======== Example 3: Use manual function calling with a non-streaming prompt ========");
         {
             var chat = kernel.GetRequiredService<IChatCompletionService>();
@@ -95,36 +140,38 @@ public static class Example59_OpenAIFunctionCalling
 
             Console.WriteLine();
         }
+    }
 
-     
-        Console.WriteLine("======== Example 4: Use automated function calling with a streaming chat ========");
+    /// <summary>
+    /// Performs automated function calling with a streaming prompt.
+    /// </summary>
+    /// <param name="kernel">The kernel instance.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    public static async Task AutomatedWithStreamingPrompt(Kernel kernel)
+    {
+        Console.WriteLine("======== Example 2: Use automated function calling with a streaming prompt ========");
         {
             OpenAIPromptExecutionSettings settings = new() { ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions };
-            var chat = kernel.GetRequiredService<IChatCompletionService>();
-            var chatHistory = new ChatHistory();
-
-            while (true)
+            await foreach (var update in kernel.InvokePromptStreamingAsync("Given the current time of day and weather, what is the likely color of the sky in Boston?", new KernelArguments(settings)))
             {
-                Console.Write("Question: ");
-                string question = Console.ReadLine() ?? string.Empty;
-                if (question == "done")
-                {
-                    break;
-                }
-
-                chatHistory.AddUserMessage(question);
-                StringBuilder sb = new();
-                await foreach (var update in chat.GetStreamingChatMessageContentsAsync(chatHistory, settings, kernel))
-                {
-                    if (update.Content is not null)
-                    {
-                        Console.Write(update.Content);
-                        sb.Append(update.Content);
-                    }
-                }
-                chatHistory.AddAssistantMessage(sb.ToString());
-                Console.WriteLine();
+                Console.Write(update);
             }
+            Console.WriteLine();
+        }
+    }
+
+    /// <summary>
+    /// Performs automated function calling with a non-streaming prompt.
+    /// </summary>
+    /// <param name="kernel">The kernel instance.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    public static async Task AutomatedWithNonStreaming(Kernel kernel)
+    {
+        Console.WriteLine("======== Example 1: Use automated function calling with a non-streaming prompt ========");
+        {
+            OpenAIPromptExecutionSettings settings = new() { ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions };
+            Console.WriteLine(await kernel.InvokePromptAsync("Given the current time of day and weather, what is the likely color of the sky in Boston?", new(settings)));
+            Console.WriteLine();
         }
     }
 }

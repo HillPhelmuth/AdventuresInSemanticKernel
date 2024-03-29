@@ -2,7 +2,7 @@
 
 public enum AIModel
 {
-    [OpenAIModel("gpt-3.5-turbo-1106")]
+    [OpenAIModel("gpt-3.5-turbo")]
     [AzureOpenAIModel("gpt-35-turbo")]
     Gpt35,
     [OpenAIModel("gpt-4-turbo-preview")]
@@ -11,7 +11,8 @@ public enum AIModel
     Image,
     [OpenAIModel("gpt-4-turbo-preview")]
     [AzureOpenAIModel("gpt-4")]
-    Planner
+    Planner,
+    LMStudio
 }
 public class OpenAIModelAttribute(string model) : Attribute
 {
