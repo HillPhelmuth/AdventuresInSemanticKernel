@@ -118,7 +118,13 @@
                     </Columns>
                 </RadzenDataGrid>
                 <br />
-                <RadzenButton Text="Done!" Click="Finish"></RadzenButton>
+                <RadzenTemplateForm Data="_agentGroupForm" TItem="AgentGroupForm" Submit="Finish">
+                    <RadzenFormField Text="Transition Type">
+                        <RadzenDropDown Data="_transitionTypes" @bind-Value=_agentGroupForm.GroupTransitionType></RadzenDropDown>
+                    </RadzenFormField>
+                    <RadzenButton Text="Done!" ButtonType="ButtonType.Submit"></RadzenButton>
+                </RadzenTemplateForm>
+               
             }
         </RadzenCard>
 

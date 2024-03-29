@@ -36,6 +36,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="Azure.AI.FormRecognizer" Version="4.1.0" />
+		<PackageReference Include="Azure.AI.OpenAI" Version="1.0.0-beta.14" />
 		<PackageReference Include="Azure.Storage.Blobs" Version="12.19.1" />
 		<PackageReference Include="Azure.Storage.Files.Shares" Version="12.17.1" />
 		<PackageReference Include="Azure.Storage.Queues" Version="12.17.1" />
@@ -131,8 +132,6 @@
 	</ItemGroup>
 	
 	<ItemGroup>
-		<ProjectReference Include="..\MathAdvancedPlugins\MathAdvancedPlugins.csproj" />
-		<ProjectReference Include="..\PromptFlowEvalsAsPlugins\PromptFlowEvalsAsPlugins.csproj" />
 		<ProjectReference Include="..\SkPluginComponents\SkPluginComponents.csproj" />
 	</ItemGroup>
 	<ItemGroup>

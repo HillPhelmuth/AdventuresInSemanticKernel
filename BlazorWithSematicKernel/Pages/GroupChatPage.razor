@@ -6,13 +6,13 @@
                 <RadzenColumn Size="8" Offset="2">
                     <RadzenCard>
                         <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle1">The core building blocks of an agent are <em>plugins</em>, <em>planners</em>, and a <em>persona</em>.</RadzenText>
-                        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle2">Plugins</RadzenText>
-                        <RadzenText TextStyle="TextStyle.Body2">Plugins are the skills of your agent. For example, you can create a plugin that sends emails, retrieves information from the web, asks for help, or even saves and retrieves memories from previous conversations. The <strong>Agent Builder</strong> allows you to select from a large list of built-in and pre-made plugins.</RadzenText>
-                        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle2">Planners</RadzenText>
-                        <RadzenText TextStyle="TextStyle.Body2">Planners are the brains of your agent. They allow your agent to generate a plan to complete a task. The <strong>Agent Builder</strong> uses OpenAI's function calling feature as it's planner, allowing the agent to determine which plugins are required to complete a task. For more advanced planners, you can ask an LLM to generate code that can be executed to complete a task (Handlebars Planner).</RadzenText>
-                        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle2">Persona</RadzenText>
-                        <RadzenText TextStyle="TextStyle.Body2">Persona is the personality of your agent. It is a prompt that is used to influence how the agent responds to stimuli. For example, you can use the persona to change its personality, such as friendly, sarcastic, or helpful. You can also use the persona to influence how the agent responds to certain situations, such as asking for help, being more verbose, or following the rules.</RadzenText>
-                        <RadzenLink Path="https://learn.microsoft.com/en-us/semantic-kernel/agents/" Target="_blank" Text="Read More about Agents"></RadzenLink><br />
+                        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle2">Agent Groups</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2">Agent Groups are collections of individual agents that are designed to work together towards achieving common or complementary goals. Just like a single agent, each member of a group is equipped with its own set of plugins, planners, and a persona, but with the added ability to collaborate with peers. This collective effort is coordinated through the use of Transition Graphs, allowing for a seamless flow of tasks and information between agents.</RadzenText>
+                        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle2">Transition Graphs</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2"><string>Transition Graphs</string> represent the sophisticated mechanism behind the scene, functioning like a rule-based Finite State Machine that dictates the interactions and transitions between agents within a group. These graphs enable the definition of conditions under which specific transitions should occur, effectively guiding the flow of activities and decision-making processes among the agents. By leveraging Transition Graphs, users can design intricate patterns of behavior and interaction, from simple sequences to complex, conditional workflows, enhancing the agents' ability to tackle more sophisticated tasks collectively.</RadzenText>
+                        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle2">Enhanced Collaboration and Efficiency</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2">With the introduction of Agent Groups and Transition Graphs, users can now build systems where agents not only operate independently but also work in concert, exchanging skills and knowledge. This collaborative framework opens up new possibilities for solving complex problems and performing multifaceted tasks with increased efficiency and creativity. Whether it's coordinating a group of agents to manage different aspects of a project or orchestrating a seamless workflow across various tasks, the new component enriches the Agent Builder's ecosystem, offering unparalleled flexibility and power in the creation and management of intelligent agent-based systems.</RadzenText>
+                        <br />
                         <RadzenButton Style="margin-left:45%" Text="Get Started" Click="GetStarted"></RadzenButton>
                     </RadzenCard>
                 </RadzenColumn>
@@ -25,20 +25,6 @@
                     <AgentBuilder @bind-AgentsGenerated=_agentProxies AgentsCompleted="HandleAgentProxies"></AgentBuilder>
                 </RadzenColumn>
             </RadzenRow>
-           @*  <RadzenRow>
-                <RadzenColumn Size="8" Offset="0">
-                    <CreateAgentForm @ref=_create Agent=_agentProxy AgentChanged="HandleAgentProxy"></CreateAgentForm>
-                </RadzenColumn>
-                <RadzenColumn Size="4">
-                   <RadzenTemplateForm Data="_selectAgentForm" TItem="SelectAgentForm" Submit="SelectAgent">
-                       <RadzenFormField Text="Select Admin">
-                           <RadzenRadioButtonList Data="_agentProxies" Orientation="Radzen.Orientation.Vertical" @bind-Value=_selectAgentForm.AdminAgent TextProperty="Name"></RadzenRadioButtonList>
-                       </RadzenFormField><br />
-                       <RadzenButton Size=ButtonSize.Small ButtonType="ButtonType.Submit" Text="Select Admin"></RadzenButton>
-                   </RadzenTemplateForm>
-                   <RadzenButton Click="UseLast" Text="Use Last"></RadzenButton>
-                </RadzenColumn>
-            </RadzenRow> *@
         </RadzenStepsItem>
         <RadzenStepsItem Text="Execute Agent">
             <RadzenButton Text="Reset" Size="ButtonSize.ExtraSmall" Click="Reset"></RadzenButton>

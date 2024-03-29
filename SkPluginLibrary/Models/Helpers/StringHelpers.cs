@@ -32,12 +32,12 @@ namespace SkPluginLibrary.Models.Helpers
             {
                 if (token == -1)
                 {
-                    tokenStrings.Add(new TokenString(token, "&nbsp;"));
+                    tokenStrings.Add(new TokenString("&nbsp;",0, token));
                 }
                 else
                 {
                     var decodedToken = _tokenizer.Decode(new List<int> { token });
-                    tokenStrings.Add(new TokenString(token, decodedToken));
+                    tokenStrings.Add(new TokenString(decodedToken, 0, token));
                 }
             }
             return tokenStrings;

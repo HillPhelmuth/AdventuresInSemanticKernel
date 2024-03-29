@@ -23,10 +23,12 @@ public partial class AgentBuilder
     [Parameter]
     public EventCallback<List<AgentProxy>> AgentsGeneratedChanged { get; set; }
     [Parameter]
-    public EventCallback<List<AgentProxy>> AgentsCompleted { get; set; }
+    public EventCallback<AgentGroupCompletedArgs> AgentsCompleted { get; set; }
     [Parameter]
     public List<AgentProxy> AgentsGenerated { get; set; } = [];
-    
+    //[Parameter]
+    //public EventCallback<AgentGroupCompletedArgs> AgentGroupCompleted { get; set; }
+
     private class PluginData(PluginType pluginType, KernelPlugin kernelPlugin)
     {
         public PluginType PluginType { get; set; } = pluginType;
@@ -59,10 +61,15 @@ public partial class AgentBuilder
         public string? Model { get; set; } = "Gpt4";
 
     }
-
+    private class AgentGroupForm
+    {
+        public GroupTransitionType GroupTransitionType { get; set; }
+    }
+    private List<GroupTransitionType> _transitionTypes = Enum.GetValues<GroupTransitionType>().ToList();
+    private AgentGroupForm _agentGroupForm = new();
     private List<string> _models = ["Gpt4", "Gpt35"];
     private AgentForm _agentForm = new();
-   
+
     private async void GenerateAgent(AgentForm agentForm)
     {
         Console.WriteLine($"Generating Agent with {agentForm.Plugins.Count()} plugins");
@@ -109,7 +116,7 @@ public partial class AgentBuilder
             }
             agentProxy.IsPrimary = false;
         }
-       
+
         AgentsGeneratedChanged.InvokeAsync(AgentsGenerated);
         StateHasChanged();
     }
@@ -127,7 +134,7 @@ public partial class AgentBuilder
         var dialogOptions = new DialogOptions { Draggable = true, ShowClose = true, Style = "width:40vw; height:max-content" };
         DialogService.Open<ViewFunctions>($"Plugin {kernelFunctions.Name} - Functions", paramters, dialogOptions);
     }
-    private void Finish()
+    private void Finish(AgentGroupForm agentGroupForm)
     {
         if (!AgentsGenerated.Any(x => x.IsPrimary))
         {
@@ -135,11 +142,22 @@ public partial class AgentBuilder
             return;
         }
         AgentsGeneratedChanged.InvokeAsync(AgentsGenerated);
-        AgentsCompleted.InvokeAsync(AgentsGenerated);
+        AgentsCompleted.InvokeAsync(new AgentGroupCompletedArgs { TransitionType = agentGroupForm.GroupTransitionType, Agents = AgentsGenerated});
     }
     private void AddSubAgent(AgentProxy agentForm)
     {
 
         StateHasChanged();
     }
+}
+public enum GroupTransitionType
+{
+    HubAndSpoke,
+    RoundRobin,
+    PromptBased
+}
+public class AgentGroupCompletedArgs
+{
+    public List<AgentProxy> Agents { get; set; } = [];
+    public GroupTransitionType TransitionType { get; set; }
 }

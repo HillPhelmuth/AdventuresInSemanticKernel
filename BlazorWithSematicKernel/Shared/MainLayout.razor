@@ -39,6 +39,7 @@
             <RadzenPanelMenuItem Text="Tokens">
                 <RadzenPanelMenuItem Text="Chunking and Tokenization" MouseEnter="@((args) => ShowTooltip(args, "Generate or add text, set the text chuncking paramters, and then see the Semantic Kernel TextChunker work"))" Icon="short_text" Path="textchunking"></RadzenPanelMenuItem>
                 <RadzenPanelMenuItem Text="Tinker with Tokens" MouseEnter="@((args) => ShowTooltip(args, "See how input text translates into tokens. Select specific tokens to set the LogitBias for a chat completion request."))" Icon="construction" Path="tokens"></RadzenPanelMenuItem>
+                <RadzenPanelMenuItem Text="Log Probs" MouseEnter="@((args) => ShowTooltip(args, "Check out log probs of chat output."))" Icon="percent" Path="logProbs"></RadzenPanelMenuItem>
             </RadzenPanelMenuItem>
 
         </RadzenPanelMenu>

@@ -36,6 +36,8 @@ public partial class GroupChatPage : ComponentBase
     private class SelectAgentForm
     {
         public AgentProxy? AdminAgent { get; set; }
+        public List<AgentProxy> Agents { get; set; } = new();
+        public GroupTransitionType GroupTransitionType { get; set; }
     }
     private SelectAgentForm _selectAgentForm = new();
     private void UseLast()
@@ -77,8 +79,7 @@ public partial class GroupChatPage : ComponentBase
             transitions.Add(transBack);
         }
         var graph = new TransitionGraph(transitions);
-        
-        _groupChat = new GroupChat(adminAgent, agents, transitionGraph:graph);
+        _groupChat = selectAgentForm.GroupTransitionType == GroupTransitionType.HubAndSpoke ? new GroupChat(adminAgent, agents, transitionGraph: graph) : new GroupChat(adminAgent, agents);
         _step = 1;
         StateHasChanged();
         _step = 2;
@@ -98,16 +99,14 @@ public partial class GroupChatPage : ComponentBase
         var groupFileName = _agentProxies.Find(a => a.IsPrimary)?.Name ?? "UnknownGroup";
         await JsRuntime.InvokeVoidAsync("downloadFile", $"{groupFileName}.json", fileContent);
     }
-    private void HandleAgentProxy(AgentProxy agentProxy)
+   
+    private void HandleAgentProxies(AgentGroupCompletedArgs agentGroupCompleted)
     {
-        
-        StateHasChanged();
-    }
-    private void HandleAgentProxies(List<AgentProxy> agents)
-    {
-        _agentProxies = agents;
+        _agentProxies = agentGroupCompleted.Agents;
         var admin = _agentProxies.Find(a => a.IsPrimary);
         _selectAgentForm.AdminAgent = admin;
+        _selectAgentForm.Agents = agentGroupCompleted.Agents;
+        _selectAgentForm.GroupTransitionType = agentGroupCompleted.TransitionType;
         SelectAgent(_selectAgentForm);
         StateHasChanged();
     }

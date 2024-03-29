@@ -1,0 +1,117 @@
+﻿@page "/logProbs"
+@using BlazorWithSematicKernel.Components.LogProbComponents
+<RadzenRow>
+    <RadzenColumn Size="3">
+        <RadzenCard>
+            <RadzenTemplateForm Data="_logProbInputForm" TItem="LogProbInputForm" Submit="SendQuery">
+                <RadzenFormField Style="width:100%" Text="System prompt">
+                    <ChildContent>
+                        <RadzenTextArea @bind-Value=@_logProbInputForm.SystemPrompt Name="System" Style="width:100%; height:8rem;font-size:90%"></RadzenTextArea>
+                    </ChildContent>
+                    <Helper>
+                        <RadzenRequiredValidator Component="System" Style="position:absolute" Popup=true></RadzenRequiredValidator>
+                    </Helper>
+                </RadzenFormField>
+                <RadzenFormField Text="Model">
+                    <RadzenDropDown @bind-Value="@_logProbInputForm.Model" Data="_models"></RadzenDropDown>
+                </RadzenFormField>
+                <RadzenFormField Style="width:100%" Text="Input">
+                    <ChildContent>
+                        <RadzenTextBox Attributes="@(new Dictionary<string, object> {["list"] = "suggestInputs"})" @bind-Value=@_logProbInputForm.UserInput Name="Input" Style="width:100%"></RadzenTextBox>
+                        <datalist id="suggestInputs">
+                            <option value="5 random words, one word per line"></option>
+                            <option value="In 5 words or less, what is the meaning of life?"></option>
+                        </datalist>
+                    </ChildContent>
+                    <Helper>
+                        <RadzenRequiredValidator Component="Input" Style="position:absolute" Popup=true></RadzenRequiredValidator>
+                    </Helper>
+                </RadzenFormField>
+                <RadzenFormField Text="Tempurature">
+                    <Start>
+                        <RadzenIcon Icon="thermostat"></RadzenIcon>
+                    </Start>
+                    <ChildContent>
+                        <RadzenNumeric @bind-Value=@_logProbInputForm.Tempurature Max="2.0m" Min="0" Name="Temperature" Step="0.01" TValue="float"></RadzenNumeric>
+                    </ChildContent>
+                </RadzenFormField>
+                <RadzenFormField Text="Top P">
+                    <Start>
+                        <RadzenIcon Icon="linear_scale"></RadzenIcon>
+                    </Start>
+                    <ChildContent>
+                        <RadzenNumeric @bind-Value=@_logProbInputForm.TopP Max="1.0m" Min="0" Name="TopP" Step="0.01" TValue="float"></RadzenNumeric>
+                    </ChildContent>
+                </RadzenFormField>
+                <br />
+                <RadzenButton ButtonType="ButtonType.Submit" Text="Send" IsBusy=_isBusy BusyText="Sending..."></RadzenButton>
+            </RadzenTemplateForm>
+        </RadzenCard>
+    </RadzenColumn>
+    <RadzenColumn Size="6">
+        <RadzenToggleButton @bind-Value=_showRaw Text="@(_showRaw ? "Show Token LogProbs" : "Show Raw Response" )" ToggleButtonStyle="ButtonStyle.Dark" ButtonStyle="ButtonStyle.Light"></RadzenToggleButton>
+        @if (_showRaw)
+        {
+            <RadzenCard>
+                <RadzenText Text="Response" TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Center"></RadzenText>
+                <RadzenCard Style="width:100%">
+                    @((MarkupString)AsHtml(_output))
+                </RadzenCard>
+            </RadzenCard>
+        }
+        else
+        {
+            <RadzenCard Style="width:100%">
+                <RadzenText Text="Tokens" TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Center"></RadzenText>
+                @if (_tokens.Count > 0)
+                {
+                    <TextAsLogProbTokens TokenStrings="@_tokens.AsTokenStrings()" @bind-SelectedTokenString=_selectedTokenString></TextAsLogProbTokens>
+                }
+
+            </RadzenCard>
+        }
+
+
+
+
+    </RadzenColumn>
+    <RadzenColumn Size="3">
+        <RadzenCard>
+            @if (_selectedTokenString?.TopLogProbs.Count > 0)
+            {
+                <RadzenText Text="Top 5 alternatives"></RadzenText>
+                <RadzenDataGrid Data="_selectedTokenString.TopLogProbs" TItem="TokenString" Density="Density.Compact">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="TokenString" Property="@nameof(TokenString.StringValue)" Title="Token">
+                            <Template Context="token">
+                                @if (_selectedTokenString.StringValue == token.StringValue)
+                                {
+                                    <strong>@token.StringValue</strong>
+                                }
+                                else
+                                {
+                                    @token.StringValue
+                                }
+
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="TokenString" Property="@nameof(TokenString.NormalizedLogProbability)" Title="Probability">
+                            <Template Context="token">
+                                @if (_selectedTokenString.StringValue == token.StringValue)
+                                {
+                                    <strong>@token.NormalizedLogProbability.ToString("P3")</strong>
+                                }
+                                else
+                                {
+                                    @token.NormalizedLogProbability.ToString("P3")
+                                }
+
+                            </Template>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+
+            }
+        </RadzenCard>
+    </RadzenColumn>
+</RadzenRow>
