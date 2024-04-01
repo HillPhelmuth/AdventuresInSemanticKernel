@@ -15,28 +15,36 @@ public class AgentProxy
     public string Description { get; set; } = "";
     public string Instructions { get; set; } = "";
     public string SystemPrompt => $"""
-                                   ## Name
+                                   # Name
                                    You are {Name}.
-                                   ## Description
+                                   # Description
                                    {Description}.
-                                   ## Instructions
+                                   # Instructions
                                    {Instructions}
                                    """;
     public string? GptModel { get; set; }
+
     [JsonIgnore]
-    public List<KernelPlugin> Plugins { get; set; } = [];
-    private Dictionary<string, List<string>> _pluginFunctionNames = [];
-    [JsonPropertyName("PluginNames")]
-    private Dictionary<string, List<string>> PluginFunctionNames
+    public List<KernelPlugin> Plugins
     {
-        get
+        get => _plugins;
+        set
         {
-            _pluginFunctionNames = Plugins.Count != 0 ? Plugins.ToDictionary(plgn => plgn.Name,plgn => plgn.Select(fnc => fnc.Name).ToList()) : [];
-            return _pluginFunctionNames;
+            PluginNames = value.Select(x => x.Name).ToList();
+            _plugins = value;
         }
-        set => _pluginFunctionNames = value;
     }
 
+    private List<KernelPlugin> _plugins = [];
+    private List<string> _pluginNames = [];
+    public List<string> PluginNames
+    {
+        get => Plugins.Count != 0 ? Plugins.Select(x => x.Name).ToList() : _pluginNames;
+        set => _pluginNames = value;
+    }
+
+
+    public bool IsUserProxy { get; set; }
 
     public bool IsPrimary { get; set; }
 }

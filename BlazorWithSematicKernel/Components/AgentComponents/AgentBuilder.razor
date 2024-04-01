@@ -11,6 +11,9 @@
                         <RadzenRequiredValidator Component="Name"></RadzenRequiredValidator>
                     </Helper>
                 </RadzenFormField>
+                <RadzenLabel>
+                    <RadzenCheckBox Value="_agentForm.IsUserProxy" TValue=bool ValueChanged="ConfirmUserProxy"></RadzenCheckBox> Assign as User Proxy (You)
+                </RadzenLabel>
                 <RadzenFormField Text="Description" Style="width:100%">
                     <ChildContent>
                         <RadzenTextArea Style="width:100%;height:4rem;" @bind-Value=_agentForm.Description></RadzenTextArea>
@@ -25,6 +28,7 @@
                         <RadzenText TextStyle="TextStyle.Caption" Text="Add instructions for agent, similar to a 'System' prompt"></RadzenText>
                     </Helper>
                 </RadzenFormField>
+               
                 <RadzenFormField Text="Required Model">
                     <ChildContent>
                         <RadzenDropDown Data="@_models" AllowClear="true" @bind-Value=@_agentForm.Model Style="width:100%"></RadzenDropDown>
@@ -42,7 +46,9 @@
                                 <RadzenDropDownDataGridColumn Property="@(nameof(PluginData.PluginType))" Title="Type" Width="30%"></RadzenDropDownDataGridColumn>
                                 <RadzenDropDownDataGridColumn Width="30%">
                                     <Template Context="plugin">
-                                        @{var kernelPlugin = (plugin as PluginData).KernelPlugin;}
+                                        @{
+                                            var kernelPlugin = (plugin as PluginData).KernelPlugin;
+                                        }
                                         <RadzenButton Size=ButtonSize.ExtraSmall Text="Functions" Icon="functions" @onclick:stopPropagation Click="@(() => ShowFunctions(kernelPlugin))"></RadzenButton>
                                     </Template>
                                 </RadzenDropDownDataGridColumn>
@@ -88,15 +94,20 @@
                     <Columns>
                         <RadzenDataGridColumn TItem="AgentProxy" Title="Name" Property="Name" Width="20%"></RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="AgentProxy" Title="Description" Property="Description" Width="40%"></RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="AgentProxy" Title="Primary" Width="10%">
+                        <RadzenDataGridColumn TItem="AgentProxy" Width="10%">
                             <Template Context="agent">
                                 @if (agent.IsPrimary)
                                 {
-                                    <RadzenIcon Style="font-size:2rem;font-weight:600" IconStyle=IconStyle.Success Icon="person"></RadzenIcon>
+                                    <RadzenIcon Style="font-size:2rem;font-weight:600" IconStyle=IconStyle.Success Icon="person" MouseEnter="@((e) => TooltipService.Open(e, "Admin Agent"))"></RadzenIcon>
+                                }
+                                else if (agent.IsUserProxy)
+                                {
+
+                                    <RadzenIcon Style="font-size:2rem;font-weight:600" IconStyle=IconStyle.Primary Icon="support_agent" MouseEnter="@((e) => TooltipService.Open(e, "You! (User Proxy)"))"></RadzenIcon>
                                 }
                                 else
                                 {
-                                    <RadzenIcon Style="font-size:2rem;font-weight:600" IconStyle="IconStyle.Warning" Icon="groups"></RadzenIcon>
+                                    <RadzenIcon Style="font-size:2rem;font-weight:600" IconStyle="IconStyle.Warning" Icon="groups" MouseEnter="@((e) => TooltipService.Open(e, "Standard Agent"))"></RadzenIcon>
                                 }
                             </Template>
                         </RadzenDataGridColumn>
@@ -122,9 +133,17 @@
                     <RadzenFormField Text="Transition Type">
                         <RadzenDropDown Data="_transitionTypes" @bind-Value=_agentGroupForm.GroupTransitionType></RadzenDropDown>
                     </RadzenFormField>
-                    <RadzenButton Text="Done!" ButtonType="ButtonType.Submit"></RadzenButton>
+                    <RadzenFormField Text="Stop Statement">
+                        <RadzenTextBox @bind-Value=_agentGroupForm.StopStatement></RadzenTextBox>
+                    </RadzenFormField>
+                    <RadzenFormField Text="Rounds">
+                        <RadzenNumeric @bind-Value=_agentGroupForm.Rounds Min="5" Max="50"></RadzenNumeric>
+                    </RadzenFormField>
+                    <br />
+
+                    <RadzenButton Text="Done!" ButtonType="ButtonType.Submit" Size="ButtonSize.Small"></RadzenButton>
                 </RadzenTemplateForm>
-               
+
             }
         </RadzenCard>
 

@@ -147,3 +147,29 @@ json-viewer {
         cursor: pointer;
         border: 1px solid blue;
     }
+.blinking-input {
+    border: 1px solid #ccc; /* Basic border for the text box */
+    padding: 8px; /* Padding for aesthetics */
+    outline: 2px solid green; /* Initial green outline */
+    animation: blink 1s infinite; /* Apply the blinking effect */
+    box-shadow: 0px 0px 8px rgba(0, 128, 0, 0.75); /* More pronounced shadow */
+}
+
+
+.blinking-input:focus {
+    border-color: green;
+    outline-color: green; /* Keep the outline green when focused */
+    box-shadow: 0px 0px 5px rgba(0, 128, 0, 0.5); /* Subtle green shadow */
+    animation: none; /* Remove the blinking effect */
+}
+@keyframes blink {
+    0%, 100% {
+        outline-color: rgba(0, 255, 0, 0); /* Transparent outline */
+        box-shadow: 0px 0px 8px rgba(0, 128, 0, 0);
+    }
+
+    50% {
+        outline-color: green; /* Solid green outline */
+        box-shadow: 0px 0px 8px rgba(0, 128, 0, 0.75); /* More pronounced shadow */
+    }
+}

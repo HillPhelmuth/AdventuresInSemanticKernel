@@ -21,6 +21,8 @@ namespace ChatComponents
         public EventCallback<UserInputRequest> UserInputSubmit { get; set; }
         [Parameter]
         public EventCallback CancelRequest { get; set; }
+        [Parameter]
+        public string CssClass { get; set; } = "";
         protected override Task OnParametersSetAsync()
         {
             _requestForm.UserInputRequest.UserInputType = UserInputType;

@@ -15,4 +15,17 @@ public static class GroupExtensions
     {
         return agentChatHistory.Count == 0 ? [] : new ChatHistory(agentChatHistory.Select(message => new ChatMessageContent(message.Role, $"{message.AgentName}:\n{message.Content}", message.ModelId, message.InnerContent, message.Encoding, message.Metadata)));
     }
+    public static string FormatMessage(this AgentMessage message)
+    {
+        var sb = new StringBuilder();
+        // write from
+        sb.AppendLine($"Message from <strong>{message.AgentName}</strong>");
+        // write a seperator
+        sb.AppendLine("\n");
+        sb.AppendLine(message.Content);
+        // write a seperator
+        sb.AppendLine("<hr/>");
+
+        return sb.ToString();
+    }
 }

@@ -5,6 +5,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
+using Microsoft.SemanticKernel.Experimental.Agents;
 using SkPluginLibrary.Agents.Extensions;
 using SkPluginLibrary.Agents.Models;
 using SkPluginLibrary.Models.Hooks;
@@ -14,11 +15,16 @@ namespace SkPluginLibrary.Agents.Group;
 public class GroupChat : IGroupChat
 {
 
-    public GroupChat(InteractiveAgentBase admin, List<InteractiveAgentBase> agents, TransitionGraph? transitionGraph = null)
+    public GroupChat(InteractiveAgentBase admin, List<InteractiveAgentBase> agents, TransitionGraph? transitionGraph = null, string endStatement = "[STOP]", bool isRoundRobin = false)
     {
         _transitionGraph = transitionGraph;
         InteractiveAgents = agents;
         Admin = admin;
+        _endStatement = endStatement;
+        var interactives = InteractiveAgents.ToList();
+        interactives.Insert(0, Admin);
+        _allAgents = interactives;
+        _isRoundRobin = isRoundRobin;
         var functionHook = new FunctionFilterHook();
         functionHook.FunctionInvoking += (sender, context) =>
         {
@@ -46,11 +52,13 @@ public class GroupChat : IGroupChat
         }
      
     }
-   
+    private string _endStatement;
+    private bool _isRoundRobin;
     private TransitionGraph? _transitionGraph;
     internal ChatHistory ChatHistory => AgentChatHistory.AsChatHistory();
     public List<AgentMessage> AgentChatHistory { get; set; } = [];
     public List<InteractiveAgentBase> InteractiveAgents { get; }
+    private List<InteractiveAgentBase> _allAgents = [];
     public InteractiveAgentBase Admin { get; }
     
    
@@ -84,7 +92,7 @@ public class GroupChat : IGroupChat
     public async Task<List<AgentMessage>> CallAsync(List<AgentMessage>? conversation = null,
         int maxRound = 10, CancellationToken ct = default)
     {
-        var agents = InteractiveAgents.Concat([Admin]).Reverse().ToList();
+        var agents = _allAgents;
         var groupConversion = new List<AgentMessage>();
         if (conversation != null)
         {
@@ -99,15 +107,27 @@ public class GroupChat : IGroupChat
         while (round < maxRound)
         {
             if (ct.IsCancellationRequested) break;
-            var nextSpeaker = await SelectNextSpeaker(lastSpeaker, groupConversion, agents, ct);
+            var nextSpeaker = _isRoundRobin ? SelectNextSpeaker(lastSpeaker) : await SelectNextSpeaker(lastSpeaker, groupConversion, agents, ct);
+            
             var agentResponse = await nextSpeaker.RunAgentAsync(groupConversion, cancellationToken: ct);
             lastSpeaker = nextSpeaker;
-            groupConversion.Add(agentResponse);
+            groupConversion.Add(agentResponse!);
+            if (agentResponse?.Content?.Contains(_endStatement) == true) break;
             round++;
         }
         return groupConversion;
     }
+    private InteractiveAgentBase SelectNextSpeaker(InteractiveAgentBase currentSpeaker)
+    {
+        var index = _allAgents.IndexOf(currentSpeaker);
+        if (index == -1)
+        {
+            throw new ArgumentException("The agent is not in the group chat", nameof(currentSpeaker));
+        }
 
+        var nextIndex = (index + 1) % _allAgents.Count;
+        return _allAgents[nextIndex];
+    }
     private async Task<InteractiveAgentBase> SelectNextSpeaker(InteractiveAgentBase lastSpeaker, IEnumerable<AgentMessage> groupConversion, IEnumerable<InteractiveAgentBase> agents,
         CancellationToken ct)
     {
