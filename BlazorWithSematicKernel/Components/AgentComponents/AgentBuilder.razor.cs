@@ -13,6 +13,8 @@ public partial class AgentBuilder
     private DialogService DialogService { get; set; } = default!;
     [Inject]
     private NotificationService NotificationService { get; set; } = default!;
+    [Inject]
+    private TooltipService TooltipService { get; set; } = default!;
     private Dictionary<PluginType, List<KernelPlugin>> _allPluginTypes = [];
     private List<PluginData> _allPlugins = [];
     private IEnumerable<PluginData> _selectedPlugins = [];
@@ -59,15 +61,34 @@ public partial class AgentBuilder
         public IEnumerable<PluginData> Plugins { get; set; } = [];
         public bool IsPrimary { get; set; }
         public string? Model { get; set; } = "Gpt4";
+        public bool IsUserProxy { get; set; }
 
     }
     private class AgentGroupForm
     {
         public GroupTransitionType GroupTransitionType { get; set; }
+        public string StopStatement { get; set; } = "[STOP]";
+        public int Rounds { get; set; } = 10;
+    }
+    private async void ConfirmUserProxy(bool isChecked)
+    {
+        if (isChecked)
+        {
+            var confirmed = await DialogService.Confirm("Setting this agent as a User Proxy will cause all interaction to this agent to pass through to you and the group will wait for your reply.", "Are you sure you want make this a User Proxy agent?");
+            if (confirmed == true)
+            {
+                _agentForm.IsUserProxy = true;
+            }
+        }
+        else
+        {
+            _agentForm.IsUserProxy = false;
+        }
+        StateHasChanged();
     }
     private List<GroupTransitionType> _transitionTypes = Enum.GetValues<GroupTransitionType>().ToList();
     private AgentGroupForm _agentGroupForm = new();
-    private List<string> _models = ["Gpt4", "Gpt35"];
+    private List<string> _models = ["Gpt35", "Gpt4"];
     private AgentForm _agentForm = new();
 
     private async void GenerateAgent(AgentForm agentForm)
@@ -80,6 +101,7 @@ public partial class AgentBuilder
             Name = agentForm.Name,
             Plugins = agentForm.Plugins.Select(x => x.KernelPlugin).ToList(),
             IsPrimary = agentForm.IsPrimary,
+            IsUserProxy = agentForm.IsUserProxy,
             GptModel = agentForm.Model
         };
         //Console.WriteLine($"Agent Generated:\n {proxy.AsJson()}");
@@ -92,7 +114,7 @@ public partial class AgentBuilder
     }
     private async Task UpdateAgent(AgentProxy agentProxy)
     {
-        _agentForm = new AgentForm { Name = agentProxy.Name, Description = agentProxy.Description, Instructions = agentProxy.Instructions, Plugins = agentProxy.Plugins.Select(x => new PluginData(PluginType.Prompt, x)) };
+        _agentForm = new AgentForm { Name = agentProxy.Name, Description = agentProxy.Description, Instructions = agentProxy.Instructions, Plugins = agentProxy.Plugins.Select(x => new PluginData(PluginType.Prompt, x)), IsUserProxy = agentProxy.IsUserProxy, Model = agentProxy.GptModel };
         AgentsGenerated.Remove(agentProxy);
         await AgentsGeneratedChanged.InvokeAsync(AgentsGenerated);
         StateHasChanged();
@@ -120,14 +142,7 @@ public partial class AgentBuilder
         AgentsGeneratedChanged.InvokeAsync(AgentsGenerated);
         StateHasChanged();
     }
-    private bool ValidatePrimary(bool isSecondary)
-    {
-        if (!isSecondary)
-        {
-            return !AgentsGenerated.Any(x => x.IsPrimary);
-        }
-        return true;
-    }
+   
     private void ShowFunctions(KernelPlugin kernelFunctions)
     {
         var paramters = new Dictionary<string, object> { { "Plugin", kernelFunctions } };
@@ -142,13 +157,14 @@ public partial class AgentBuilder
             return;
         }
         AgentsGeneratedChanged.InvokeAsync(AgentsGenerated);
-        AgentsCompleted.InvokeAsync(new AgentGroupCompletedArgs { TransitionType = agentGroupForm.GroupTransitionType, Agents = AgentsGenerated});
+        AgentsCompleted.InvokeAsync(new AgentGroupCompletedArgs { TransitionType = agentGroupForm.GroupTransitionType, Agents = AgentsGenerated, StopStatement = agentGroupForm.StopStatement, Rounds = agentGroupForm.Rounds});
     }
     private void AddSubAgent(AgentProxy agentForm)
     {
 
         StateHasChanged();
     }
+    
 }
 public enum GroupTransitionType
 {
@@ -160,4 +176,6 @@ public class AgentGroupCompletedArgs
 {
     public List<AgentProxy> Agents { get; set; } = [];
     public GroupTransitionType TransitionType { get; set; }
+    public string StopStatement { get; set; } = "[STOP]";
+    public int Rounds { get; set; } = 10;
 }

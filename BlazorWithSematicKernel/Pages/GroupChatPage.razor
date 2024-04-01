@@ -22,17 +22,41 @@
             <RadzenRow>
                 <RadzenColumn>
                     <RadzenButton Size=ButtonSize.Small Click="UseLast" Text="Use Moderated Debate Example"></RadzenButton>
+                </RadzenColumn>
+                <RadzenColumn>
+                    <RadzenTemplateForm TItem="FileUploadData" Data="_fileUploadData" Submit="HandleFile">
+                        <RadzenFileInput Name="Fileupload" Error="HandleError" MaxFileSize="FileUploadData.MaxFileSize" ChooseText="Upload previous Agent Group" @bind-FileName="@_fileUploadData.FileName" TValue="string" @bind-Value="@_fileUploadData.FileBase64" @bind-FileSize="_fileUploadData.FileSize" Accept="text/plain,application/json"></RadzenFileInput>
+                        <RadzenRequiredValidator Component="Fileupload" Popup=true Style="position:absolute"></RadzenRequiredValidator>
+                        @if (!string.IsNullOrEmpty(_fileUploadData.FileBase64))
+                        {
+                            <RadzenButton ButtonType="ButtonType.Submit" Text="Upload" Size="ButtonSize.ExtraSmall"></RadzenButton>
+                        }
+                        
+                    </RadzenTemplateForm>
+                </RadzenColumn>
+            </RadzenRow>
+            <RadzenRow>
+                <RadzenColumn>
                     <AgentBuilder @bind-AgentsGenerated=_agentProxies AgentsCompleted="HandleAgentProxies"></AgentBuilder>
                 </RadzenColumn>
+               @*  <RadzenColumn>
+
+                </RadzenColumn> *@
             </RadzenRow>
         </RadzenStepsItem>
         <RadzenStepsItem Text="Execute Agent">
             <RadzenButton Text="Reset" Size="ButtonSize.ExtraSmall" Click="Reset"></RadzenButton>
             <RadzenButton Text="Download" Size="ButtonSize.ExtraSmall" Click="DownloadToFile"></RadzenButton>
+            @if (!string.IsNullOrWhiteSpace(_summary))
+            {
+                <span class="blinking-input">
+                    <RadzenButton Size="ButtonSize.ExtraSmall" Click="ShowSummary" Text="Summary"></RadzenButton>
+                </span>
+            }
             <RadzenCard>
                 <ChatView @ref=_chatView ViewId="simpleagentchat"></ChatView>
             </RadzenCard>
-            <UserInput UserInputSubmit="HandleUserInput" ButtonLabel="Send" HelperText="User Input" IsBusy=_isBusy CancelRequest="Cancel"></UserInput>
+            <UserInput UserInputSubmit="HandleUserInput" ButtonLabel="Send" HelperText="User Input" IsBusy=_isBusy CancelRequest="Cancel" CssClass="@Css"></UserInput>
         </RadzenStepsItem>
     </Steps>
 </RadzenSteps>

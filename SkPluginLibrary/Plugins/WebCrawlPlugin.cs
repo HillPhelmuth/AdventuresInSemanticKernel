@@ -23,7 +23,7 @@ public class WebCrawlPlugin
     {
         var kernel = CreateKernel();
         var summarizePlugin = kernel.ImportPluginFromPromptDirectory(Path.Combine(RepoFiles.PluginDirectoryPath, "SummarizePlugin"), "SummarizePlugin");
-        _summarizeWebContent = summarizePlugin["Summarize"];
+        _summarizeWebContent = summarizePlugin["Notegen"];
         _kernel = kernel;
         _searchService = bingWebSearchService;
 

@@ -64,6 +64,16 @@ public class FileHelper
         var paragraphs = TextChunker.SplitMarkdownParagraphs(lines, 512, 96, $"## {chunckHeader}\n", StringHelpers.GetTokens);
         return paragraphs;
     }
+    public static T DeserializeFromBytes<T>(byte[] data)
+    {
+        // Convert byte array to string
+        string json = Encoding.UTF8.GetString(data);
+
+        // Deserialize the JSON string to the specified type
+        T result = JsonSerializer.Deserialize<T>(json);
+
+        return result;
+    }
 }
 
 public enum FileType

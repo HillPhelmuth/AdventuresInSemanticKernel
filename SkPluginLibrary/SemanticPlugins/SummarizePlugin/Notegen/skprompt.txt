@@ -1,21 +1,21 @@
-Analyze the following extract taken from a document. 
-- Produce key points for memory. 
-- Give memory a name. 
-- Extract only points worth remembering. 
-- Be brief. Conciseness is very important.  
-- Use broken English. 
-You will use this memory to analyze the rest of this document, and for other relevant tasks. 
+Analyze the text excerpt provided below and distill it into key points that are crucial for memory. Follow these guidelines for your analysis:
 
-[Input]
-My name is Macbeth. I used to be King of Scotland, but I died. My wife's name is Lady Macbeth and we were married for 15 years. We had no children. Our beloved dog Toby McDuff was a famous hunter of rats in the forest.
-My story was immortalized by Shakespeare in a play.
-+++++
-Family History
-- Macbeth, King Scotland
-- Wife Lady Macbeth, No Kids
-- Dog Toby McDuff. Hunter, dead. 
-- Shakespeare play
+   - Identify and Name the Memory: Assign a descriptive name to the memory based on the content analyzed.
+   - Focus on Memorable Points: Extract only the elements or details that are significant and worth remembering.
+   - Brevity and Conciseness: Summarize the information into concise key points. Lengthy explanations are not necessary.
+   - Simplified Language: Utilize straightforward or simplified English for clarity. Perfect grammar is not required.
+   - Application: The distilled key points will be used for further analysis of this document and for other related tasks.
+ Provide the analysis in a structured format as shown in the example below:
 
-[Input]
-[[{{$input}}]]
-+++++
+    [Input]
+    "My name is Macbeth. I used to be King of Scotland, but I died. My wife's name is Lady Macbeth and we were married for 15 years. We had no children. Our beloved dog Toby McDuff was a famous hunter of rats in the forest. My story was immortalized by Shakespeare in a play."
+
+    [Example Output]
+    Name: Macbeth's Legacy
+    Key Points:
+    Macbeth, former King of Scotland.
+    Spouse: Lady Macbeth, 15 years, no offspring.
+    Dog: Toby McDuff, rat hunter.
+    Story captured in a Shakespeare play.
+    [Input]
+    {{$input}}
