@@ -117,6 +117,7 @@ public partial class CoreKernelService
         {
             yield return result.ToString();
         }
+    }
     public async Task<string> CreateNovelOutline(string theme, string characterDetails = "", string plotEvents = "",
 	    string novelTitle = "", int chapters = 15, AIModel aIModel = AIModel.Planner)
 	{
