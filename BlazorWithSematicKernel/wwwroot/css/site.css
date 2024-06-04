@@ -173,3 +173,6 @@ json-viewer {
         box-shadow: 0px 0px 8px rgba(0, 128, 0, 0.75); /* More pronounced shadow */
     }
 }
+.hide-outline{
+    opacity:0.5;
+}

@@ -13,4 +13,6 @@ public interface ICustomNativePlugins
 	    CancellationToken token = default);
     Task<string> CreateNovelOutline(string theme, string characterDetails = "", string plotEvents = "",
 	    string novelTitle = "", int chapters = 15, AIModel aIModel = AIModel.Planner);
+
+    Task<NovelOutline> GenerateNovelIdea(NovelGenre genre);
 }

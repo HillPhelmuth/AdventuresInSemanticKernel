@@ -118,6 +118,31 @@ public partial class CoreKernelService
             yield return result.ToString();
         }
     }
+    public async Task<NovelOutline> GenerateNovelIdea(NovelGenre genre)
+    {
+        var kernel = CreateKernel();
+        const string Prompt = """
+                              You are a novel idea generator. Provided a Genre, generate a novel idea.
+                              The idea should contain a Title, a Theme, a few Character Details, and a few key Plot Events.
+                              ## Output
+                              Your output must be in json using the following format:
+                              ```json
+                              {
+                              	"Title": "Title of the Novel",
+                                  "Theme": "Theme of the Novel",
+                                  "Characters": "Character Details",
+                                  "PlotEvents": "Plot Events"
+                              }
+                              ```
+
+                              ## Genre
+                              {{ $genre }}
+                              """;
+        var settings = new OpenAIPromptExecutionSettings { MaxTokens = 1024, Temperature = 0.7, ResponseFormat = "json_object" };
+        var args = new KernelArguments(settings) { ["genre"] = genre.ToString() };
+        var json = await kernel.InvokePromptAsync<string>(Prompt, args);
+        return JsonSerializer.Deserialize<NovelOutline>(json);
+    }
     public async Task<string> CreateNovelOutline(string theme, string characterDetails = "", string plotEvents = "",
 	    string novelTitle = "", int chapters = 15, AIModel aIModel = AIModel.Planner)
 	{

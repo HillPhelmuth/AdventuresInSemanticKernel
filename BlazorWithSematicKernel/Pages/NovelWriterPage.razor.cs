@@ -7,6 +7,8 @@ using System.Linq;
 using SkPluginLibrary.Models.Helpers;
 using static SkPluginLibrary.Models.Helpers.EnumHelpers;
 using System.Text.Json;
+using Radzen.Blazor.Rendering;
+using Radzen.Blazor;
 
 namespace BlazorWithSematicKernel.Pages;
 
@@ -18,21 +20,21 @@ public partial class NovelWriterPage : ComponentBase
 	private bool _isBusy;
     private string _text = "";
     private int _step;
+    private bool _showOutline;
+    RadzenButton _button;
+    Popup _popup;
     private class NovelWriter
     {
         public string Outline { get; set; } = "";
         public AIModel AIModel { get; set; }
        
     }
-    private class NovelOutline
+    private class NovelIdea
     {
-        public string? Theme { get; set; }
-        public string? Characters { get; set; }
-        public string? PlotEvents { get; set; }
-        public string? Title { get; set; }
-        public int ChapterCount { get; set; } = 10;
-        public AIModel AIModel { get; set; }
-	}
+        public NovelGenre NovelGenre { get; set; }
+    }
+    private NovelIdea _novelIdea = new();
+    private List<NovelGenre> _genres = Enum.GetValues<NovelGenre>().ToList();
     private record OutlineChapter(string Title, string Text);
     private List<OutlineChapter> _chapterOutlines = [];
     private NovelWriter _novelWriter = new();
@@ -57,6 +59,18 @@ public partial class NovelWriterPage : ComponentBase
         _isBusy = false;
         StateHasChanged();
 	}
+    private async void SubmitIdea(NovelIdea novelIdea)
+	{
+		_isBusy = true;
+		
+		StateHasChanged();
+
+		await _popup.CloseAsync();
+        _novelOutline = await CustomNativePlugins.GenerateNovelIdea(novelIdea.NovelGenre);
+
+		_isBusy = false;
+		StateHasChanged();
+	}
     private void Cancel()
     {
         _cancellationTokenSource.Cancel();
@@ -69,6 +83,7 @@ public partial class NovelWriterPage : ComponentBase
 	    await Task.Delay(1);
 	    _novelWriter.Outline = await CustomNativePlugins.CreateNovelOutline(novelOutline.Theme, novelOutline.Characters, novelOutline.PlotEvents, novelOutline.Title, novelOutline.ChapterCount, novelOutline.AIModel);
 	    _isBusy = false;
+        _showOutline = true;
         StateHasChanged();
 	}
     private async Task DownloadNovelToFile()
