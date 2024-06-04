@@ -48,7 +48,7 @@ public static class Example61_MultipleLLMs
 
         await RunByServiceIdAsync(kernel, "AzureOpenAIChat");
         await RunByModelIdAsync(kernel, openAIModelId);
-        await RunByFirstModelIdAsync(kernel, "gpt-4-turbo-preview", azureModelId, openAIModelId);
+        await RunByFirstModelIdAsync(kernel, "gpt-4-turbo", azureModelId, openAIModelId);
     }
 
     public static async Task RunByServiceIdAsync(Kernel kernel, string serviceId)

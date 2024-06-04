@@ -18,7 +18,7 @@ public static class Example75_AgentTools
     /// Specific model is required that supports agents and parallel function calling.
     /// Currently this is limited to Open AI hosted services.
     /// </summary>
-    private const string OpenAIFunctionEnabledModel = "gpt-4-turbo-preview";
+    private const string OpenAIFunctionEnabledModel = "gpt-4-turbo";
 
     // Track agents for clean-up
     private static readonly List<IAgent> _agents = [];

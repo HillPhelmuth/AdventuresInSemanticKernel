@@ -4,6 +4,7 @@ using SkPluginLibrary.Abstractions;
 using SkPluginLibrary.Models.Helpers;
 using SkPluginLibrary.Services;
 using System.Text.Json;
+using Microsoft.SemanticKernel.Memory;
 
 namespace BlazorWithSematicKernel.Pages
 {
@@ -31,7 +32,7 @@ namespace BlazorWithSematicKernel.Pages
 
         private List<ClusterDisplay> _clusters = new();
 
-        private readonly Dictionary<DistanceFunction, string> _distanceFunctionDescriptions = typeof(DistanceFunction).GetEnumsWithDescriptions<DistanceFunction>();
+        private readonly Dictionary<DistanceFunction, string> _distanceFunctionDescriptions = EnumHelpers.GetEnumsWithDescriptions<DistanceFunction>();
         private class ClusterForm
         {
             public int MinPoints { get; set; } = 3;
@@ -46,6 +47,7 @@ namespace BlazorWithSematicKernel.Pages
         private bool _isBusy;
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
+
             if (firstRender)
             {
                 //await RunCluster();
@@ -80,10 +82,24 @@ namespace BlazorWithSematicKernel.Pages
         private async Task RunCluster(ClusterForm form)
         {
             var collection = form.UseDefaultContent ? null : FileuploadCollection;
-            _memoryResults = await CoreMemoryKernelService.GetItemClustersFromCollection(form.ItemCount, "*", form.MinPoints, form.MinCluster, form.DistanceFunction, collection);
-            var memoryGroups = _memoryResults.GroupBy(x => x.Cluster).Select(g =>
-                new ClusterDisplay(g.Key, g.FirstOrDefault()?.ClusterTitle ?? "no title", g.ToList()) { Tags = g.FirstOrDefault()?.ClusterSummary });
-            _clusters = memoryGroups.ToList();
+            if (form.UseDefaultContent)
+            {
+                _memoryResults = await CoreMemoryKernelService.GetItemClustersFromCollection(form.ItemCount, "*",
+                    form.MinPoints, form.MinCluster, form.DistanceFunction, collection);
+                var memoryGroups = _memoryResults.GroupBy(x => x.Cluster).Select(g =>
+                    new ClusterDisplay(g.Key, g.FirstOrDefault()?.ClusterTitle ?? "no title", g.ToList())
+                        {Tags = g.FirstOrDefault()?.ClusterSummary});
+                _clusters = memoryGroups.ToList();
+            }
+            else
+            {
+                var records = await ExtractResultsFromJson(form.FileUpload);
+                _memoryResults = await CoreMemoryKernelService.ItemClustersFromCollection(form.MinPoints, form.MinCluster, form.DistanceFunction, records, CoreKernelService.CreateKernel());
+                var memoryGroups = _memoryResults.GroupBy(x => x.Cluster).Select(g =>
+                    new ClusterDisplay(g.Key, g.FirstOrDefault()?.ClusterTitle ?? "no title", g.ToList())
+                    { Tags = g.FirstOrDefault()?.ClusterSummary });
+                _clusters = memoryGroups.ToList();
+            }
             StateHasChanged();
         }
 
@@ -105,13 +121,23 @@ namespace BlazorWithSematicKernel.Pages
 
         private FileUploadData _fileUploadData = new();
         
-
+        private async Task<List<MemoryQueryResult>> ExtractResultsFromJson(FileUploadData fileUploadData)
+        {
+            var fileBase64 = fileUploadData.FileBase64!.ExtractBase64FromDataUrl();
+            var data = Convert.FromBase64String(fileBase64);
+            using var stream = new MemoryStream(data);
+            var records = await JsonSerializer.DeserializeAsync<List<MemoryQueryResult>>(stream);
+            return records;
+        }
         private async Task HandleFile(FileUploadData fileUploadData)
         {
-            if (_fileNameHandled == fileUploadData.FileName) return;
+	        var fileName = fileUploadData.FileName;
+	        if (_fileNameHandled == fileName) return;
             var file = Convert.FromBase64String(fileUploadData.FileBase64!.ExtractBase64FromDataUrl());
-            await CoreMemoryKernelService.ChunkAndSaveFileCluster(file, $"File: {fileUploadData.FileName}", collectionName: FileuploadCollection);
-            _fileNameHandled = fileUploadData.FileName!;
+            var noCase = StringComparison.InvariantCultureIgnoreCase;
+            FileType fileType = fileName.EndsWith(".pdf", noCase) ? FileType.Pdf : fileName.EndsWith(".json", noCase) ? FileType.Json : FileType.Text;
+            await CoreMemoryKernelService.ChunkAndSaveFileCluster(file, $"File: {fileName}", collectionName: FileuploadCollection, fileType:fileType);
+            _fileNameHandled = fileName!;
             _isBusy = false;
             StateHasChanged();
         }

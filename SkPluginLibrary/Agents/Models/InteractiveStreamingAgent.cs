@@ -30,7 +30,8 @@ namespace SkPluginLibrary.Agents.Models
             var plugin = KernelPluginFactory.CreateFromFunctions("InteractiveAgentPlugin", "", [function]);
             Plugins.Add(plugin);
         }
-        public override async Task<AgentMessage?> RunAgentAsync(List<AgentMessage> chatHistory, PromptExecutionSettings? settings = null, CancellationToken cancellationToken = default)
+        public override async Task<ChatMessageContent?> RunAgentAsync(ChatHistory chatHistory,
+	        PromptExecutionSettings? settings = null, CancellationToken cancellationToken = default)
         {
             if (Agent.Plugins.Count > Kernel.Plugins.Count)
             {
@@ -39,13 +40,13 @@ namespace SkPluginLibrary.Agents.Models
                 Kernel.Plugins.AddRange(Agent.Plugins);
             }
             var chat = Kernel.Services.GetRequiredService<IChatCompletionService>();
-            var chatmessageHistory = chatHistory.AsChatHistory();
+            var chatmessageHistory = chatHistory/*.AsChatHistory()*/;
             chatmessageHistory.AddSystemMessage(SystemPrompt);
             var callBehavior = Plugins.Count > 0 ? ToolCallBehavior.AutoInvokeKernelFunctions : null;
             Console.WriteLine($"{Name} ToolCallBehavior: {callBehavior}");
             settings ??= new OpenAIPromptExecutionSettings() { Temperature = Temperature, ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions, ChatSystemPrompt = SystemPrompt };
-            AgentMessage? message = null;
-            AgentMessageStreamUpdate? finalMessage = null;
+            ChatMessageContent? message = null;
+            StreamingChatMessageContent? finalMessage = null;
             
             var hasStarted = false;
             try
@@ -63,7 +64,7 @@ namespace SkPluginLibrary.Agents.Models
                     {
                         message.Content += update.Content;
                     }
-                    var agentChatMessageContent = new AgentMessageStreamUpdate(update.Role, update.Content, Name, update.InnerContent, update.ChoiceIndex, update.ModelId, update.Encoding, update.Metadata);
+                    var agentChatMessageContent = new StreamingChatMessageContent(update.Role, update.Content, update.InnerContent, update.ChoiceIndex, update.ModelId, update.Encoding, update.Metadata) { AuthorName = update.AuthorName};
                     finalMessage = agentChatMessageContent;
                     this.AgentStreamingResponse?.Invoke(this, new AgentStreamingResponseArgs(agentChatMessageContent) { IsStartToken = !hasStarted});
                     hasStarted = true;

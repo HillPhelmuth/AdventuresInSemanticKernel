@@ -1,4 +1,5 @@
-﻿using Microsoft.SemanticKernel.Memory;
+﻿using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.Memory;
 using SkPluginLibrary.Services;
 
 namespace SkPluginLibrary.Abstractions;
@@ -13,4 +14,8 @@ public interface IMemoryConnectors
     Task<List<MemoryResult>> GetItemClustersFromCollection(int numberOfItems = 100, string searchTerm = "*", int minpoints = 3, int minCluster = 3, DistanceFunction distanceFunction = DistanceFunction.CosineSimilarity, string? collection = null);
     Task ChunkAndSaveFileCluster(byte[] file, string filename, FileType fileType = FileType.Pdf,
         string? collectionName = null);
+
+    Task<List<MemoryResult>> ItemClustersFromCollection(int minpoints, int minCluster,
+        DistanceFunction distanceFunction,
+        IEnumerable<MemoryQueryResult> itemList, Kernel kernel);
 }

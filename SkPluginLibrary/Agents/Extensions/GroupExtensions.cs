@@ -13,16 +13,16 @@ public static class GroupExtensions
 {
     public static ChatHistory AsChatHistory(this List<AgentMessage> agentChatHistory)
     {
-        return agentChatHistory.Count == 0 ? [] : new ChatHistory(agentChatHistory.Select(message => new ChatMessageContent(message.Role, $"{message.AgentName}:\n{message.Content}", message.ModelId, message.InnerContent, message.Encoding, message.Metadata)));
+        return agentChatHistory.Count == 0 ? [] : new ChatHistory(agentChatHistory.Select(message => new ChatMessageContent(message.Role, $"{message.AuthorName}:\n{message.Content}", message.ModelId, message.InnerContent, message.Encoding, message.Metadata)));
     }
-    public static string FormatMessage(this AgentMessage message)
+    public static string FormatMessage(this ChatMessageContent message)
     {
         var sb = new StringBuilder();
         // write from
-        sb.AppendLine($"Message from <strong>{message.AgentName}</strong>");
+        sb.AppendLine($"Message from <strong>{message?.AuthorName}</strong>");
         // write a seperator
         sb.AppendLine("\n");
-        sb.AppendLine(message.Content);
+        sb.AppendLine(message?.Content);
         // write a seperator
         sb.AppendLine("<hr/>");
 

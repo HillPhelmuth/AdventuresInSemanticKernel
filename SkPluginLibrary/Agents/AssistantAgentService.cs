@@ -16,7 +16,7 @@ namespace SkPluginLibrary.Agents;
 public class AssistantAgentService : IAsyncDisposable
 {
     private static readonly List<IAgent> Agents = [];
-    public event Action<AgentMessage>? ChatMessage;
+    //public event Action<AgentMessage>? ChatMessage;
     public event Action<ChatHistory>? ChatHistoryUpdate;
     private ChatHistory _chatHistory = [];
     private AgentProxy? _chatAgent; 
@@ -150,13 +150,13 @@ public class AssistantAgentService : IAsyncDisposable
         }
         return Track(await agentBuilder.BuildAsync());
     }
-    private void HandleFunctionInvokingFilter(object? sender, FunctionInvokingContext context)
+    private void HandleFunctionInvokingFilter(object? sender, FunctionInvocationContext context)
     {
         var function = context.Function;
         Console.WriteLine($"Function Arguments: {context.Arguments.AsJson()}");
         Console.WriteLine($"Function {function.Name} Invoking");
     }
-    private void HandleFunctionInvokedFilter(object? sender, FunctionInvokedContext context)
+    private void HandleFunctionInvokedFilter(object? sender, FunctionInvocationContext context)
     {
         var function = context.Function;
         Console.WriteLine($"\n---------Function {function.Name} Invoked-----------\nResults:\n{context.Result.Result()}\n----------------------------");

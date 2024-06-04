@@ -382,3 +382,8 @@ FodyWeavers.xsd
 /SkPluginLibrary/YamlPlugins/EvalPlugin/SqlQueryEval.yaml
 /SkPluginLibrary/AbotX.lic
 /BlazorWithSematicKernel/agents.json
+/BlazorWithSematicKernel/clusterTitles_CosineSimilarity.json
+/BlazorWithSematicKernel/clusterTitles_EuclideanDistance.json
+/BlazorWithSematicKernel/clusterTitles_ManhattanDistance.json
+/BlazorWithSematicKernel/clusterTitles_SupremumDistance.json
+/BlazorWithSematicKernel/path.json

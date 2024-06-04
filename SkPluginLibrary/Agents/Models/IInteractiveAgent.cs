@@ -1,4 +1,5 @@
 ﻿using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.ChatCompletion;
 
 namespace SkPluginLibrary.Agents.Models;
 
@@ -10,5 +11,6 @@ public interface IInteractiveAgent
     public string Name { get; }
     string Description { get; }
 
-    Task<AgentMessage?> RunAgentAsync(List<AgentMessage> chatHistory, PromptExecutionSettings? settings = null, CancellationToken cancellationToken = default);
+    Task<ChatMessageContent?> RunAgentAsync(ChatHistory chatHistory, PromptExecutionSettings? settings = null,
+	    CancellationToken cancellationToken = default);
 }

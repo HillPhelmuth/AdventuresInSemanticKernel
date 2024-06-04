@@ -13,7 +13,8 @@ namespace SkPluginLibrary.Agents.Models
         public UserProxyAgent(AgentProxy agent, Kernel kernel) : base(agent, kernel)
         {
         }
-        public override async Task<AgentMessage?> RunAgentAsync(List<AgentMessage> chatHistory, PromptExecutionSettings? settings = null, CancellationToken cancellationToken = default)
+        public override async Task<ChatMessageContent?> RunAgentAsync(ChatHistory chatHistory,
+	        PromptExecutionSettings? settings = null, CancellationToken cancellationToken = default)
         {
             var content = await GetHumanInputAsync();
             var agentChatMessageContent = new AgentMessage(AuthorRole.User, content, Name);

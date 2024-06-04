@@ -29,6 +29,7 @@ public partial class GroupChatPage : ComponentBase
     }
     private AgentProxy? _agentProxy;
     private List<AgentProxy> _agentProxies = [];
+    private List<AgentProxy> _agentsAsPlugins = [];
     private bool _isBusy;
     private bool _isUserInputRequested;
     private ChatView? _chatView;
@@ -58,7 +59,7 @@ public partial class GroupChatPage : ComponentBase
     {
         _agentProxies = FileHelper.ExtractFromAssembly<List<AgentProxy>>("agentsExample.json") /*JsonSerializer.Deserialize<List<AgentProxy>>(File.ReadAllText("agentsExample.json"))*/;
         StateHasChanged();
-        
+
     }
     private void SelectAgent(SelectAgentForm selectAgentForm)
     {
@@ -66,31 +67,12 @@ public partial class GroupChatPage : ComponentBase
         File.WriteAllText("agents.json", JsonSerializer.Serialize(_agentProxies, JsonSerializerOptions));
 #endif 
         var adminProxy = selectAgentForm.AdminAgent!;
-        var interactiveAgents = new List<InteractiveAgentBase>();
-        foreach (var agent in _agentProxies)
-        {
-            if (agent.Name == adminProxy.Name) continue;
-            var model = agent.GptModel switch
-            {
-                "Gpt4" => AIModel.Gpt4,
-                "Gpt35" => AIModel.Gpt35,
-                _ => AIModel.Gpt4
-            };
-            var kernel = CoreKernelService.CreateKernel(model);
-            if (agent.IsUserProxy)
-            {
-                var user = new UserProxyAgent(agent, kernel);
-                user.AgentInputRequest += HandleInteractiveAgentInputRequest;
-                interactiveAgents.Add(user);
-            }
-            else
-            {
-                var interactiveAgent = new InteractiveStreamingAgent(agent, kernel);
-                interactiveAgents.Add(interactiveAgent);
-            }
-        }
-        var agents = interactiveAgents;
-        var adminAgent = new InteractiveStreamingAgent(adminProxy, _kernel!);
+        var agents = InteractiveAgents(adminProxy, _agentProxies);
+        InteractiveStreamingAgent adminAgent;
+        if (adminProxy.GptModel.StartsWith("gemini"))
+            adminAgent = new InteractiveStreamingAgent(adminProxy, CoreKernelService.CreateKernelGoogle(adminProxy.GptModel));
+        else
+            adminAgent = new InteractiveStreamingAgent(adminProxy, _kernel!);
         adminAgent.AgentStreamingResponse += HandleInteractiveStreamingResponse;
         var transitions = new List<Transition>();
         foreach (var agent in agents)
@@ -115,10 +97,50 @@ public partial class GroupChatPage : ComponentBase
         _step = 2;
         StateHasChanged();
     }
+
+    private List<InteractiveAgentBase> InteractiveAgents(AgentProxy adminProxy, List<AgentProxy> agentProxies)
+    {
+	    var interactiveAgents = new List<InteractiveAgentBase>();
+	    foreach (var agent in agentProxies)
+	    {
+		    if (agent.Name == adminProxy.Name) continue;
+		    var model = agent.GptModel switch
+		    {
+			    "Gpt4" => AIModel.Gpt4,
+			    "Gpt35" => AIModel.Gpt35,
+			    "gemini-1.0-pro" => AIModel.Gemini10,
+			    "gemini-1.5-pro-latest" => AIModel.Gemini15,
+			    _ => AIModel.Gpt4
+		    };
+		    Kernel kernel;
+		    if (model is AIModel.Gpt35 or AIModel.Gpt4)
+			    kernel = CoreKernelService.CreateKernel(model);
+		    else
+		    {
+			    kernel = CoreKernelService.CreateKernelGoogle();
+
+		    }
+		    if (agent.IsUserProxy)
+		    {
+			    var user = new UserProxyAgent(agent, kernel);
+			    user.AgentInputRequest += HandleInteractiveAgentInputRequest;
+			    interactiveAgents.Add(user);
+		    }
+		    else
+		    {
+			    var interactiveAgent = new InteractiveStreamingAgent(agent, kernel);
+			    interactiveAgents.Add(interactiveAgent);
+		    }
+	    }
+	    return interactiveAgents;
+	    
+    }
+
     protected override Task OnInitializedAsync()
     {
         var aiModel = AIModel.Gpt4;
         _kernel = CoreKernelService.CreateKernel(aiModel);
+        _agentsAsPlugins = FileHelper.ExtractFromAssembly<List<AgentProxy>>("agentsExample.json");
         return base.OnInitializedAsync();
     }
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -126,6 +148,7 @@ public partial class GroupChatPage : ComponentBase
         if (firstRender)
         {
             _allKernelPlugins = (await CorePluginService.GetAllPlugins()).SelectMany(x => x.Value).ToList();
+
         }
         await base.OnAfterRenderAsync(firstRender);
     }
@@ -137,7 +160,7 @@ public partial class GroupChatPage : ComponentBase
         var groupFileName = _agentProxies.Find(a => a.IsPrimary)?.Name ?? "UnknownGroup";
         await JsRuntime.InvokeVoidAsync("downloadFile", $"{groupFileName}.json", fileContent);
     }
-   
+
     private void HandleAgentProxies(AgentGroupCompletedArgs agentGroupCompleted)
     {
         _agentProxies = agentGroupCompleted.Agents;
@@ -158,13 +181,13 @@ public partial class GroupChatPage : ComponentBase
     private string? _summary;
     private async void HandleUserInput(UserInputRequest userInputRequest)
     {
-        
+
         _isBusy = true;
         StateHasChanged();
         await Task.Delay(1);
         var input = userInputRequest.ChatInput!;
         _chatView!.ChatState.AddUserMessage(input);
-        
+
         var history = _chatView!.ChatState.ChatHistory;
         if (_isUserInputRequested)
         {
@@ -177,19 +200,19 @@ public partial class GroupChatPage : ComponentBase
         _cancellationTokenSource = new();
         _summary = null;
         var token = _cancellationTokenSource.Token;
-        var result = await _groupChat.CallAsync(input,_selectAgentForm.Rounds, ct: token);
+        var result = await _groupChat.CallAsync(input, _selectAgentForm.Rounds, ct: token);
         var sb = new StringBuilder();
         foreach (var message in result)
         {
             sb.AppendLine(message.FormatMessage());
         }
         _summary = sb.ToString();
-        
+
     }
-    private void HandleInteractiveAgentResponse(object? sender, AgentResponseArgs args)
-    {
-        _chatView.ChatState.AddAssistantMessage($"{args.AgentChatMessage.AgentName}:<br/> { args.AgentChatMessage.Content}");
-    }
+    //private void HandleInteractiveAgentResponse(object? sender, AgentResponseArgs args)
+    //{
+    //    _chatView.ChatState.AddAssistantMessage($"{args.AgentChatMessage.AuthorName}:<br/> {args.AgentChatMessage.Content}");
+    //}
     private async void HandleInteractiveAgentInputRequest(object? sender, AgentInputRequestEventArgs args)
     {
         _isBusy = false;
@@ -202,7 +225,7 @@ public partial class GroupChatPage : ComponentBase
     {
         if (args.IsStartToken)
         {
-            _chatView.ChatState.AddAssistantMessage($"{args.AgentChatMessageUpdate.AgentName}:<br/> {args.AgentChatMessageUpdate.Content}");
+            _chatView.ChatState.AddAssistantMessage($"{args.AgentChatMessageUpdate.AuthorName}:<br/> {args.AgentChatMessageUpdate.Content}");
         }
         else
         {
@@ -258,13 +281,13 @@ public partial class GroupChatPage : ComponentBase
     private JsonSerializerOptions? _jsonSerializerOptions;
     private JsonSerializerOptions JsonSerializerOptions
     {
-        get 
+        get
         {
-            var jsonSerializerOptions = new JsonSerializerOptions(new JsonSerializerOptions()) { WriteIndented = true,};
+            var jsonSerializerOptions = new JsonSerializerOptions(new JsonSerializerOptions()) { WriteIndented = true, };
             jsonSerializerOptions.Converters.Add(new TypeJsonConverter());
             _jsonSerializerOptions ??= jsonSerializerOptions;
-            
-            return _jsonSerializerOptions; 
+
+            return _jsonSerializerOptions;
         }
     }
 

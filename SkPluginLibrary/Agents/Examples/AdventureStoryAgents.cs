@@ -42,7 +42,7 @@ public class AdventureStoryAgents(AskUserService askUserService) : IAsyncDisposa
         kernel.Plugins.Add(_zanar.AsPlugin());
         kernel.Plugins.Add(_elara.AsPlugin());
         var functionHook = new FunctionFilterHook();
-        kernel.FunctionFilters.Add(functionHook);
+        kernel.FunctionInvocationFilters.Add(functionHook);
         functionHook.FunctionInvoking += HandleFunctionInvoking;
         functionHook.FunctionInvoked += HandleFunctionInvoked;
         OpenAIPromptExecutionSettings settings = new() { ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions, ChatSystemPrompt = AdventureSystemPrompt, Temperature = 1.0 };
@@ -77,12 +77,12 @@ public class AdventureStoryAgents(AskUserService askUserService) : IAsyncDisposa
         ChatHistoryUpdate?.Invoke(_chatHistory);
 
     }
-    private void HandleFunctionInvoked(object? sender, FunctionInvokedContext invokedArgs)
+    private void HandleFunctionInvoked(object? sender, FunctionInvocationContext invokedArgs)
     {
         var function = invokedArgs.Function;
         Console.WriteLine($"\n---------Function {function.Name} Invoked-----------\nResults:\n{invokedArgs.Result}\n----------------------------");
     }
-    private void HandleFunctionInvoking(object? sender, FunctionInvokingContext invokingEventArgs)
+    private void HandleFunctionInvoking(object? sender, FunctionInvocationContext invokingEventArgs)
     {
         var function = invokingEventArgs.Function;
         Console.WriteLine($"Function Arguments: {invokingEventArgs.Arguments.AsJson()}");

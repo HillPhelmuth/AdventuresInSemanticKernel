@@ -108,7 +108,7 @@
                     </div>
                     break;
                 case DisplayType.PlainText:
-                    <RadzenText>@_output</RadzenText>
+                    <RadzenText><pre>@_output</pre></RadzenText>
                     break;
                 case DisplayType.Markdown:
                     <div>@((MarkupString)AsHtml(_output))</div>

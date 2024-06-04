@@ -16,6 +16,10 @@
     margin-left: auto;
     border-radius: 30px 30px 0 30px;
 }
-.assistant h1, h2, h3, h4, h5 {
-    color: white !important;
+.assistant > h1,
+.assistant > h2,
+.assistant > h3,
+.assistant > h4,
+.assistant > h5 {
+	color: white !important;
 }

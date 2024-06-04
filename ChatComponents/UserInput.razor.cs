@@ -23,6 +23,7 @@ namespace ChatComponents
         public EventCallback CancelRequest { get; set; }
         [Parameter]
         public string CssClass { get; set; } = "";
+        private bool _isTextArea;
         protected override Task OnParametersSetAsync()
         {
             _requestForm.UserInputRequest.UserInputType = UserInputType;

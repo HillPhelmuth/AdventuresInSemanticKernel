@@ -40,7 +40,7 @@
                 @if (!_clusterForm.UseDefaultContent)
                 {
                     <RadzenFormField>
-                        <ChildContent><RadzenFileInput Error="HandleError" MaxFileSize="FileUploadData.MaxFileSize" ChooseText="Upload pdf, txt or docx file" @bind-FileName="@_clusterForm.FileUpload.FileName" TValue="string" @bind-Value="@_clusterForm.FileUpload.FileBase64" @bind-FileSize="_clusterForm.FileUpload.FileSize" Accept="text/plain,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"></RadzenFileInput></ChildContent>
+                        <ChildContent><RadzenFileInput Error="HandleError" MaxFileSize="FileUploadData.MaxFileSize" ChooseText="Upload pdf, txt or docx file" @bind-FileName="@_clusterForm.FileUpload.FileName" TValue="string" @bind-Value="@_clusterForm.FileUpload.FileBase64" @bind-FileSize="_clusterForm.FileUpload.FileSize" Accept="text/x-markdown,text/plain,application/pdf,application/msword,application/json,application/vnd.openxmlformats-officedocument.wordprocessingml.document"></RadzenFileInput></ChildContent>
                         <Helper>
                             <RadzenText TextStyle="TextStyle.Caption" Text="Upload a file to chunk, vectorize and cluster"></RadzenText>
                             @* <RadzenRequiredValidator Component="File" Text="Upload a file" Popup=true Style="position:absolute"></RadzenRequiredValidator> *@
@@ -63,7 +63,7 @@
     <RadzenColumn Size="7">
 
         <RadzenCard>
-            <RadzenDataGrid Data="_clusters" TItem="ClusterDisplay" AllowSorting="true" AllowPaging="true" AllowFiltering="true" PageSize="5" Density="Density.Compact" ShowPagingSummary="true" Style="width: 100%">
+            <RadzenDataGrid Data="_clusters" TItem="ClusterDisplay" AllowSorting="true" AllowPaging="true" AllowFiltering="true" PageSize="15" Density="Density.Compact" ShowPagingSummary="true" Style="width: 100%">
                 <Template Context="cluster">
                     <RadzenTabs>
                         <Tabs>
@@ -93,7 +93,11 @@
                 <Columns>
                     <RadzenDataGridColumn TItem="ClusterDisplay" Title="Label" Property="CluserLabel" Width="5%"></RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="ClusterDisplay" Title="Generated Cluster Title" Property="Title" Width="85%"></RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="ClusterDisplay" Title="#" Property="Count" Width="10%"></RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="ClusterDisplay" Title="#" Property="Count" Width="10%">
+                     <FooterTemplate>
+                      @_clusters.Sum(x => x.Count)
+                     </FooterTemplate>
+                    </RadzenDataGridColumn>
                     @* <RadzenDataGridColumn TItem="ClusterDisplay" Title="Summary" Property="Tags" Width="45%"></RadzenDataGridColumn> *@
                 </Columns>
             </RadzenDataGrid>

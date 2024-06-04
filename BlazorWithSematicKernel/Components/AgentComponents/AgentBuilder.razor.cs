@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Components;
 using Radzen.Blazor;
 using SkPluginLibrary.Abstractions;
 using SkPluginLibrary.Agents;
 using SkPluginLibrary.Agents.Models;
+using static SkPluginLibrary.CoreKernelService;
 
 namespace BlazorWithSematicKernel.Components.AgentComponents;
 
@@ -28,6 +30,8 @@ public partial class AgentBuilder
     public EventCallback<AgentGroupCompletedArgs> AgentsCompleted { get; set; }
     [Parameter]
     public List<AgentProxy> AgentsGenerated { get; set; } = [];
+    [Parameter]
+    public List<AgentProxy> AgentsAsPlugins { get; set; } = [];
     //[Parameter]
     //public EventCallback<AgentGroupCompletedArgs> AgentGroupCompleted { get; set; }
 
@@ -41,9 +45,22 @@ public partial class AgentBuilder
     private async Task AllPlugins()
     {
         _allPluginTypes = await CoreKernelService.GetAllPlugins();
-        _allPlugins = _allPluginTypes.Where(x => x.Key != PluginType.Api).SelectMany(x => x.Value.Select(y => new PluginData(x.Key, y))).ToList();
+        if (AgentsAsPlugins.Count > 0)
+        {
+            var kernel = CreateKernel();
+            var plugins = new List<KernelPlugin>();
+            foreach (var agent in AgentsAsPlugins)
+            {
+                var interactive = new InteractiveAgent(agent, kernel.Clone());
+                var plugin = interactive.AsPlugin();
+                plugins.Add(plugin);
+            }
+            _allPluginTypes[PluginType.Agent] = plugins;
+        }
+        _allPlugins = _allPluginTypes.SelectMany(x => x.Value.Select(y => new PluginData(x.Key, y))).ToList();
 
     }
+    
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)

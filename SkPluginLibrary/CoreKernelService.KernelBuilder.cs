@@ -16,6 +16,7 @@ using Microsoft.SemanticKernel.Planning;
 using System.Text;
 using SkPluginLibrary.Models.Hooks;
 using Azure.AI.OpenAI;
+using Microsoft.SemanticKernel.Connectors.Google;
 
 namespace SkPluginLibrary;
 
@@ -78,18 +79,25 @@ public partial class CoreKernelService
 
     private Dictionary<string, object> GetCustomNativePlugins()
     {
-        _customNativePlugins ??= new Dictionary<string, object>();
+        _customNativePlugins ??= [];
         //var result = new Dictionary<string, object>();
         var kernel = CreateKernel();
+        var novelWriterPlugin = new NovelWriterPlugin();
+        _customNativePlugins.TryAdd(nameof(NovelWriterPlugin), novelWriterPlugin);
         var csharpPlugin = new ReplCsharpPlugin(kernel);
         _customNativePlugins.TryAdd(nameof(ReplCsharpPlugin), csharpPlugin);
+        var csharpExecutePlugin = new CodeExecuterPlugin();
+        _customNativePlugins.TryAdd(nameof(CodeExecuterPlugin), csharpExecutePlugin);
+        var webToMarkdownPlugin = new WebToMarkdownPlugin();
+        _customNativePlugins.TryAdd(nameof(WebToMarkdownPlugin), webToMarkdownPlugin);
         var webCrawlPlugin = new WebCrawlPlugin(_bingSearchService);
         _customNativePlugins.TryAdd(nameof(WebCrawlPlugin), webCrawlPlugin);
         var dndPlugin = new DndPlugin();
         _customNativePlugins.TryAdd(nameof(DndPlugin), dndPlugin);
         var jsonPlugin = new HandleJsonPlugin();
         _customNativePlugins.TryAdd(nameof(HandleJsonPlugin), jsonPlugin);
-
+        var promptExpertPlugin = new PromptExpertPlugin(_configuration);
+        _customNativePlugins.TryAdd(nameof(PromptExpertPlugin), promptExpertPlugin);
         var wikiPlugin = new WikiChatPlugin();
         _customNativePlugins.TryAdd(nameof(WikiChatPlugin), wikiPlugin);
         var youtubePlugin = new YouTubePlugin(kernel, _configuration["YouTubeSearch:ApiKey"]!);
@@ -129,7 +137,7 @@ public partial class CoreKernelService
     }
 
     private static IEnumerable<string?> SemanticPlugins =>
-        Directory.GetDirectories(RepoFiles.PluginDirectoryPath).Select(Path.GetFileName).ToList();
+        Directory.GetDirectories(RepoFiles.PathToYamlPlugins).Select(Path.GetFileName).ToList();
 
     private static IEnumerable<string?> ApiPlugins => Directory.GetDirectories(RepoFiles.ApiPluginDirectoryPath)
         .Select(Path.GetFileName).ToList();
@@ -199,22 +207,36 @@ public partial class CoreKernelService
 
     private ChatHistory _chatHistory = [];
 
-    public async IAsyncEnumerable<string> ChatWithAutoFunctionCalling(string query, ChatRequestModel requestModel, bool runAsChat = true, string? askOverride = null, [EnumeratorCancellation] CancellationToken cancellationToken = default, bool resetChat = false)
+    public async IAsyncEnumerable<string> ChatWithAutoFunctionCalling(string query, ChatRequestModel requestModel, bool runAsChat = false, string? askOverride = null, [EnumeratorCancellation] CancellationToken cancellationToken = default, bool resetChat = false)
     {
         if (resetChat)
             _chatHistory = [];
         var systemPrompt = "You are a helpful assistant. Use the tools available to fulfill the user's request";
-        var kernel = CreateKernelWithPlugins(requestModel.SelectedPlugins);
+        var kernel = CreateKernelWithPlugins(requestModel.SelectedPlugins, requestModel.SelectedModel);
         var functionHook = new FunctionFilterHook();
         functionHook.FunctionInvoking += (_, e) => 
         {
             var soemthing = e.Function;
-            YieldAdditionalText?.Invoke($"\n<h4> Executing {soemthing.Name} {soemthing.Metadata.PluginName}</h4>\n\n");
+            YieldAdditionalText?.Invoke($"\n<h4> Executing {soemthing.Name} {soemthing.Metadata.PluginName}</h4>\n");
         };
         functionHook.FunctionInvoked += HandleFunctionInvokedFilter;
-        var settings = new OpenAIPromptExecutionSettings { ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions, ChatSystemPrompt = systemPrompt };
+        PromptExecutionSettings settings;
+        if (requestModel.SelectedModel == AIModel.Gemini10)
+        {
+            settings = new GeminiPromptExecutionSettings { ToolCallBehavior = GeminiToolCallBehavior.AutoInvokeKernelFunctions};
+        }
+        else
+        {
+            settings = new OpenAIPromptExecutionSettings
+                {ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions, ChatSystemPrompt = systemPrompt};
+        }
         if (!runAsChat)
         {
+            //if (requestModel.SelectedModel == AIModel.Gemini10)
+            //{
+            //    var nonStreamingResult = await kernel.InvokePromptAsync(query, new KernelArguments(settings), cancellationToken: cancellationToken);
+            //    yield return nonStreamingResult.GetValue<string>() ?? "Uh oh, null!!";
+            //}
             await foreach (var update in kernel.InvokePromptStreamingAsync(query, new KernelArguments(settings), cancellationToken: cancellationToken))
             {
                 yield return update.ToString();
@@ -227,13 +249,26 @@ public partial class CoreKernelService
             var assistantMessage = "";
             await foreach (var streamingChatMessageContent in chat.GetStreamingChatMessageContentsAsync(_chatHistory, settings, kernel, cancellationToken))
             {
-                var update = (OpenAIStreamingChatMessageContent)streamingChatMessageContent;
-                var toolCall = update.ToolCallUpdate as StreamingFunctionToolCallUpdate;
-                if (toolCall?.Name is not null)
-                    YieldAdditionalText?.Invoke($"<h4>Executing {toolCall.ToolCallIndex}. {toolCall.Name}</h4>");
-                if (update.Content is null) continue;
-                assistantMessage += update.Content;
-                yield return update.Content;
+                if (requestModel.SelectedModel != AIModel.Gemini10)
+                {
+                    var update = (OpenAIStreamingChatMessageContent) streamingChatMessageContent;
+                    var toolCall = update.ToolCallUpdate as StreamingFunctionToolCallUpdate;
+                    if (toolCall?.Name is not null)
+                        YieldAdditionalText?.Invoke($"<h4>Executing {toolCall.ToolCallIndex}. {toolCall.Name}</h4>");
+                    if (update.Content is null) continue;
+                    assistantMessage += update.Content;
+                    yield return update.Content;
+                }
+                else
+                {
+                    var gUpdate = (GeminiStreamingChatMessageContent)streamingChatMessageContent;
+                    var toolCall = gUpdate.ToolCalls?[0];
+                    if (toolCall?.FunctionName is not null)
+                        YieldAdditionalText?.Invoke($"<h4>Executing {toolCall.FunctionName} - {toolCall.PluginName}</h4>");
+                    if (gUpdate.Content is null) continue;
+                    assistantMessage += gUpdate.Content;
+                    yield return gUpdate.Content;
+                }
             }
             _chatHistory.AddAssistantMessage(assistantMessage);
         }
@@ -247,30 +282,48 @@ public partial class CoreKernelService
         [EnumeratorCancellation] CancellationToken cancellationToken = default, bool resetChat = false)
     {
 
-        var kernel = CreateKernelWithPlugins(chatRequestModel.SelectedPlugins);
+        var kernel = CreateKernelWithPlugins(chatRequestModel.SelectedPlugins, chatRequestModel.SelectedModel);
         var functionHook = new FunctionFilterHook();
-        kernel.FunctionFilters.Add(functionHook);
+        functionHook.FunctionInvoking += HandleFunctionInvokingFilter;
+        functionHook.FunctionInvoked += HandleFunctionInvokedFilter;
+        kernel.FunctionInvocationFilters.Add(functionHook);
         var config = new FunctionCallingStepwisePlannerOptions
         {
             MaxIterations = 15,
-            MaxTokens = 5500,
+            MaxTokensRatio = 0.15,
+            MaxTokens = 16000
 
         };
+        foreach (var function in chatRequestModel.ExcludedFunctions ?? [])
+        {
+            config.ExcludedFunctions.Add(function);
+        }
         var planner = new FunctionCallingStepwisePlanner(config);
 
-        yield return "<h2>Generating Plan...</h2><br/>";
+        
         askOverride ??= query;
 
 
         yield return "<br/><h3>Executing plan...</h3><br/>";
-        //These Do Not Fire
-        functionHook.FunctionInvoking += HandleFunctionInvokingFilter;
-        functionHook.FunctionInvoked += HandleFunctionInvokedFilter;
-        //These Fire
-        kernel.FunctionInvoking += HandleFunctionInvoking;
-        kernel.FunctionInvoked += HandleFunctionInvoked;
-        var planResults = await planner.ExecuteAsync(kernel, askOverride, cancellationToken);
-        var chatResult = planResults.ChatHistory;
+        
+        var chatResult = new MyChatHistory();
+        chatResult.OnChatMessageContent += (message) =>
+        {
+            var messageUpdate = $"""
+                          <details>
+                            <summary>{message.Role}</summary>
+                            
+                            <h5>Message</h5>
+                            <p>
+                            {message.Content}
+                            </p>
+                            <br/>
+                          </details>
+                          """;
+            YieldAdditionalText?.Invoke(messageUpdate);
+        };
+        var planResults = await planner.ExecuteAsync(kernel, askOverride, chatResult, cancellationToken);
+        //var chatResult = planResults.ChatHistory;
         var historyBuilder = new StringBuilder();
 
         historyBuilder.AppendLine("<ol>");
@@ -311,11 +364,11 @@ public partial class CoreKernelService
     {
         var kernel = CreateKernelWithPlugins(chatRequestModel.SelectedPlugins);
         var functionHook = new FunctionFilterHook();
-        kernel.FunctionFilters.Add(functionHook);
+        kernel.FunctionInvocationFilters.Add(functionHook);
         functionHook.FunctionInvoking += HandleFunctionInvokingFilter;
         functionHook.FunctionInvoked += HandleFunctionInvokedFilter;
         var planner = CreateHandlebarsPlanner(chatRequestModel);
-        yield return "<h2> Generating Plan</h2>\n\n";
+        yield return "<h2> Generating Plan</h2>";
         HandlebarsPlan? plan = null;
         var isError = false;
         var ask = askOverride ?? query;
@@ -417,25 +470,33 @@ public partial class CoreKernelService
         var planner = new HandlebarsPlanner(config);
         return planner;
     }
-    private void HandleFunctionInvoking(object? sender, FunctionInvokingEventArgs args)
-    {
-        HandleFunctionInvokingFilter(sender, new FunctionInvokingContext(args.Function, args.Arguments));
-    }
-    private void HandleFunctionInvoked(object? sender, FunctionInvokedEventArgs args)
-    {
-        HandleFunctionInvokedFilter(sender, new FunctionInvokedContext(args.Arguments, args.Result));
-    }
-    private void HandleFunctionInvokingFilter(object? sender, FunctionInvokingContext context)
+    
+    private void HandleFunctionInvokingFilter(object? sender, FunctionInvocationContext context)
     {
         var function = context.Function;
         YieldAdditionalText?.Invoke($"\n<h4> Executing {function.Name} {function.Metadata.PluginName}</h4>\n\n");
+        var metaData =
+            $"<strong>{JsonSerializer.Serialize(context.Arguments, _optionsAsIndented)}</strong>";
+        var metaDataExpando = $"""
+
+                               <details>
+                                 <summary>See Arguments</summary>
+                                 
+                                 <h5>Arguments</h5>
+                                 <p>
+                                 {metaData}
+                                 </p>
+                                 <br/>
+                               </details>
+                               """;
+        YieldAdditionalText?.Invoke(metaDataExpando);
     }
-    private void HandleFunctionInvokedFilter(object? sender, FunctionInvokedContext context)
+    private void HandleFunctionInvokedFilter(object? sender, FunctionInvocationContext context)
     {
         var function = context.Function;
 
         YieldAdditionalText?.Invoke($"\n<h4> {function.Name} {function.Metadata.PluginName} Completed</h4>\n\n");
-        var result = $"<p>{context.Result}</p>";
+        var result = $"<strong>{context.Result}</strong>";
         var resultsExpando = $"""
 
                               <details>
@@ -450,30 +511,7 @@ public partial class CoreKernelService
                               """;
 
         YieldAdditionalText?.Invoke(resultsExpando);
-        var metaData =
-            $"<strong>{JsonSerializer.Serialize(context.Metadata, _optionsAsIndented)}</strong>";
-        var metaDataExpando = $"""
-
-                               <details>
-                                 <summary>See Metadata</summary>
-                                 
-                                 <h5>Metadata</h5>
-                                 <p>
-                                 {metaData}
-                                 </p>
-                                 <br/>
-                               </details>
-                               """;
-        YieldAdditionalText?.Invoke(metaDataExpando);
-
-    }
-
-    [Obsolete("No,no to Sequential planner")]
-    public async IAsyncEnumerable<string> ChatWithSequentialPlanner(string query, ChatRequestModel chatRequestModel,
-     bool runAsChat = true, string? askOverride = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        yield return "stop";
-
+        
     }
 
 
@@ -507,9 +545,9 @@ public partial class CoreKernelService
 
     }
 
-    private static Kernel CreateKernelWithPlugins(IEnumerable<KernelPlugin> pluginFunctions)
+    private static Kernel CreateKernelWithPlugins(IEnumerable<KernelPlugin> pluginFunctions, AIModel model = AIModel.Planner)
     {
-        var kernel = CreateKernel(AIModel.Planner);
+        var kernel = CreateKernel(model);
         kernel.Plugins.AddRange(pluginFunctions);
         return kernel;
     }

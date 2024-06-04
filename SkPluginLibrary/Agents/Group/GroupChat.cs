@@ -43,20 +43,20 @@ public class GroupChat : IGroupChat
         {
             Console.WriteLine($"Prompt Rendering for: {context.Function.Name}");
         };
-        Admin.Kernel.FunctionFilters.Add(functionHook);
-        Admin.Kernel.PromptFilters.Add(promptHook);
+        Admin.Kernel.FunctionInvocationFilters.Add(functionHook);
+        Admin.Kernel.PromptRenderFilters.Add(promptHook);
         foreach (var agent in InteractiveAgents)
         {
-            agent.Kernel.FunctionFilters.Add(functionHook);
-            agent.Kernel.PromptFilters.Add(promptHook);
+            agent.Kernel.FunctionInvocationFilters.Add(functionHook);
+            agent.Kernel.PromptRenderFilters.Add(promptHook);
         }
      
     }
     private string _endStatement;
     private bool _isRoundRobin;
     private TransitionGraph? _transitionGraph;
-    internal ChatHistory ChatHistory => AgentChatHistory.AsChatHistory();
-    public List<AgentMessage> AgentChatHistory { get; set; } = [];
+    internal ChatHistory ChatHistory => AgentChatHistory/*.AsChatHistory()*/;
+    public ChatHistory AgentChatHistory { get; set; } = [];
     public List<InteractiveAgentBase> InteractiveAgents { get; }
     private List<InteractiveAgentBase> _allAgents = [];
     public InteractiveAgentBase Admin { get; }
@@ -77,23 +77,28 @@ public class GroupChat : IGroupChat
         """;
     public void AddInitializeMessage(AgentMessage message)
     {
-        Console.WriteLine($"Agent {message.AgentName} Init message");
+        Console.WriteLine($"Agent {message.AuthorName} Init message");
         AgentChatHistory.Add(message);
     }
-    public Task<List<AgentMessage>> CallAsync(string userInput, int maxRound = 10, CancellationToken ct = default)
+    public Task<ChatHistory> CallAsync(string userInput, int maxRound = 10, CancellationToken ct = default)
     {
        
-        var groupConversion = new List<AgentMessage>
+        var groupConversion = new ChatHistory
         {
             new(AuthorRole.User, userInput, "User")
         };
         return CallAsync(groupConversion, maxRound, ct);
     }
-    public async Task<List<AgentMessage>> CallAsync(List<AgentMessage>? conversation = null,
-        int maxRound = 10, CancellationToken ct = default)
+    public void AddAgent(InteractiveAgentBase agent)
+    {
+		InteractiveAgents.Add(agent);
+		_allAgents.Add(agent);
+	}
+    public async Task<ChatHistory> CallAsync(ChatHistory conversation = null,
+	    int maxRound = 10, CancellationToken ct = default)
     {
         var agents = _allAgents;
-        var groupConversion = new List<AgentMessage>();
+        var groupConversion = new ChatHistory();
         if (conversation != null)
         {
             groupConversion.AddRange(conversation);
@@ -128,8 +133,9 @@ public class GroupChat : IGroupChat
         var nextIndex = (index + 1) % _allAgents.Count;
         return _allAgents[nextIndex];
     }
-    private async Task<InteractiveAgentBase> SelectNextSpeaker(InteractiveAgentBase lastSpeaker, IEnumerable<AgentMessage> groupConversion, IEnumerable<InteractiveAgentBase> agents,
-        CancellationToken ct)
+    private async Task<InteractiveAgentBase> SelectNextSpeaker(InteractiveAgentBase lastSpeaker,
+	    ChatHistory groupConversion, IEnumerable<InteractiveAgentBase> agents,
+	    CancellationToken ct)
     {
         InteractiveAgentBase nextSpeaker;
         if (_transitionGraph != null)
@@ -152,7 +158,7 @@ public class GroupChat : IGroupChat
         return nextSpeaker;
     }
 
-    private async Task<InteractiveAgentBase> AutoSelectNextAgent(IEnumerable<AgentMessage> groupConversion, IEnumerable<IInteractiveAgent> agents, CancellationToken ct)
+    private async Task<InteractiveAgentBase> AutoSelectNextAgent(ChatHistory groupConversion, IEnumerable<IInteractiveAgent> agents, CancellationToken ct)
     {
         var settings = new OpenAIPromptExecutionSettings
         {
@@ -187,9 +193,9 @@ public class GroupChat : IGroupChat
         }
     }
 
-    private static KernelArguments UpdateKernelArguments(IEnumerable<AgentMessage> groupConversion, IEnumerable<IInteractiveAgent> interactiveAgents, OpenAIPromptExecutionSettings settings)
+    private static KernelArguments UpdateKernelArguments(ChatHistory groupConversion, IEnumerable<IInteractiveAgent> interactiveAgents, OpenAIPromptExecutionSettings settings)
     {
-        var groupConvoHistory = string.Join("\n ", groupConversion?.Select(message => $"From: \n{message?.AgentName}\n### Message\n {message?.Content}\n") ?? Array.Empty<string>());
+        var groupConvoHistory = string.Join("\n ", groupConversion?.Select(message => $"From: \n{message?.AuthorName}\n### Message\n {message?.Content}\n") ?? Array.Empty<string>());
         var kernelArgs = new KernelArguments(settings)
         {
             ["speakerList"] = string.Join("\n ", interactiveAgents.Select(interactiveagent => $"### Name\n{interactiveagent?.Name}\n### Description\n {interactiveagent?.Description}\n")),

@@ -20,7 +20,15 @@
                         {
                             <RadzenFormField Text="@HelperText" Style="width: 100%">
                                 <ChildContent>
-                                    <RadzenTextBox ReadOnly="_isDisabled" Name="Input" Style="width: 100%" @bind-Value="@_requestForm.UserInputRequest.ChatInput"></RadzenTextBox>
+                                    @if (_isTextArea)
+                                    {
+	                                    <RadzenTextArea ReadOnly="_isDisabled" Name="Input" Style="width: 100%; height:4rem" @bind-Value="@_requestForm.UserInputRequest.ChatInput"></RadzenTextArea>
+                                    }
+                                    else
+                                    {
+	                                    <RadzenTextBox ReadOnly="_isDisabled" Name="Input" Style="width: 100%" @bind-Value="@_requestForm.UserInputRequest.ChatInput"></RadzenTextBox>
+                                    }
+                                    
                                 </ChildContent>
                                 <Helper>
                                     <RadzenRequiredValidator Component="Input" Text="@($"{HelperText} required")"></RadzenRequiredValidator>
@@ -30,6 +38,7 @@
                     </RadzenColumn>
                     <RadzenColumn Size="2" SizeLG="2" Style="display: flex; align-items:center">
                         <RadzenCard Style="display: flex; align-items: center; justify-items: center; justify-content:center; justify-items:center; padding:0">
+                            <RadzenToggleButton Size="ButtonSize.ExtraSmall" Icon="expand" ToggleIcon="unfold_less" @bind-Value=_isTextArea ToggleButtonStyle="ButtonStyle.Dark"></RadzenToggleButton>
                             <RadzenButton Disabled="_isDisabled" ButtonType="ButtonType.Submit" Size=ButtonSize.Small Icon="send" IsBusy="IsBusy" BusyText="Sending..." Text="@ButtonLabel"></RadzenButton>
                             <RadzenButton Size="ButtonSize.Small" Icon="block" Click="Cancel"></RadzenButton>
                         </RadzenCard>

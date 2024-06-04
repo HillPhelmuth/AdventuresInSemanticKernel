@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
 using SkPluginLibrary.Abstractions;
 using SkPluginLibrary.Models.Helpers;
+using static SkPluginLibrary.Models.Helpers.EnumHelpers;
 
 namespace BlazorWithSematicKernel.Pages
 {
@@ -35,17 +36,20 @@ namespace BlazorWithSematicKernel.Pages
             await base.OnAfterRenderAsync(firstRender);
         }
 
-        private static Dictionary<ExecutionType, string> ExecutionTypeDescriptions => typeof(ExecutionType).GetEnumsWithDescriptions<ExecutionType>().Where(x => x.Key.IsActive() ).ToDictionary(x => x.Key, x => x.Value);
+        private static Dictionary<ExecutionType, string> ExecutionTypeDescriptions => GetEnumsWithDescriptions<ExecutionType>().Where(x => x.Key.IsActive() ).ToDictionary(x => x.Key, x => x.Value);
         private class ExecutionTypeForm
         {
             public ExecutionType ExecutionType { get; set; }
+            public AIModel AIModel { get; set; } = AIModel.Planner;
         }
+        private static Dictionary<AIModel, string> AIModelDescriptions => GetEnumsWithDescriptions<AIModel>().Where(x => x.Key is AIModel.Planner or AIModel.Gemini10 or AIModel.None).ToDictionary(x => x.Key, y => y.Value);
 
         private void SetExecutionType(ExecutionTypeForm form)
         {
             _currentStep = 0;
             StateHasChanged();
             _requestModel.ExecutionType = form.ExecutionType;
+            _requestModel.SelectedModel = form.AIModel;
             Console.WriteLine($"Execution type selected: {_requestModel.ExecutionType}");
             _currentStep = 1;
             StateHasChanged();

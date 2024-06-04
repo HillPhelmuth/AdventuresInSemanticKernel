@@ -53,8 +53,6 @@ namespace BlazorWithSematicKernel.Components
                 {
                     ExecutionType.SingleFunction => "Select Function to Execute",
                     ExecutionType.AutoFunctionCalling or ExecutionType.AutoFunctionCallingChat => "Execute Action Plan",
-                    ExecutionType.SequentialPlanner or ExecutionType.SequentialPlannerChat =>
-                        "Exclude or Require Functions to Execute",
                     _ => "View Functions"
                 };
             }
@@ -127,14 +125,6 @@ namespace BlazorWithSematicKernel.Components
         private FunctionForm _functionForm = new();
         private string _visibleFunctionForm = "";
 
-        private void ShowFunctionForm(string skillName, string functionName, KernelFunction function, IEnumerable<ParameterView> parameterView)
-        {
-            _visibleFunctionForm = $"{skillName}-{functionName}";
-
-            _functionForm.Function = new KeyValuePair<string, KernelFunction>(functionName, function);
-            _functionForm.Fields = parameterView.Select(p => new ParamViewField(p.Name, p.Description ?? "", p.DefaultValue ?? "")).ToList();
-            StateHasChanged();
-        }
         private void SelectFunction(FunctionForm functionForm)
         {
             PluginFunctions.Add(new Function(functionForm.Function.Key, functionForm.Function.Value)

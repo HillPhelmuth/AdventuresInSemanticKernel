@@ -207,7 +207,24 @@ public sealed class TestConfiguration
         get => _coreSettings ?? LoadSection<CoreSettingsConfig>();
         set => _coreSettings = value;
     }
-
+    private static GoogleAIConfig? _googleAI;
+    public static GoogleAIConfig? GoogleAI
+    {
+        get => _googleAI ?? LoadSection<GoogleAIConfig>();
+        set => _googleAI = value;
+    }
+    private static VertexAIConfig? _vertexAI;
+    public static VertexAIConfig? VertexAI
+    {
+        get => _vertexAI ?? LoadSection<VertexAIConfig>();
+        set => _vertexAI = value;
+    }
+    private static MistralAIConfig? _mistralAI;
+    public static MistralAIConfig? MistralAI
+	{
+		get => _mistralAI ?? LoadSection<MistralAIConfig>();
+		set => _mistralAI = value;
+	}
 
     private static T LoadSection<T>([CallerMemberName] string? caller = null)
     {
@@ -314,7 +331,34 @@ public sealed class TestConfiguration
     {
         public string PAT { get; set; }
     }
+    public class GoogleAIConfig
+    {
+        public string ApiKey { get; set; }
+        public string EmbeddingModelId { get; set; }
+        public GeminiConfig Gemini { get; set; }
 
+        public class GeminiConfig
+        {
+            public string ModelId { get; set; }
+        }
+    }
+    public class MistralAIConfig
+    {
+        public string ApiKey { get; set; }
+    }
+    public class VertexAIConfig
+    {
+        public string BearerKey { get; set; }
+        public string EmbeddingModelId { get; set; }
+        public string Location { get; set; }
+        public string ProjectId { get; set; }
+        public GeminiConfig Gemini { get; set; }
+
+        public class GeminiConfig
+        {
+            public string ModelId { get; set; }
+        }
+    }
     public class PostgresConfig
     {
         public string ConnectionString { get; set; }

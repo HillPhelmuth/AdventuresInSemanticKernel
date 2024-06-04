@@ -1,4 +1,6 @@
-﻿namespace SkPluginLibrary.Abstractions;
+﻿using Microsoft.SemanticKernel.ChatCompletion;
+
+namespace SkPluginLibrary.Abstractions;
 
 public interface ICustomNativePlugins
 {
@@ -7,4 +9,8 @@ public interface ICustomNativePlugins
     event EventHandler<string>? StringWritten;
     IAsyncEnumerable<string> RunWikiSearchChat(string query);
     event Action<string>? AdditionalAgentText;
+    IAsyncEnumerable<string> WriteNovel(string outline, AIModel aiModel = AIModel.Planner,
+	    CancellationToken token = default);
+    Task<string> CreateNovelOutline(string theme, string characterDetails = "", string plotEvents = "",
+	    string novelTitle = "", int chapters = 15, AIModel aIModel = AIModel.Planner);
 }

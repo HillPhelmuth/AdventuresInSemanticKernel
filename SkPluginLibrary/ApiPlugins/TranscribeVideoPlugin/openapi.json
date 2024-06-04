@@ -1,0 +1,90 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Video Transcription API",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://vcaption.maila.ai"
+    }
+  ],
+  "paths": {
+    "/api/transcription": {
+      "post": {
+        "summary": "Transcribe a section of a video",
+        "operationId": "transcribeVideo",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "videoId": {
+                    "type": "string",
+                    "description": "YouTube video ID to be transcribed"
+                  },
+                  "segment": {
+                    "type": "integer",
+                    "description": "Segment number to transcribe, with each segment holding a maximum of 2k words."
+                  },
+                  "includeTimestamp": {
+                    "type": "boolean",
+                    "description": "Specifies whether to include timestamps in the transcription"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "totalSegments": {
+                      "type": "integer",
+                      "description": "Total number of segments in the video"
+                    },
+                    "currentSegment": {
+                      "type": "integer",
+                      "description": "The current transcribed segment number"
+                    },
+                    "transcribedText": {
+                      "type": "string",
+                      "description": "The transcribed text of the current segment"
+                    },
+                    "error": {
+                      "type": "string",
+                      "description": "Error message, if any"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request, no transcription available",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error message"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

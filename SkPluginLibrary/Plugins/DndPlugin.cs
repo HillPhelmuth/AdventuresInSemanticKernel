@@ -28,32 +28,20 @@ public class DndPlugin
     [KernelFunction("RollDice"),
      Description(
          "Roll dice using [count]D[value]+[bonus] where [count] is number of rolls, and [value] is sides on the die. (examples: 3D6, 2D4, 1D20, etc.)")]
-    public string RollDice([Description("must be in nDv format like 3D6 or 1D20")] string countDValue)
+    [return:Description("The result of the total value of the dice plus bonus")]
+    public string RollDice([Description("The number of dice to roll")] int diceCount,[Description("The value or faces on each die (e.g. for a 6 sided die, dieValue = 6)")] int dieValue,[Description("the value to add or subtract from each roll total")] int bonus = 0)
     {
-            if (!countDValue.Contains('d', StringComparison.InvariantCultureIgnoreCase))
-                throw new ArgumentException("Invalid dice format");
-            countDValue = countDValue.Trim('"');
-            var dValue = countDValue.Contains('+') ? countDValue.Split('+')[0] : countDValue;
-            var bValue = countDValue.Contains('+') ? countDValue.Split('+')[1] : "0";
-            var countValueArray = dValue.ToLower().Split('d','D');
-            Console.WriteLine($"Count and Value:\n{string.Join("\n", countValueArray)}");
-            var hasCount = int.TryParse(countValueArray[0], out var count);
-            count = hasCount ? count : 1;
-            var hasValue = int.TryParse(countValueArray[1], out var value);
-            value = hasValue ? value : 6;
+            
             var total = 0;
-            Console.WriteLine($"Count: {count}, Value: {value}");
-            for (var i = 0; i < count; i++)
+            Console.WriteLine($"Count: {diceCount}, Value: {dieValue}");
+            for (var i = 0; i < diceCount; i++)
             {
                 var random = new Random();
-                var diceValue = random.Next(1, value + 1);
+                var diceValue = random.Next(1, dieValue + 1);
                 total += diceValue;
             }
-
-            if (int.TryParse(bValue, out var bonus))
-            {
-                total += bonus;
-            }
+            total += bonus;
+		
 
             return total.ToString();
         }

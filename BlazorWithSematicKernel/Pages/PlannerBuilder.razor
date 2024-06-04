@@ -19,6 +19,14 @@
                                 <RadzenCompareValidator Text="Select an execution type" Operator="CompareOperator.NotEqual" Value="ExecutionType.None" Popup="true" Style="position:absolute"></RadzenCompareValidator>
                             </Helper>
                         </RadzenFormField>
+                      @*   <RadzenFormField Text="Model Source" Style="width: 100%">
+                            <ChildContent>
+                                <RadzenDropDown Style="font-size:95%" Data="AIModelDescriptions" TValue="AIModel" @bind-Value="_executionTypeForm.AIModel" ValueProperty="Key" TextProperty="Value"></RadzenDropDown>
+                            </ChildContent>
+                            <Helper>
+                                <RadzenCompareValidator Text="Use OpenAI Or Gemini" Operator="CompareOperator.NotEqual" Value="ExecutionType.None" Popup="true" Style="position:absolute"></RadzenCompareValidator>
+                            </Helper>
+                        </RadzenFormField> *@
                         <RadzenButton ButtonType="ButtonType.Submit" Text="Go To 'Select Plugins'" Icon="start"></RadzenButton>
                     </RadzenTemplateForm>
                     <RadzenCard>

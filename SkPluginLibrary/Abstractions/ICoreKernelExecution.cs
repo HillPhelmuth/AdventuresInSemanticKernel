@@ -10,8 +10,7 @@ public interface ICoreKernelExecution
     IAsyncEnumerable<string> ChatWithAutoFunctionCalling(string query, ChatRequestModel chatRequestModel,
         bool runAsChat = true, string? askOverride = null, CancellationToken cancellationToken = default,
         bool resetChat = false);
-    IAsyncEnumerable<string> ChatWithSequentialPlanner(string query, ChatRequestModel chatRequestModel,
-        bool runAsChat = true, string? askOverride = null, CancellationToken cancellationToken = default);
+
     Task<Dictionary<PluginType, List<KernelPlugin>>> GetAllPlugins();
 
     IAsyncEnumerable<string> ChatWithStepwisePlanner(string query, ChatRequestModel chatRequestModel,

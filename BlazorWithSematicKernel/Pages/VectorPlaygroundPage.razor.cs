@@ -22,7 +22,7 @@ namespace BlazorWithSematicKernel.Pages
             public MemoryStoreType MemoryStoreType { get; set; }
         }
         private MemoryStoreForm _memoryStoreForm = new();
-        private readonly Dictionary<MemoryStoreType, string> _memoryStoreTypes = typeof(MemoryStoreType).GetEnumsWithDescriptions<MemoryStoreType>();
+        private readonly Dictionary<MemoryStoreType, string> _memoryStoreTypes = EnumHelpers.GetEnumsWithDescriptions<MemoryStoreType>();
         private int _currentStep;
         private async Task GetVectors(int number = 10)
         {

@@ -72,7 +72,8 @@ public class HdbscanService(ILoggerFactory loggerFactory)
         for (var i = 0; i < memories.Count(); i++)
         {
             if (labels[i] == -1) continue;
-            results.Add(new MemoryResult(memories.ElementAt(i).Metadata.Description, memories.ElementAt(i).Metadata.Text, labels[i]));
+            var memoryRecordMetadata = memories.ElementAt(i).Metadata;
+            results.Add(new MemoryResult(memoryRecordMetadata.Description, memoryRecordMetadata.Text, labels[i]) { MetadataId = memoryRecordMetadata.Id});
         }
 
         return results;

@@ -2,5 +2,5 @@
 
 public enum PluginType
 {
-    Prompt, Native, Api, External
+    Prompt, Native, Api, External, Agent
 }

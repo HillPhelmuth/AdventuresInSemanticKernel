@@ -1,11 +1,7 @@
-﻿using System.Runtime.CompilerServices;
-using System.Runtime.Intrinsics.X86;
-using DocumentFormat.OpenXml.Presentation;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
-using SkPluginLibrary.Agents.Extensions;
 using SkPluginLibrary.Agents.Models.Events;
 
 namespace SkPluginLibrary.Agents.Models;
@@ -17,14 +13,14 @@ public abstract class InteractiveAgentBase(AgentProxy agent, Kernel kernel) : II
     public string Description => Agent.Description;
     public string SystemPrompt => Agent.SystemPrompt;
     public Kernel Kernel { get; } = kernel;
-    protected List<Func<IEnumerable<AgentMessage>, Task<IEnumerable<AgentMessage>>>>? PreReplyHooks { get; set; }
-    public void RegisterPreReplyHook(Func<IEnumerable<AgentMessage>, Task<IEnumerable<AgentMessage>>> hook)
+    protected List<Func<ChatHistory, Task<ChatHistory>>>? PreReplyHooks { get; set; }
+    public void RegisterPreReplyHook(Func<ChatHistory, Task<ChatHistory>> hook)
     {
         PreReplyHooks ??= new();
         PreReplyHooks.Add(hook);
     }
-    protected List<Func<IEnumerable<AgentMessage>, AgentMessage, Task<AgentMessage>>>? PostReplyHooks { get; set; }
-    public void RegisterPostReplyHook(Func<IEnumerable<AgentMessage>, AgentMessage, Task<AgentMessage>> hook)
+    protected List<Func<ChatHistory, AgentMessage, Task<AgentMessage>>>? PostReplyHooks { get; set; }
+    public void RegisterPostReplyHook(Func<ChatHistory, AgentMessage, Task<AgentMessage>> hook)
     {
         PostReplyHooks ??= new();
         PostReplyHooks.Add(hook);
@@ -35,12 +31,14 @@ public abstract class InteractiveAgentBase(AgentProxy agent, Kernel kernel) : II
     // ReSharper disable ValueParameterNotUsed
     public virtual event AgentStreamingResponseEventHandler? AgentStreamingResponse { add { } remove { } }
 
-    public virtual async Task<AgentMessage?> RunAgentAsync(List<AgentMessage> chatHistory, PromptExecutionSettings? settings = null, CancellationToken cancellationToken = default)
+    public virtual async Task<ChatMessageContent?> RunAgentAsync(ChatHistory chatHistory,
+	    PromptExecutionSettings? settings = null, CancellationToken cancellationToken = default)
     {
         var chat = Kernel.Services.GetRequiredService<IChatCompletionService>();
         var chatmessageHistory = new ChatHistory(SystemPrompt);
-        chatmessageHistory.AddRange(chatHistory.AsChatHistory());
-        settings ??= new OpenAIPromptExecutionSettings() { Temperature = Temperature, ChatSystemPrompt = SystemPrompt, ToolCallBehavior = Kernel.Plugins.Count > 0 ? ToolCallBehavior.AutoInvokeKernelFunctions : null };
+        if (chatHistory is not null)
+            chatmessageHistory.AddRange(chatHistory);
+        settings ??= new OpenAIPromptExecutionSettings() { Temperature = Temperature, ChatSystemPrompt = SystemPrompt, ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions };
 
         var result = await chat.GetChatMessageContentAsync(chatmessageHistory, settings, Kernel, cancellationToken);
         
@@ -49,6 +47,10 @@ public abstract class InteractiveAgentBase(AgentProxy agent, Kernel kernel) : II
         return agentChatMessageContent;
     }
 
+    public virtual Task<ChatMessageContent?> RunAgent(string input, CancellationToken cancellationToken = default)
+    {
+        return RunAgentAsync([new AgentMessage(AuthorRole.Assistant,input, Name)], null, cancellationToken);
+    }
 
     public virtual async Task<string?> GetHumanInputAsync()
     {

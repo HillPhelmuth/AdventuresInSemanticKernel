@@ -12,7 +12,7 @@ namespace ChatComponents
     {
         private RadzenColumn? _column;
         private ElementReference _chatColumn;
-        public ChatState? ChatState { get; set; }
+        public ChatState ChatState { get; set; } = new();
         [Inject]
         private ChatStateCollection ChatStateCollection {get; set; } = default!;
         //[Inject]

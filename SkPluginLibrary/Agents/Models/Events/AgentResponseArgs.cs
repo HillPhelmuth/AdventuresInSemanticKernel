@@ -1,23 +1,25 @@
-﻿namespace SkPluginLibrary.Agents.Models.Events;
+﻿using Microsoft.SemanticKernel;
+
+namespace SkPluginLibrary.Agents.Models.Events;
 
 /// <summary>
 /// Initializes a new instance of the <see cref="AgentResponseArgs"/> class.
 /// </summary>
 /// <param name="agentChatMessage">The agent chat message associated with the response.</param>
-public class AgentResponseArgs(AgentMessage agentChatMessage) : EventArgs
+public class AgentResponseArgs(ChatMessageContent agentChatMessage) : EventArgs
 {
 
     /// <summary>
     /// Gets the agent chat message associated with the response.
     /// </summary>
-    public AgentMessage AgentChatMessage { get; } = agentChatMessage;
+    public ChatMessageContent AgentChatMessage { get; } = agentChatMessage;
 }
-public class AgentStreamingResponseArgs(AgentMessageStreamUpdate agentChatMessage) : EventArgs
+public class AgentStreamingResponseArgs(StreamingChatMessageContent agentChatMessage) : EventArgs
 {
     /// <summary>
     /// Gets the agent chat message associated with the response.
     /// </summary>
-    public AgentMessageStreamUpdate AgentChatMessageUpdate { get; } = agentChatMessage;
+    public StreamingChatMessageContent AgentChatMessageUpdate { get; } = agentChatMessage;
     public bool IsCompleted { get; internal set; }
     public bool IsStartToken { get; internal set; }
 }

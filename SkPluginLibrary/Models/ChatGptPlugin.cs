@@ -59,7 +59,7 @@ namespace SkPluginLibrary.Models
         [JsonPropertyName("type")]
         public string? Type { get; set; }
         [JsonIgnore]
-        public TypeEnum TypeEnum => Type is null ? TypeEnum.None : EnumExtensions.GetEnumValueFromDescription<TypeEnum>(Type);
+        public TypeEnum TypeEnum => Type is null ? TypeEnum.None : EnumHelpers.GetEnumValueFromDescription<TypeEnum>(Type);
     }
     public enum TypeEnum
     {

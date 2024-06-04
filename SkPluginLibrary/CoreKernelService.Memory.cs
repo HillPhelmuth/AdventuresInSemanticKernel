@@ -3,6 +3,7 @@ using Microsoft.SemanticKernel.Memory;
 using Microsoft.SemanticKernel.Text;
 using SkPluginLibrary.Services;
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.SemanticKernel.Connectors.Sqlite;
@@ -85,8 +86,7 @@ public partial class CoreKernelService
 
         Console.WriteLine($"\n{items.Count} items found\n");
 
-        var itemList = items.Select(x => MemoryRecord.FromMetadata(x.Metadata, x.Embedding.Value)).Take(numberOfItems)
-            .ToList();
+        var itemList = items;
         var deduped = itemList.GroupBy(x => x.Metadata.Description).Select(grp => grp.First()).ToList();
         var dedupeCount = deduped.Count;
         var itemCount = itemList.Count;
@@ -96,8 +96,9 @@ public partial class CoreKernelService
         return await ItemClustersFromCollection(minpoints, minCluster, distanceFunction, itemList, kernel);
     }
 
-    private async Task<List<MemoryResult>> ItemClustersFromCollection(int minpoints, int minCluster, DistanceFunction distanceFunction,
-        IEnumerable<MemoryRecord> itemList, Kernel kernel)
+    public async Task<List<MemoryResult>> ItemClustersFromCollection(int minpoints, int minCluster,
+        DistanceFunction distanceFunction,
+        IEnumerable<MemoryQueryResult> itemList, Kernel kernel)
     {
         var result = _hdbscanService.ClusterAsync(itemList, minpoints, minCluster, distanceFunction);
         var writerPlugin = kernel.ImportPluginFromPromptDirectoryYaml("WriterPlugin");
@@ -112,7 +113,7 @@ public partial class CoreKernelService
           
             item.ClusterSummary = itemTagString;
         }
-
+        await File.WriteAllTextAsync($"clusterTitles_{distanceFunction}.json", JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true }));
         return result;
     }
 

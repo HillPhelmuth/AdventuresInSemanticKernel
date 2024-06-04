@@ -27,7 +27,7 @@ namespace BlazorWithSematicKernel.Pages
             public float Tempurature { get; set; } = 1.0f;
             public float TopP { get; set; } = 1.0f;
         }
-        private List<string> _models = ["gpt-3.5-turbo", "gpt-4-turbo-preview"];
+        private List<string> _models = ["gpt-3.5-turbo", "gpt-4-turbo", "gpt-4o"];
         private LogProbInputForm _logProbInputForm = new();
         private async void SendQuery(LogProbInputForm logProbInputForm)
         {
