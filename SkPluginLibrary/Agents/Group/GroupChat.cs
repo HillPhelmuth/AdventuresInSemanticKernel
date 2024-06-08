@@ -116,7 +116,8 @@ public class GroupChat : IGroupChat
             
             var agentResponse = await nextSpeaker.RunAgentAsync(groupConversion, cancellationToken: ct);
             lastSpeaker = nextSpeaker;
-            groupConversion.Add(agentResponse!);
+            if (agentResponse is null) break;
+            groupConversion.Add(agentResponse);
             if (agentResponse?.Content?.Contains(_endStatement) == true) break;
             round++;
         }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Azure.AI.OpenAI;
 using Microsoft.Extensions.DependencyInjection;
@@ -40,8 +41,12 @@ namespace SkPluginLibrary.Agents.Models
                 Kernel.Plugins.AddRange(Agent.Plugins);
             }
             var chat = Kernel.Services.GetRequiredService<IChatCompletionService>();
-            var chatmessageHistory = chatHistory/*.AsChatHistory()*/;
+            var chatmessageHistory = new ChatHistory(chatHistory)/*.AsChatHistory()*/;
             chatmessageHistory.AddSystemMessage(SystemPrompt);
+            foreach (var messageItem in chatmessageHistory)
+            {
+                messageItem.AuthorName = EnsurePattern(messageItem.AuthorName);
+            }
             var callBehavior = Plugins.Count > 0 ? ToolCallBehavior.AutoInvokeKernelFunctions : null;
             Console.WriteLine($"{Name} ToolCallBehavior: {callBehavior}");
             settings ??= new OpenAIPromptExecutionSettings() { Temperature = Temperature, ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions, ChatSystemPrompt = SystemPrompt };
@@ -53,9 +58,7 @@ namespace SkPluginLibrary.Agents.Models
             {
                 await foreach (var update in chat.GetStreamingChatMessageContentsAsync(chatmessageHistory, settings, Kernel, cancellationToken))
                 {
-                    //var update2 = (OpenAIStreamingChatMessageContent)update;
-                    //var toolCall = update2.ToolCallUpdate as StreamingFunctionToolCallUpdate;
-                    //Console.WriteLine($"Tool call: {toolCall?.Name}, {toolCall?.ToolCallIndex}");
+                   
                     if (message is null)
                     {
                         message = new AgentMessage(update.Role.GetValueOrDefault(), update.Content, Name);
@@ -82,5 +85,11 @@ namespace SkPluginLibrary.Agents.Models
             }
             return message;
         }
-    }
+        public string EnsurePattern(string input)
+        {
+            if (string.IsNullOrEmpty(input)) return input;
+	        string pattern = @"[^a-zA-Z0-9_-]";
+	        return Regex.Replace(input, pattern, "_");
+        }
+	}
 }
