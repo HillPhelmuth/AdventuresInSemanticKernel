@@ -1,8 +1,5 @@
-﻿using Microsoft.SemanticKernel;
-using System.ComponentModel;
-using System.Text.Json;
+﻿using System.Text.Json;
 using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
 
 namespace SkPluginLibrary.Plugins;
 

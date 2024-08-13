@@ -1,0 +1,15 @@
+﻿@page "/prompt"
+<RadzenRow>
+	@* <RadzenColumn Size="2"></RadzenColumn> *@
+	<RadzenColumn Size="12">
+		<RadzenText Text="Prompt Builder Agent" TextStyle="TextStyle.DisplayH6" TextAlign="TextAlign.Center"></RadzenText>
+		<RadzenCard>
+			<ChatView ViewId="promptChat" ResetOnClose="false" @ref=_chatView></ChatView>
+		</RadzenCard>
+		<RadzenCard Style="width: 100%">
+			<UserInput ButtonLabel="Send" HelperText="Ask a prompt engineering expert..." MessageSubmit="Submit" IsBusy="_isBusy"></UserInput>
+		</RadzenCard>
+
+	</RadzenColumn>
+	<RadzenColumn Size="2"></RadzenColumn>
+</RadzenRow>

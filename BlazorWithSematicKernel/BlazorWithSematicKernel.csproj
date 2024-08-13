@@ -25,6 +25,7 @@
 	  <Compile Remove="Components\AgentComponents\AgentRunner.razor.cs" />
 	  <Compile Remove="Pages\AgentBuilderPage.razor.cs" />
 	  <Compile Remove="Pages\Error.cshtml.cs" />
+	  <Compile Remove="Pages\PromptEngineerAgent.razor.cs" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -33,6 +34,7 @@
 	  <Content Remove="Components\AgentComponents\AgentRunner.razor" />
 	  <Content Remove="Pages\AgentBuilderPage.razor" />
 	  <Content Remove="Pages\Error.cshtml" />
+	  <Content Remove="Pages\PromptEngineerAgent.razor" />
 	</ItemGroup>
 
 	

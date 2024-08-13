@@ -1,8 +1,8 @@
 ﻿using Microsoft.SemanticKernel.Experimental.Agents;
-using Microsoft.SemanticKernel;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using SkPluginLibrary.Agents.Models;
+using SemanticKernelAgentOrchestration.Models;
+using SkPluginLibrary.Agents.Extensions;
 using SkPluginLibrary.Plugins;
 
 

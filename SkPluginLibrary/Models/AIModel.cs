@@ -1,6 +1,4 @@
-﻿using System.ComponentModel;
-
-namespace SkPluginLibrary.Models;
+﻿namespace SkPluginLibrary.Models;
 
 public enum AIModel
 {
@@ -8,23 +6,29 @@ public enum AIModel
     None,
     [ModelName("gpt-3.5-turbo")]
     [AzureOpenAIModel("gpt-35-turbo")]
-    [Description("Latest gpt-3.5")]
+    [Description("Latest gpt-3.5-turbo")]
     [ModelProvidor("OpenAI")]
     [ModelProvidor("AzureOpenAI")]
 	Gpt35,
     [ModelName("gpt-4-turbo")]
-    [AzureOpenAIModel("gpt-4")]
+    [AzureOpenAIModel("gpt-4-turbo")]
     [Description("Latest gpt-4-turbo")]
     [ModelProvidor("OpenAI")]
     [ModelProvidor("AzureOpenAI")]
-	Gpt4,
+	Gpt4Turbo,
     [ModelName("gpt-4o")]
-    [AzureOpenAIModel("gpt-4")]
+    [AzureOpenAIModel("gpt-4o")]
     [Description("Latest gpt-4o")]
     [ModelProvidor("OpenAI")]
     [ModelProvidor("AzureOpenAI")]
-	Planner,
-    [ModelName("gemini-pro")]
+	Gpt4O,
+	[ModelName("gpt-4o-mini")]
+	[AzureOpenAIModel("gpt-4o-mini")]
+	[Description("Latest gpt-4o-mini")]
+	[ModelProvidor("OpenAI")]
+	[ModelProvidor("AzureOpenAI")]
+	Gpt4OMini,
+	[ModelName("gemini-pro")]
     [Description("Latest Gemini 1.0 Pro")]
     [ModelProvidor("GoogleAI")]
 	Gemini10,
@@ -32,6 +36,10 @@ public enum AIModel
     [Description("Latest Gemini 1.5 Pro")]
     [ModelProvidor("GoogleAI")]
 	Gemini15,
+	[ModelName("gemini-1.5-flash")]
+	[Description("Gemeni Flash")]
+	[ModelProvidor("GoogleAI")]
+	GeminiFlash,
 	[ModelName("open-mistral-7b")]
 	[Description("Open Mistral 7B")]
 	[ModelProvidor("MistralAI")]

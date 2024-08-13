@@ -1,10 +1,8 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
-using System.ComponentModel;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text.Json;
-using Microsoft.SemanticKernel;
 
 namespace SkPluginLibrary.Examples.DictionaryPlugin;
 

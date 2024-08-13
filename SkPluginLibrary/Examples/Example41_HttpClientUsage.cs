@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.SemanticKernel;
 
 // These examples show how to use HttpClient and HttpClientFactory within SK SDK.
 namespace SkPluginLibrary.Examples;

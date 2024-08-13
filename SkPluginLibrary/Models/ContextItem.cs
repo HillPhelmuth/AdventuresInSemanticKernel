@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 
 namespace SkPluginLibrary.Models

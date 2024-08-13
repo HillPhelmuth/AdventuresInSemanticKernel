@@ -1,11 +1,9 @@
-﻿using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Memory;
+﻿using Microsoft.SemanticKernel.Memory;
 using Microsoft.SemanticKernel.Text;
 using SkPluginLibrary.Services;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.SemanticKernel.Connectors.Sqlite;
 using UglyToad.PdfPig;
 

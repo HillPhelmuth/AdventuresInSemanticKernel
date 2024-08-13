@@ -21,6 +21,7 @@
         <RadzenPanelMenu>
             <RadzenPanelMenuItem Text="Home" Icon="home" Path="" />
             <RadzenPanelMenuItem Text="SK Samples" MouseEnter="@((args) => ShowTooltip(args, "View, modify, and execute dotnet examples from the Semantic Kernel Repo"))" Icon="shopping_cart" Path="samples" />
+            <RadzenPanelMenuItem Text="Gen Eval Sample" MouseEnter="@((args) => ShowTooltip(args, "Temp Gen Eval Sample From WebChat"))" Icon="shopping_cart" Path="agentGroupChat" />
             <RadzenPanelMenuItem Text="Execute A Function" MouseEnter="@((args) => ShowTooltip(args, "Select a single plugin function. Add required inputs and  execute"))" Icon="playlist_add_check" Path="executeFunction"></RadzenPanelMenuItem>
             <RadzenPanelMenuItem Text="Build An Agent" MouseEnter="@((args) => ShowTooltip(args, "Create and interact with a simple Semantic Kernel Agents"))" Path="simpleAgent" Icon="build"></RadzenPanelMenuItem>
             <RadzenPanelMenuItem Text="Build A Planner" MouseEnter="@((args) => ShowTooltip(args, "Select plugins and functions to build and execute your own:<ul><li>Open AI Function Chat</li><li>Handlebars planner</li><li>or FunctionCalling Stepwise planner</li></ul>"))" Icon="foundation" Path="planBuilder"></RadzenPanelMenuItem>
@@ -41,6 +42,7 @@
                 <RadzenPanelMenuItem Text="Chunking and Tokenization" MouseEnter="@((args) => ShowTooltip(args, "Generate or add text, set the text chuncking paramters, and then see the Semantic Kernel TextChunker work"))" Icon="short_text" Path="textchunking"></RadzenPanelMenuItem>
                 <RadzenPanelMenuItem Text="Tinker with Tokens" MouseEnter="@((args) => ShowTooltip(args, "See how input text translates into tokens. Select specific tokens to set the LogitBias for a chat completion request."))" Icon="construction" Path="tokens"></RadzenPanelMenuItem>
                 <RadzenPanelMenuItem Text="Log Probs" MouseEnter="@((args) => ShowTooltip(args, "Check out log probs of chat output."))" Icon="percent" Path="logProbs"></RadzenPanelMenuItem>
+                <RadzenPanelMenuItem Text="Autocomplete" MouseEnter="@((args) => ShowTooltip(args, "Use log probs of for autocomplete options"))" Icon="prompt_suggestion" Path="logprobsautocomplete"></RadzenPanelMenuItem>
             </RadzenPanelMenuItem>
 
         </RadzenPanelMenu>

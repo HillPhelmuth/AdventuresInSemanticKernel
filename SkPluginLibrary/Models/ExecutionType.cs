@@ -1,6 +1,4 @@
-﻿using System.ComponentModel;
-
-namespace SkPluginLibrary.Models;
+﻿namespace SkPluginLibrary.Models;
 
 public enum ExecutionType
 {

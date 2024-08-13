@@ -41,21 +41,21 @@
 						</RadzenTemplateForm>
 					</Popup>
 					<RadzenTemplateForm TItem="NovelOutline" Data="_novelOutline" Submit="SubmitOutline">
-						<RadzenFormField Style="width:100%" Text="Topic or Theme">
-							<ChildContent>
-								<RadzenTextArea Name="Theme" Style="width:100%; height:4rem" @bind-Value="@_novelOutline.Theme"></RadzenTextArea>
-							</ChildContent>
-							<Helper>
-								<RadzenRequiredValidator Component="Theme"></RadzenRequiredValidator>
-							</Helper>
-						</RadzenFormField>
-						<br />
 						<RadzenFormField Style="width:100%" Text="Title">
 							<ChildContent>
 								<RadzenTextBox Name="Title" Style="width:100%" @bind-Value="@_novelOutline.Title"></RadzenTextBox>
 							</ChildContent>
 							<Helper>
 								<RadzenRequiredValidator Component="Title"></RadzenRequiredValidator>
+							</Helper>
+						</RadzenFormField>
+						<br />
+						<RadzenFormField Style="width:100%" Text="Topic or Theme">
+							<ChildContent>
+								<RadzenTextArea Name="Theme" Style="width:100%; height:4rem" @bind-Value="@_novelOutline.Theme"></RadzenTextArea>
+							</ChildContent>
+							<Helper>
+								<RadzenRequiredValidator Component="Theme"></RadzenRequiredValidator>
 							</Helper>
 						</RadzenFormField>
 						<br />
@@ -79,7 +79,7 @@
 						<br /><br />
 						<RadzenFormField Text="Chapter Count">
 							<ChildContent>
-								<RadzenNumeric @bind-Value="_novelOutline.ChapterCount" Step="1" Min="3" Max="20"></RadzenNumeric>
+								<RadzenNumeric @bind-Value="_novelOutline.ChapterCount" Step="1" Min="2" Max="20"></RadzenNumeric>
 							</ChildContent>
 							<Helper>
 								<RadzenText TextStyle="TextStyle.Caption" Text="Between 3 and 20 Chapters."></RadzenText>
@@ -87,10 +87,11 @@
 						</RadzenFormField>
 						<RadzenFormField Text="AI Model">
 							<ChildContent>
-								<RadzenDropDown Data="AIModelDescriptions" ValueProperty="Key" TextProperty="Value" @bind-Value="@_novelOutline.AIModel"></RadzenDropDown>
+								<RadzenDropDown Name="AIModel" Data="AIModelDescriptions" ValueProperty="Key" TextProperty="Value" @bind-Value="@_novelOutline.AIModel"></RadzenDropDown>
 							</ChildContent>
 							<Helper>
 								<RadzenText TextStyle="TextStyle.Caption" Text="Select the AI model used to generate Outline"></RadzenText>
+								<RadzenCompareValidator Operator="CompareOperator.NotEqual" Value="@AIModel.None" Component="AIModel" Text="Please select a model" Popup="true" Style="position:absolute"></RadzenCompareValidator>
 							</Helper>
 						</RadzenFormField><br />
 						<RadzenButton ButtonType="ButtonType.Submit" Text="Create Outline" BusyText="Generating Outline..." IsBusy="_isBusy"></RadzenButton>
@@ -129,7 +130,7 @@
 
 			<RadzenRow>
 				<RadzenColumn Size="4">
-					<RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle1" Text="Chapter Outlines"></RadzenText>
+					<RadzenText @ondblclick="@(Cheat)" TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle1" Text="Chapter Outlines"></RadzenText>
 					@if (_chapterOutlines.Count > 0)
 					{
 						<RadzenAccordion>
@@ -141,21 +142,34 @@
 											@((MarkupString)AsHtml(chapter.Text))
 
 										</RadzenCard>
+										<RadzenCard Style="padding:0">
+											<RadzenButton Size="ButtonSize.ExtraSmall" Disabled="@(string.IsNullOrEmpty(chapter.FullText))" Click="@(() => chapter.ShowAudio = true)" Icon="record_voice_over" Text="Too lazy even to read it"></RadzenButton>
+											@if (chapter.ShowAudio)
+											{
+												var indexString = _chapterOutlines.IndexOf(chapter).ToString();
+												<BookAudio BookAudioId="@indexString" TextToAudio="@chapter.FullText" Title="@chapter.Title"></BookAudio>
+											}
+										</RadzenCard>
 									</RadzenAccordionItem>
 								}
 							</Items>
 						</RadzenAccordion>
 					}
+					
 
 				</RadzenColumn>
 				<RadzenColumn Size="8">
-					<RadzenCard Style="max-height:70vh; overflow:auto">
-						@((MarkupString)AsHtml(_text))
+					<RadzenCard Style="height:65vh; overflow:auto">
+						<BookReader Text="@_text" ChapterTexts="_chapterTexts"></BookReader>
 					</RadzenCard>
-					@* @if (!_isBusy && !string.IsNullOrWhiteSpace(_text))
-					{ *@
-					<RadzenButton Disabled="@(_isBusy || string.IsNullOrWhiteSpace(_text))" Text="Download" Size="ButtonSize.ExtraSmall" Click="DownloadNovelToFile"></RadzenButton>
-					@* } *@
+					
+					<RadzenButton Disabled="_isBusy" Text="Download" Size="ButtonSize.ExtraSmall" Click="DownloadNovelToFile"></RadzenButton>
+					
+					<RadzenButton Text="Cancel" Size="ButtonSize.ExtraSmall" Click="Cancel"></RadzenButton>
+					
+					<hr />
+					
+
 				</RadzenColumn>
 			</RadzenRow>
 		</RadzenStepsItem>

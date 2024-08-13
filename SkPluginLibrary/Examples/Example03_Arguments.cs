@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
 using System.Globalization;
-using Microsoft.SemanticKernel;
 using SkPluginLibrary.Plugins;
 
 // This example shows how to use kernel arguments when invoking functions.

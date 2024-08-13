@@ -1,4 +1,5 @@
 ﻿@page "/groupChat"
+@using SemanticKernelAgentOrchestration.Models
 <RadzenSteps @bind-SelectedIndex="_step">
     <Steps>
         <RadzenStepsItem Text="Intro" NextText="Build Agent">
@@ -31,8 +32,9 @@
                         {
                             <RadzenButton ButtonType="ButtonType.Submit" Text="Upload" Size="ButtonSize.ExtraSmall"></RadzenButton>
                         }
-                        
+                        <RadzenButton Text="Save Agent Group" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" Click="DownloadToFile"></RadzenButton>
                     </RadzenTemplateForm>
+                    
                 </RadzenColumn>
             </RadzenRow>
             <RadzenRow>
@@ -46,7 +48,6 @@
         </RadzenStepsItem>
         <RadzenStepsItem Text="Execute Agent">
             <RadzenButton Text="Reset" Size="ButtonSize.ExtraSmall" Click="Reset"></RadzenButton>
-            <RadzenButton Text="Download" Size="ButtonSize.ExtraSmall" Click="DownloadToFile"></RadzenButton>
             @if (!string.IsNullOrWhiteSpace(_summary))
             {
                 <span class="blinking-input">

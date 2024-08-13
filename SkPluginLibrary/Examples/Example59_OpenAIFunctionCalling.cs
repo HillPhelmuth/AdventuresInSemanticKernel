@@ -3,9 +3,7 @@
 using Azure.AI.OpenAI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
 using System.Text;
 using System.Text.Json;
 
@@ -51,7 +49,7 @@ public static class Example59_OpenAIFunctionCalling
 
         await AutomatedWithStreamingPrompt(kernel);
 
-        await ManualNonStreamingFunctionCall(kernel);
+        await RunNonStreamingChatAPIWithManualFunctionCallingAsync(kernel);
 
 
         await AutomaticStreamingFunctionCall(kernel);
@@ -100,41 +98,56 @@ public static class Example59_OpenAIFunctionCalling
     /// </summary>
     /// <param name="kernel">The kernel instance.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    public static async Task ManualNonStreamingFunctionCall(Kernel kernel)
+    public static async Task RunNonStreamingChatAPIWithManualFunctionCallingAsync(Kernel kernel)
     {
-        Console.WriteLine("======== Example 3: Use manual function calling with a non-streaming prompt ========");
+        Console.WriteLine("Manual function calling with a non-streaming prompt.");
+
+       
+        IChatCompletionService chat = kernel.GetRequiredService<IChatCompletionService>();
+
+        // Configure the chat service to enable manual function calling
+        OpenAIPromptExecutionSettings settings = new() { ToolCallBehavior = ToolCallBehavior.EnableKernelFunctions };
+
+        // Create chat history with the initial user message
+        ChatHistory chatHistory = new();
+        chatHistory.AddUserMessage("Given the current time of day and weather, what is the likely color of the sky in Boston?");
+
+        while (true)
         {
-            var chat = kernel.GetRequiredService<IChatCompletionService>();
-            var chatHistory = new ChatHistory();
-
-            OpenAIPromptExecutionSettings settings = new() { ToolCallBehavior = ToolCallBehavior.EnableKernelFunctions };
-            chatHistory.AddUserMessage("Given the current time of day and weather, what is the likely color of the sky in Boston?");
-            while (true)
+            // Start or continue chat based on the chat history
+            ChatMessageContent result = await chat.GetChatMessageContentAsync(chatHistory, settings, kernel);
+            if (result.Content is not null)
             {
-                var result = (OpenAIChatMessageContent)await chat.GetChatMessageContentAsync(chatHistory, settings, kernel);
+                Console.Write(result.Content);
+            }
 
-                if (result.Content is not null)
+            // Get function calls from the chat message content and quit the chat loop if no function calls are found.
+            IEnumerable<FunctionCallContent> functionCalls = FunctionCallContent.GetFunctionCalls(result);
+            if (!functionCalls.Any())
+            {
+                break;
+            }
+
+            // Preserving the original chat message content with function calls in the chat history.
+            chatHistory.Add(result);
+
+            // Iterating over the requested function calls and invoking them
+            foreach (FunctionCallContent functionCall in functionCalls)
+            {
+                try
                 {
-                    Console.Write(result.Content);
+                    // Invoking the function
+                    FunctionResultContent resultContent = await functionCall.InvokeAsync(kernel);
+
+                    // Adding the function result to the chat history
+                    chatHistory.Add(resultContent.ToChatMessage());
                 }
-
-                List<ChatCompletionsFunctionToolCall> toolCalls = result.ToolCalls.OfType<ChatCompletionsFunctionToolCall>().ToList();
-                if (toolCalls.Count == 0)
+                catch (Exception ex)
                 {
-                    break;
-                }
-
-                chatHistory.Add(result);
-                foreach (var toolCall in toolCalls)
-                {
-                    string content = kernel.Plugins.TryGetFunctionAndArguments(toolCall, out KernelFunction? function, out KernelArguments? arguments) ?
-                        JsonSerializer.Serialize((await function.InvokeAsync(kernel, arguments)).GetValue<object>()) :
-                        "Unable to find function. Please try again!";
-
-                    chatHistory.Add(new ChatMessageContent(
-                        AuthorRole.Tool,
-                        content,
-                        metadata: new Dictionary<string, object?>(1) { { OpenAIChatMessageContent.ToolIdProperty, toolCall.Id } }));
+                    // Adding function exception to the chat history.
+                    chatHistory.Add(new FunctionResultContent(functionCall, ex).ToChatMessage());
+                    // or
+                    //chatHistory.Add(new FunctionResultContent(functionCall, "Error details that LLM can reason about.").ToChatMessage());
                 }
             }
 

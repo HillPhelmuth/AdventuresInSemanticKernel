@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
 using System.Diagnostics.CodeAnalysis;
-using Microsoft.SemanticKernel;
 
 // This example shows how to create a mutable <see cref="KernelPlugin"/>.
 namespace SkPluginLibrary.Examples;

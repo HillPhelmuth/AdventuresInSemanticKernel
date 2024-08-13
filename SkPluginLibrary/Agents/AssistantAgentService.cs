@@ -1,13 +1,11 @@
 ﻿using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Experimental.Agents;
 using System.Text;
-using Microsoft.SemanticKernel;
-using SkPluginLibrary.Agents.Models;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Azure.AI.OpenAI;
+using SemanticKernelAgentOrchestration.Models;
 using SkPluginLibrary.Agents.Examples;
 using SkPluginLibrary.Models.Hooks;
 
@@ -65,13 +63,13 @@ public class AssistantAgentService : IAsyncDisposable
         var chat = kernel.GetRequiredService<IChatCompletionService>();
         _chatHistory.AddUserMessage(input);
         var sentRespondant = false;
-        await foreach (var streamingChatMessageContent in chat.GetStreamingChatMessageContentsAsync(_chatHistory, settings, kernel, cancellationToken))
+        await foreach (StreamingChatMessageContent streamingChatMessageContent in chat.GetStreamingChatMessageContentsAsync(_chatHistory, settings, kernel, cancellationToken))
         {
             var update = (OpenAIStreamingChatMessageContent)streamingChatMessageContent;
-            var toolCall = update.ToolCallUpdate as StreamingFunctionToolCallUpdate;
-            if (toolCall?.Name is not null)
+            var toolCalls = update.ToolCallUpdates;
+            if (toolCalls.Any(x => x.FunctionName is not null))
             {
-                var respondant = toolCall.Name.Replace("_Ask", "");
+                var respondant = toolCalls.First(x => x.FunctionName is not null).FunctionName.Replace("_Ask", "");
                 if (!respondant.Equals(_currentRespondent, StringComparison.InvariantCultureIgnoreCase))
                 {
                     
@@ -96,29 +94,13 @@ public class AssistantAgentService : IAsyncDisposable
         }
     }
 
-/*
-    private IAgentThread? _agentThread;
-*/
-    //public async Task<string> ExecuteAgentThread(string input, AgentExecutionRequest agentExecutionRequest, CancellationToken cancellationToken = default)
-    //{
-    //    var primary = await GenerateAgent(_chatAgent?.Name ?? "Chat", _chatAgent?.Description ?? "Chat Agent", _chatAgent?.Instructions ?? "Use the tools available to respond to the user input. Take a deep breath and think step by step.");
-    //    primary.Plugins.AddRange(Agents.Select(x => x.AsPlugin()));
-    //    _agentThread = await primary.NewThreadAsync(cancellationToken);
-    //    await _agentThread.AddUserMessageAsync(input, cancellationToken);
-    //    var response = _agentThread.InvokeAsync(primary, cancellationToken: cancellationToken);
-    //    var responseString = new StringBuilder();
-    //    await foreach (var message in response)
-    //    {
-    //        responseString.AppendLine(message.Content);
-    //    }
-    //    return responseString.ToString();
-    //}
+
     private Kernel GenerateKernel(bool hasAgents = true, List<KernelPlugin>? plugins = null)
     {
         var kernelBuilder = Kernel.CreateBuilder();
         kernelBuilder.Services.AddLogging(builder => builder.AddConsole());
 
-        var kernel = kernelBuilder.AddAIChatCompletion(AIModel.Planner).Build();
+        var kernel = kernelBuilder.AddAIChatCompletion(AIModel.Gpt4O).Build();
         if (hasAgents)
         {
             foreach (var agent in Agents)

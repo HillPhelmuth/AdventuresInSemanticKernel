@@ -2,7 +2,6 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel;
 
 // The following examples show how to use SK SDK in applications using DI/IoC containers.
 namespace SkPluginLibrary.Examples;
@@ -13,7 +12,7 @@ public static class Example40_DIContainer
     {
         var collection = new ServiceCollection();
         collection.AddSingleton<ILoggerFactory>(ConsoleLogger.LoggerFactory);
-        collection.AddOpenAITextGeneration(TestConfiguration.OpenAI.Gpt35ModelId, TestConfiguration.OpenAI.ApiKey);
+        collection.AddOpenAIChatCompletion(TestConfiguration.OpenAI.Gpt35ModelId, TestConfiguration.OpenAI.ApiKey);
         collection.AddSingleton<Kernel>();
 
         // Registering class that uses Kernel to execute a plugin

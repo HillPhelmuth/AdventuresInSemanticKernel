@@ -1,5 +1,4 @@
-﻿using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Plugins.Core;
+﻿using Microsoft.SemanticKernel.Plugins.Core;
 using Microsoft.SemanticKernel.Plugins.Memory;
 using Microsoft.SemanticKernel.Plugins.Web;
 using Microsoft.SemanticKernel.Plugins.Web.Bing;
@@ -9,7 +8,6 @@ using SkPluginComponents;
 using SkPluginComponents.Models;
 using System.Runtime.CompilerServices;
 using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.SemanticKernel.Planning.Handlebars;
 using Microsoft.SemanticKernel.Plugins.OpenApi;
 using Microsoft.SemanticKernel.Planning;
@@ -17,6 +15,7 @@ using System.Text;
 using SkPluginLibrary.Models.Hooks;
 using Azure.AI.OpenAI;
 using Microsoft.SemanticKernel.Connectors.Google;
+using Microsoft.SemanticKernel.Plugins.Core.CodeInterpreter;
 
 namespace SkPluginLibrary;
 
@@ -74,6 +73,8 @@ public partial class CoreKernelService
         _nativePlugins.TryAdd(nameof(WebSearchEnginePlugin), webSearchPlugin);
         var searchUrlPlugin = new SearchUrlPlugin();
         _nativePlugins.TryAdd(nameof(SearchUrlPlugin), searchUrlPlugin);
+        var codeInterpreter = new SessionsPythonPlugin(new SessionsPythonSettings(Guid.NewGuid().ToString(),new Uri(_configuration["AzureContainerApps:Endpoint"]!)),_httpClientFactory);
+        _nativePlugins.TryAdd(nameof(SessionsPythonPlugin), codeInterpreter);
         return _nativePlugins;
     }
 
@@ -252,9 +253,9 @@ public partial class CoreKernelService
                 if (requestModel.SelectedModel != AIModel.Gemini10)
                 {
                     var update = (OpenAIStreamingChatMessageContent) streamingChatMessageContent;
-                    var toolCall = update.ToolCallUpdate as StreamingFunctionToolCallUpdate;
-                    if (toolCall?.Name is not null)
-                        YieldAdditionalText?.Invoke($"<h4>Executing {toolCall.ToolCallIndex}. {toolCall.Name}</h4>");
+                    var toolCall = update.ToolCallUpdates?[0];
+                    if (toolCall?.FunctionName is not null)
+                        YieldAdditionalText?.Invoke($"<h4>Executing {toolCall.Index}. {toolCall.FunctionName}</h4>");
                     if (update.Content is null) continue;
                     assistantMessage += update.Content;
                     yield return update.Content;
@@ -545,7 +546,7 @@ public partial class CoreKernelService
 
     }
 
-    private static Kernel CreateKernelWithPlugins(IEnumerable<KernelPlugin> pluginFunctions, AIModel model = AIModel.Planner)
+    private static Kernel CreateKernelWithPlugins(IEnumerable<KernelPlugin> pluginFunctions, AIModel model = AIModel.Gpt4O)
     {
         var kernel = CreateKernel(model);
         kernel.Plugins.AddRange(pluginFunctions);

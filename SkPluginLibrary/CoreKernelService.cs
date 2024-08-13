@@ -1,7 +1,6 @@
 ﻿using System.Net;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.Qdrant;
 using Microsoft.SemanticKernel.Memory;
 using SkPluginLibrary.Abstractions;
@@ -12,7 +11,6 @@ using Microsoft.SemanticKernel.Planning;
 using Microsoft.SemanticKernel.Plugins.OpenApi;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.SemanticKernel.Connectors.Redis;
 using Microsoft.SemanticKernel.Connectors.Sqlite;
 using Microsoft.SemanticKernel.Connectors.Weaviate;
@@ -22,6 +20,10 @@ using Microsoft.SemanticKernel.Plugins.Memory;
 using Microsoft.Extensions.Http.Resilience;
 using Polly;
 using SkPluginLibrary.Models.Hooks;
+using UglyToad.PdfPig;
+using System.Text;
+using Microsoft.SemanticKernel.Text;
+using NRedisStack.Search;
 
 namespace SkPluginLibrary;
 
@@ -36,6 +38,7 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
 	private readonly ILoggerFactory _loggerFactory;
 	private readonly BingWebSearchService _bingSearchService;
 	private readonly ISemanticTextMemory _semanticTextMemory;
+	private readonly IHttpClientFactory _httpClientFactory;
 	private static string _appInsightConnectionString;
 	public class CollectionName
 	{
@@ -47,7 +50,7 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
 		public const string LangchainDocsCollection = "langchainDocsCollection";
 		public const string PromptEngineerCollection = "promptEngineerCollection";
 	}
-	public CoreKernelService(IConfiguration configuration, ScriptService scriptService, CompilerService compilerService, HdbscanService hdbscanService, ILoggerFactory loggerFactory, BingWebSearchService bingSearchService, AskUserService modalService)
+	public CoreKernelService(IConfiguration configuration, ScriptService scriptService, CompilerService compilerService, HdbscanService hdbscanService, ILoggerFactory loggerFactory, BingWebSearchService bingSearchService, AskUserService modalService, IHttpClientFactory httpClientFactory)
 	{
 		_configuration = configuration;
 		_scriptService = scriptService;
@@ -55,7 +58,8 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
 		_hdbscanService = hdbscanService;
 		_loggerFactory = loggerFactory;
 		_bingSearchService = bingSearchService;
-		_askUserService = modalService;
+        _httpClientFactory = httpClientFactory;
+        _askUserService = modalService;
 
 		_memoryStore = new VolatileMemoryStore();
 		CreateKernel();
@@ -92,6 +96,7 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
 			});
 		});
 		var providor = aiModel.GetModelProvidors().FirstOrDefault();
+		Console.WriteLine($"AI: {providor}");
 		if (providor.Contains("OpenAI"))
 			kernelBuilder.AddAIChatCompletion(aiModel);
 		if (providor == "GoogleAI")
@@ -209,7 +214,30 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
 			.WithOpenAITextEmbeddingGeneration(TestConfiguration.OpenAI.EmbeddingModelId, TestConfiguration.OpenAI.ApiKey)
 			.Build();
 	}
-
+	public static async Task SaveNewSKPdf()
+	{
+		var pdfPath = @"C:\Users\adamh\Downloads\semantic-kernel.pdf";
+		var fileData = await File.ReadAllBytesAsync(pdfPath);
+		var sb = new StringBuilder();
+		using var document = PdfDocument.Open(fileData, new ParsingOptions { UseLenientParsing = true });
+		foreach (var page in document.GetPages())
+		{
+			var pageText = page.Text;
+			sb.Append(pageText);
+		}
+		var textString = sb.ToString();
+		var lines = TextChunker.SplitPlainTextLines(textString, 128, StringHelpers.GetTokens);
+		var paragraphs = TextChunker.SplitPlainTextParagraphs(lines, 512, 96, "semantic-kernel Documentation", StringHelpers.GetTokens);
+		var memory = await ChatWithSkKernelMemory();
+		var index = 0;
+		var ids = new List<string>();
+		foreach (var paragraph in paragraphs)
+		{
+			var id = await memory.SaveInformationAsync(CollectionName.SkDocsCollection, paragraph, $"SKDocs_P_{index++}", "semantic-kernel Documentation");
+			ids.Add(id);
+		}
+		Console.WriteLine($"Saved {ids.Count} Items to {CollectionName.SkDocsCollection}");
+	}
 	private const string ChatWithSkSystemPromptTemplate =
 		"""
         You are a Semantic Kernel Expert and a helpful and friendly Instructor. Use the [Semantic Kernel CONTEXT] below to answer the user's questions.
@@ -260,7 +288,7 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
 		var detailString = $" a {details.Race} {details.Class} with a {details.Alignment} alignment";
 		characterDescription += detailString;
 
-		var kernel = CreateKernel(AIModel.Planner);
+		var kernel = CreateKernel(AIModel.Gpt4O);
 		var functionHook = new FunctionFilterHook();
 		kernel.FunctionInvocationFilters.Add(functionHook);
 		var dndApiPlugin = await kernel.ImportPluginFromOpenApiAsync("DndApiPlugin", Path.Combine(RepoFiles.ApiPluginDirectoryPath, "DndApiPlugin", "openapi.json"), new OpenApiFunctionExecutionParameters { IgnoreNonCompliantErrors = true }, cancellationToken: cancellationToken);

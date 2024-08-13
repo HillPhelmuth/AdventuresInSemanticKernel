@@ -1,0 +1,128 @@
+public static class Agents_Step5_JsonResult
+{
+    private const int ScoreCompletionThreshold = 70;
+
+    private const string TutorName = "Tutor";
+    private const string TutorInstructions =
+        """
+        Think step-by-step and rate the user input on creativity and expressivness from 1-100.
+
+        Respond in JSON format with the following JSON schema:
+
+        {
+            "score": "integer (1-100)",
+            "notes": "the reason for your score"
+        }
+        """;
+
+    
+    public static async Task RunAsync()
+    {
+        // Define the agents
+        ChatCompletionAgent agent =
+            new()
+            {
+                Instructions = TutorInstructions,
+                Name = TutorName,
+                Kernel = CreateKernelWithChatCompletion(),
+            };
+
+        // Create a chat for agent interaction.
+        AgentGroupChat chat =
+            new()
+            {
+                ExecutionSettings =
+                    new()
+                    {
+                        // Here a TerminationStrategy subclass is used that will terminate when
+                        // the response includes a score that is greater than or equal to 70.
+                        TerminationStrategy = new ThresholdTerminationStrategy()
+                    }
+            };
+
+        // Respond to user input
+        await InvokeAgentAsync("The sunset is very colorful.");
+        await InvokeAgentAsync("The sunset is setting over the mountains.");
+        await InvokeAgentAsync("The sunset is setting over the mountains and filled the sky with a deep red flame, setting the clouds ablaze.");
+
+        // Local function to invoke agent and display the conversation messages.
+        async Task InvokeAgentAsync(string input)
+        {
+            chat.AddChatMessage(new ChatMessageContent(AuthorRole.User, input));
+
+            Console.WriteLine($"# {AuthorRole.User}: '{input}'");
+
+            await foreach (var content in chat.InvokeAsync(agent))
+            {
+                Console.WriteLine($"# {content.Role} - {content.AuthorName ?? "*"}: '{content.Content}'");
+                Console.WriteLine($"# IS COMPLETE: {chat.IsComplete}");
+            }
+        }
+    }
+
+    private record struct InputScore(int score, string notes);
+
+    private sealed class ThresholdTerminationStrategy : TerminationStrategy
+    {
+        protected override Task<bool> ShouldAgentTerminateAsync(Agent agent, IReadOnlyList<ChatMessageContent> history, CancellationToken cancellationToken)
+        {
+            string lastMessageContent = history[history.Count - 1].Content ?? string.Empty;
+
+            InputScore? result = JsonResultTranslator.Translate<InputScore>(lastMessageContent);
+
+            return Task.FromResult((result?.score ?? 0) >= ScoreCompletionThreshold);
+        }
+    }
+}
+public static class JsonResultTranslator
+{
+	private const string LiteralDelimiter = "```";
+	private const string JsonPrefix = "json";
+
+	/// <summary>
+	/// Utility method for extracting a JSON result from an agent response.
+	/// </summary>
+	/// <param name="result">A text result</param>
+	/// <typeparam name="TResult">The target type of the <see cref="FunctionResult"/>.</typeparam>
+	/// <returns>The JSON translated to the requested type.</returns>
+	public static TResult? Translate<TResult>(string? result)
+	{
+		if (string.IsNullOrWhiteSpace(result))
+		{
+			return default;
+		}
+
+		string rawJson = ExtractJson(result);
+
+		return JsonSerializer.Deserialize<TResult>(rawJson);
+	}
+
+	private static string ExtractJson(string result)
+	{
+		// Search for initial literal delimiter: ```
+		int startIndex = result.IndexOf(LiteralDelimiter, System.StringComparison.Ordinal);
+		if (startIndex < 0)
+		{
+			// No initial delimiter, return entire expression.
+			return result;
+		}
+
+		startIndex += LiteralDelimiter.Length;
+
+		// Accommodate "json" prefix, if present.
+		if (JsonPrefix.Equals(result.Substring(startIndex, JsonPrefix.Length), System.StringComparison.OrdinalIgnoreCase))
+		{
+			startIndex += JsonPrefix.Length;
+		}
+
+		// Locate final literal delimiter
+		int endIndex = result.IndexOf(LiteralDelimiter, startIndex, System.StringComparison.OrdinalIgnoreCase);
+		if (endIndex < 0)
+		{
+			endIndex = result.Length;
+		}
+
+		// Extract JSON
+		return result.Substring(startIndex, endIndex - startIndex);
+	}
+}

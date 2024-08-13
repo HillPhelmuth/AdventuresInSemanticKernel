@@ -7,7 +7,6 @@ using Microsoft.SemanticKernel.Experimental.Agents;
 using Microsoft.SemanticKernel.ChatCompletion;
 using AngleSharp.Browser.Dom;
 using SkPluginLibrary.Agents.Examples;
-using SkPluginLibrary.Agents.Models;
 
 namespace BlazorWithSematicKernel.Pages;
 

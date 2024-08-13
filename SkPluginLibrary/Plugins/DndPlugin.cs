@@ -1,10 +1,7 @@
-﻿using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Plugins.OpenApi;
-using System.ComponentModel;
+﻿using Microsoft.SemanticKernel.Plugins.OpenApi;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
 
 namespace SkPluginLibrary.Plugins;
 

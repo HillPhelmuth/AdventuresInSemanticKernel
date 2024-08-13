@@ -1,8 +1,5 @@
-﻿using Microsoft.SemanticKernel;
-using SkPluginLibrary.Services;
-using System.ComponentModel;
+﻿using SkPluginLibrary.Services;
 using System.Text.Json;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
 
 namespace SkPluginLibrary.Plugins;
 
