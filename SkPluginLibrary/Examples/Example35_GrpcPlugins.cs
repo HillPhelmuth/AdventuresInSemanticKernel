@@ -1,6 +1,5 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
-using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Plugins.Grpc;
 
 // This example shows how to use gRPC plugins.

@@ -4,7 +4,6 @@ using System.Net;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel;
 
 // This example shows how to use a retry handler within a Semantic Kernel
 namespace SkPluginLibrary.Examples;

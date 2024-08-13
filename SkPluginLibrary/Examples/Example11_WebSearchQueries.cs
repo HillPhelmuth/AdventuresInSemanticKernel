@@ -1,6 +1,5 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
-using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Plugins.Web;
 
 namespace SkPluginLibrary.Examples;

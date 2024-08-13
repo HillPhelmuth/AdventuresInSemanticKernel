@@ -1,6 +1,4 @@
-﻿using Microsoft.SemanticKernel;
-
-namespace SkPluginLibrary.Models.Helpers
+﻿namespace SkPluginLibrary.Models.Helpers
 {
     public static class KernelBuilderExtensions
     {

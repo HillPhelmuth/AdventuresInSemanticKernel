@@ -1,7 +1,4 @@
-﻿using Microsoft.SemanticKernel;
-
-
-namespace SkPluginLibrary.Abstractions;
+﻿namespace SkPluginLibrary.Abstractions;
 
 public interface ICoreKernelExecution
 {

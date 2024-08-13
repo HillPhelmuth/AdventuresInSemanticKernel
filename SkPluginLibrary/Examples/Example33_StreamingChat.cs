@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
 using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
 
 // The following example shows how to use Semantic Kernel with streaming Chat Completion
 namespace SkPluginLibrary.Examples;

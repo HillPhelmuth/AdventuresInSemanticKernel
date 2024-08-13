@@ -1,28 +1,27 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
-using Microsoft.SemanticKernel;
-
 namespace SkPluginLibrary.Examples;
 
-public static class Step5_Chat_Prompt
+public sealed class Step5_Chat_Prompt
 {
     /// <summary>
     /// Show how to construct a chat prompt and invoke it.
     /// </summary>
-    public static async Task RunAsync()
+    public async Task RunAsync()
     {
         // Create a kernel with OpenAI chat completion
         Kernel kernel = Kernel.CreateBuilder()
             .AddOpenAIChatCompletion(
-                modelId: TestConfiguration.OpenAI.Gpt4ModelId,
+                modelId: TestConfiguration.OpenAI.Gpt35ModelId,
                 apiKey: TestConfiguration.OpenAI.ApiKey)
             .Build();
 
         // Invoke the kernel with a chat prompt and display the result
-        string chatPrompt = @"
-            <message role=""user"">What is Seattle?</message>
-            <message role=""system"">Respond with JSON.</message>
-        ";
+        string chatPrompt = """
+            <message role="user">What is Seattle?</message>
+            <message role="system">Respond with JSON.</message>
+            """;
+
         Console.WriteLine(await kernel.InvokePromptAsync(chatPrompt));
     }
 }

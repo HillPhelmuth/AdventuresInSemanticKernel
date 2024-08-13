@@ -1,8 +1,4 @@
-﻿using Microsoft.SemanticKernel;
-using System.ComponentModel;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
-
-namespace SkPluginLibrary.Plugins;
+﻿namespace SkPluginLibrary.Plugins;
 
 public class InstructPlugin
 {

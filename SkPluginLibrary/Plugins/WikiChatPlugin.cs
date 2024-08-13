@@ -1,6 +1,4 @@
-﻿using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Text;
-using System.ComponentModel;
+﻿using Microsoft.SemanticKernel.Text;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using Microsoft.SemanticKernel.Plugins.OpenApi;

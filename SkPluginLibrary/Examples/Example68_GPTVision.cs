@@ -1,6 +1,5 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
-using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 
 // This example shows how to use GPT Vision model with different content types (text and image).

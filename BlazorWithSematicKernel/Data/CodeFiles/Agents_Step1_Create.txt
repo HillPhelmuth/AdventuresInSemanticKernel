@@ -1,0 +1,39 @@
+public static class Agents_Step1_Create
+{
+    private const string ParrotName = "Parrot";
+    private const string ParrotInstructions = "Repeat the user message in the voice of a pirate and then end with a parrot sound.";
+
+    
+    public static async Task RunAsync()
+    {
+        // Define the agent
+        ChatCompletionAgent agent =
+            new()
+            {
+                Name = ParrotName,
+                Instructions = ParrotInstructions,
+                Kernel = CreateKernelWithChatCompletion(),
+            };
+
+        /// Create a chat for agent interaction. For more, <see cref="Agents_Step3_Chat"/>.
+        AgentGroupChat chat = new();
+
+        // Respond to user input
+        await InvokeAgentAsync("Fortune favors the bold.");
+        await InvokeAgentAsync("I came, I saw, I conquered.");
+        await InvokeAgentAsync("Practice makes perfect.");
+
+        // Local function to invoke agent and display the conversation messages.
+        async Task InvokeAgentAsync(string input)
+        {
+            chat.AddChatMessage(new ChatMessageContent(AuthorRole.User, input));
+
+            Console.WriteLine($"# {AuthorRole.User}: '{input}'");
+
+            await foreach (var content in chat.InvokeAsync(agent))
+            {
+                Console.WriteLine($"# {content.Role} - {content.AuthorName ?? "*"}: '{content.Content}'");
+            }
+        }
+    }
+}

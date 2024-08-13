@@ -2,7 +2,6 @@
 using HdbscanSharp.Runner;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel.Memory;
-using System.ComponentModel;
 using System.Diagnostics;
 
 namespace SkPluginLibrary.Services;

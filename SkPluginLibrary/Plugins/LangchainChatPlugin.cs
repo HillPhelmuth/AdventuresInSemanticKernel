@@ -1,9 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.SemanticKernel.Connectors.Sqlite;
 using Microsoft.SemanticKernel.Memory;
-using System.ComponentModel;
 using static SkPluginLibrary.CoreKernelService;
 
 namespace SkPluginLibrary.Plugins;

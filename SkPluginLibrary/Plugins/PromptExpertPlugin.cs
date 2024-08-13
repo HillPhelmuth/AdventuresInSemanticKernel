@@ -1,9 +1,6 @@
-﻿using System.ComponentModel;
-using System.Text;
+﻿using System.Text;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Configuration;
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.SemanticKernel.Connectors.Sqlite;
 using Microsoft.SemanticKernel.Memory;
 using Microsoft.SemanticKernel.Plugins.Memory;

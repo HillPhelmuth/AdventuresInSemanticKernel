@@ -1,8 +1,5 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
-
 namespace SkPluginLibrary.Examples;
 
 public static class Example05_InlineFunctionDefinition

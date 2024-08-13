@@ -1,9 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
-using System.ComponentModel;
 using System.Globalization;
 using System.Text.Json;
-using Microsoft.SemanticKernel;
 
 // This example shows different ways how to define and execute method functions using custom and primitive types.
 namespace SkPluginLibrary.Examples;

@@ -1,5 +1,6 @@
 ﻿using Azure.AI.OpenAI;
 using Microsoft.SemanticKernel.Memory;
+using OpenAI.Chat;
 
 namespace SkPluginLibrary.Abstractions;
 
@@ -13,5 +14,7 @@ public interface ITokenization
 
     Task<string> SaveChunks(List<TokenizedChunk> chunks, string model = "text-embedding-3-small");
     Task<List<MemoryQueryResult>> SearchInChunks(string query, int limit = 1, double threshold = 0.7d);
-    Task<ChatChoice> GetLogProbs(string input, float temp, float topP, string systemPrompt = "You are a helpful AI model", string model = "gpt-3.5-turbo");
+    Task<ChatCompletion> GetLogProbs(string input, float temp, float topP,
+        string systemPrompt = "You are a helpful AI model", string model = "gpt-3.5-turbo");
+    IAsyncEnumerable<string> GenerateAutoCompleteOptions(string text, int maxTokens = 10, AIModel model = AIModel.Gpt4OMini);
 }

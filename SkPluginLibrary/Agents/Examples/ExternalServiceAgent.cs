@@ -1,7 +1,5 @@
-﻿using Microsoft.SemanticKernel;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.SemanticKernel.Plugins.OpenApi;
 using Microsoft.SemanticKernel.Experimental.Agents;
 using Microsoft.SemanticKernel.ChatCompletion;

@@ -1,9 +1,10 @@
 ﻿using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Components;
 using Radzen.Blazor;
+using SemanticKernelAgentOrchestration.Extensions;
+using SemanticKernelAgentOrchestration.Models;
 using SkPluginLibrary.Abstractions;
 using SkPluginLibrary.Agents;
-using SkPluginLibrary.Agents.Models;
 using static SkPluginLibrary.CoreKernelService;
 
 namespace BlazorWithSematicKernel.Components.AgentComponents;

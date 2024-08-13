@@ -1,8 +1,5 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
-using Microsoft.SemanticKernel;
-using System.ComponentModel;
-
 namespace SkPluginLibrary.Plugins;
 
 public sealed class StaticTextPlugin

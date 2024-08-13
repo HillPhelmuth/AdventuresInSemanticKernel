@@ -1,16 +1,14 @@
-﻿using System.ComponentModel;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Text;
 using Azure.AI.OpenAI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.SemanticKernel.Experimental.Agents;
+using SemanticKernelAgentOrchestration.Models;
 using SkPluginComponents;
 using SkPluginComponents.Models;
-using SkPluginLibrary.Agents.Models;
+using SkPluginLibrary.Agents.Extensions;
 using SkPluginLibrary.Models.Hooks;
 using SkPluginLibrary.Services;
 
@@ -53,10 +51,10 @@ public class AdventureStoryAgents(AskUserService askUserService) : IAsyncDisposa
         await foreach (var streamingChatMessageContent in chat.GetStreamingChatMessageContentsAsync(_chatHistory, settings, kernel, cancellationToken))
         {
             var update = (OpenAIStreamingChatMessageContent) streamingChatMessageContent;
-            var toolCall = update.ToolCallUpdate as StreamingFunctionToolCallUpdate;
-            if (toolCall?.Name is not null)
+            var toolCall = update.ToolCallUpdates[0];
+            if (toolCall?.FunctionName is not null)
             {
-                _currentRespondent = toolCall.Name.Replace("_Ask","");
+                _currentRespondent = toolCall.FunctionName.Replace("_Ask","");
             }
             
             if (!sentRespondant)

@@ -1,6 +1,7 @@
 ﻿using Azure.AI.OpenAI;
 using Markdig;
 using Microsoft.AspNetCore.Components;
+using OpenAI.Chat;
 using SkPluginLibrary.Abstractions;
 
 namespace BlazorWithSematicKernel.Pages
@@ -12,8 +13,8 @@ namespace BlazorWithSematicKernel.Pages
         //private string ApiKey => Configuration["OpenAI:ApiKey"]!;
         [Inject]
         private ITokenization LogProbService { get; set; } = default!;
-        private ChatChoice? _chatResponse;
-        private List<ChatTokenLogProbabilityResult> _tokens = [];
+        
+        private List<ChatTokenLogProbabilityInfo> _tokens = [];
         private string _output = string.Empty;
         private string _query = string.Empty;
         private bool _isBusy;
@@ -34,10 +35,10 @@ namespace BlazorWithSematicKernel.Pages
             _isBusy = true;
             StateHasChanged();
             await Task.Delay(1);
-            var choice = await LogProbService.GetLogProbs(logProbInputForm.UserInput!,logProbInputForm.Tempurature,logProbInputForm.TopP, logProbInputForm.SystemPrompt, logProbInputForm.Model);
+            ChatCompletion? choice = await LogProbService.GetLogProbs(logProbInputForm.UserInput!,logProbInputForm.Tempurature,logProbInputForm.TopP, logProbInputForm.SystemPrompt, logProbInputForm.Model);
             
-            _output = choice?.Message.Content?.ToString() ?? "";
-            _tokens = choice?.LogProbabilityInfo.TokenLogProbabilityResults.ToList() ?? [];
+            _output = choice?.Content?.ToString() ?? "";
+            _tokens = choice?.ContentTokenLogProbabilities.ToList() ?? [];
             _isBusy = false;
             StateHasChanged();
         }
@@ -52,31 +53,5 @@ namespace BlazorWithSematicKernel.Pages
 
         }
 
-    }
-    public static class LogProbExtensions
-    {
-        public static List<TokenString> AsTokenStrings(this List<ChatTokenLogProbabilityResult> logProbContentItems)
-        {
-            var result = new List<TokenString>();
-            foreach (var logProb in logProbContentItems)
-            {
-                var tokenString = new TokenString(logProb.Token, logProb.NormalizedLogProb());
-                if (logProb.TopLogProbabilityEntries is {Count: > 0})
-                {
-                    var innerResult = logProb.TopLogProbabilityEntries.Select(item => new TokenString(item.Token, item.NormalizedLogProb())).ToList();
-                    tokenString.TopLogProbs = innerResult;
-                }
-                result.Add(tokenString);
-            }            
-            return result;
-        }
-        public static double NormalizedLogProb(this ChatTokenLogProbabilityResult logProbabilityResult)
-        {
-            return Math.Exp(logProbabilityResult.LogProbability);
-        }
-        public static double NormalizedLogProb(this ChatTokenLogProbabilityInfo logProbInfo)
-        {
-            return Math.Exp(logProbInfo.LogProbability);
-        }
     }
 }

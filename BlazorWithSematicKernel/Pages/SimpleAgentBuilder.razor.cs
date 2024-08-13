@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Components;
 using SkPluginLibrary.Agents;
-using SkPluginLibrary.Agents.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using SemanticKernelAgentOrchestration.Models;
 
 namespace BlazorWithSematicKernel.Pages
 {

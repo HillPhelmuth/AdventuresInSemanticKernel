@@ -1,6 +1,5 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
-using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.SemanticKernel.TextGeneration;
 
 namespace SkPluginLibrary.Examples;
@@ -27,7 +26,7 @@ public static class Example32_StreamingCompletion
     {
         Console.WriteLine("======== Azure OpenAI - Text Completion - Raw Streaming ========");
 
-        var textGeneration = new AzureOpenAITextGenerationService(
+        var textGeneration = new AzureOpenAIChatCompletionService(
             deploymentName: TestConfiguration.AzureOpenAI.Gpt35DeploymentName,
             endpoint: TestConfiguration.AzureOpenAI.Endpoint,
             apiKey: TestConfiguration.AzureOpenAI.ApiKey,
@@ -40,7 +39,7 @@ public static class Example32_StreamingCompletion
     {
         Console.WriteLine("======== Open AI - Text Completion - Raw Streaming ========");
 
-        var textGeneration = new OpenAITextGenerationService("text-davinci-003", TestConfiguration.OpenAI.ApiKey);
+        var textGeneration = new OpenAIChatCompletionService("gpt-3.5-turbo", TestConfiguration.OpenAI.ApiKey);
 
         await TextGenerationStreamAsync(textGeneration);
     }

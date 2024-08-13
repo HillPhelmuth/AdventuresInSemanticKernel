@@ -67,6 +67,44 @@ namespace SkPluginLibrary.Models.Helpers
         {
             return Regex.Replace(input, @"[^a-zA-Z0-9_]", "_");
         }
-        
-    }
+		public static List<string> SplitText(this string text, int maxCharLength)
+		{
+			var result = new List<string>();
+
+			if (string.IsNullOrWhiteSpace(text))
+			{
+				return result;
+			}
+
+			var length = text.Length;
+			var start = 0;
+
+			while (start < length)
+			{
+				var end = start + maxCharLength;
+
+				if (end >= length)
+				{
+					result.Add(text[start..]);
+					break;
+				}
+
+				var lastSpace = text.LastIndexOf(' ', end, end - start);
+
+				if (lastSpace > start)
+				{
+					result.Add(text.Substring(start, lastSpace - start));
+					start = lastSpace + 1;
+				}
+				else
+				{
+					result.Add(text.Substring(start, maxCharLength));
+					start += maxCharLength;
+				}
+			}
+
+			return result;
+		}
+
+	}
 }

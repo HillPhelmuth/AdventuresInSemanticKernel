@@ -1,6 +1,4 @@
-﻿using Microsoft.SemanticKernel;
-
-namespace SkPluginLibrary.Models.Hooks
+﻿namespace SkPluginLibrary.Models.Hooks
 {
     public class FunctionFilterHook : IFunctionInvocationFilter
     {

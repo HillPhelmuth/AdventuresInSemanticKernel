@@ -1,17 +1,17 @@
 ﻿using Microsoft.AspNetCore.Components;
-using SkPluginLibrary.Agents.Models;
-using SkPluginLibrary.Agents.Models.Events;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
-using SkPluginLibrary.Agents.Group;
 using BlazorWithSematicKernel.Components.AgentComponents;
 using Microsoft.JSInterop;
 using SkPluginLibrary.Models.Helpers;
 using SkPluginLibrary.Models.JsonConverters;
 using System.Text;
-using SkPluginLibrary.Agents.Extensions;
+using SemanticKernelAgentOrchestration.Extensions;
+using SemanticKernelAgentOrchestration.Group;
+using SemanticKernelAgentOrchestration.Models;
+using SemanticKernelAgentOrchestration.Models.Events;
 using SkPluginLibrary.Abstractions;
 
 
@@ -36,7 +36,7 @@ public partial class GroupChatPage : ComponentBase
     private Kernel? _kernel;
     private GroupChat? _groupChat;
     private CreateAgentForm? _create;
-    private InteractiveAgentBase? _requestingAgent;
+    private ChatAgent? _requestingAgent;
     private List<KernelPlugin> _allKernelPlugins = [];
     private string Css => _isUserInputRequested ? "blinking-input" : "";
     [Inject]
@@ -73,11 +73,11 @@ public partial class GroupChatPage : ComponentBase
             adminAgent = new InteractiveStreamingAgent(adminProxy, CoreKernelService.CreateKernelGoogle(adminProxy.GptModel));
         else
             adminAgent = new InteractiveStreamingAgent(adminProxy, _kernel!);
-        adminAgent.AgentStreamingResponse += HandleInteractiveStreamingResponse;
+        adminAgent.AgentResponse += HandleInteractiveStreamingResponse;
         var transitions = new List<Transition>();
         foreach (var agent in agents)
         {
-            agent.AgentStreamingResponse += HandleInteractiveStreamingResponse;
+            agent.AgentResponse += HandleInteractiveStreamingResponse;
             var trans = Transition.Create(adminAgent, agent);
             transitions.Add(trans);
             var transBack = Transition.Create(agent, adminAgent);
@@ -98,22 +98,22 @@ public partial class GroupChatPage : ComponentBase
         StateHasChanged();
     }
 
-    private List<InteractiveAgentBase> InteractiveAgents(AgentProxy adminProxy, List<AgentProxy> agentProxies)
+    private List<ChatAgent> InteractiveAgents(AgentProxy adminProxy, List<AgentProxy> agentProxies)
     {
-	    var interactiveAgents = new List<InteractiveAgentBase>();
+	    var interactiveAgents = new List<ChatAgent>();
 	    foreach (var agent in agentProxies)
 	    {
 		    if (agent.Name == adminProxy.Name) continue;
 		    var model = agent.GptModel switch
 		    {
-			    "Gpt4" => AIModel.Gpt4,
+			    "Gpt4" => AIModel.Gpt4Turbo,
 			    "Gpt35" => AIModel.Gpt35,
 			    "gemini-1.0-pro" => AIModel.Gemini10,
 			    "gemini-1.5-pro-latest" => AIModel.Gemini15,
-			    _ => AIModel.Gpt4
+			    _ => AIModel.Gpt4Turbo
 		    };
 		    Kernel kernel;
-		    if (model is AIModel.Gpt35 or AIModel.Gpt4)
+		    if (model is AIModel.Gpt35 or AIModel.Gpt4Turbo)
 			    kernel = CoreKernelService.CreateKernel(model);
 		    else
 		    {
@@ -138,7 +138,7 @@ public partial class GroupChatPage : ComponentBase
 
     protected override Task OnInitializedAsync()
     {
-        var aiModel = AIModel.Gpt4;
+        var aiModel = AIModel.Gpt4Turbo;
         _kernel = CoreKernelService.CreateKernel(aiModel);
         _agentsAsPlugins = FileHelper.ExtractFromAssembly<List<AgentProxy>>("agentsExample.json");
         return base.OnInitializedAsync();
@@ -221,7 +221,7 @@ public partial class GroupChatPage : ComponentBase
         StateHasChanged();
         await Task.Delay(1);
     }
-    private void HandleInteractiveStreamingResponse(object? sender, AgentStreamingResponseArgs args)
+    private void HandleInteractiveStreamingResponse(object? sender, AgentResponseArgs args)
     {
         if (args.IsStartToken)
         {

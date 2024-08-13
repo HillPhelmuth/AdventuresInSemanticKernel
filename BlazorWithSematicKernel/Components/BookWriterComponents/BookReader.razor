@@ -1,0 +1,16 @@
+﻿@* <div class="book">
+	@((MarkupString)AsHtml(Text))
+</div> *@
+<RadzenAccordion>
+	<Items>
+		@foreach (var chapter in ChapterTexts)
+		{
+			<RadzenAccordionItem Text="@chapter.Key">
+				<div class="book">
+					@((MarkupString)AsHtml(chapter.Value))
+				</div>
+			</RadzenAccordionItem>
+		}
+	</Items>
+
+</RadzenAccordion>

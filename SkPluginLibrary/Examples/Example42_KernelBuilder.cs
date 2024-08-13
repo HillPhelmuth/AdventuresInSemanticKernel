@@ -7,7 +7,6 @@
 using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Plugins.Core;
 
 namespace SkPluginLibrary.Examples;

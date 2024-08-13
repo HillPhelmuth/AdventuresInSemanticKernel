@@ -1,7 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
-using Microsoft.SemanticKernel;
-using System.ComponentModel;
 using System.Net;
 using static SkPluginLibrary.CoreKernelService;
 using Microsoft.SemanticKernel.Connectors.Sqlite;

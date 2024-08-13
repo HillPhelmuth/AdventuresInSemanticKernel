@@ -1,6 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
-using Microsoft.SemanticKernel;
+
 
 // This example shows how to use chat completion prompts.
 namespace SkPluginLibrary.Examples;

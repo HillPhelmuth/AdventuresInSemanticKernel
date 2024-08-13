@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.SemanticKernel.Agents;
+using SemanticKernelAgentOrchestration.Models;
 using SkPluginLibrary.Abstractions;
-using SkPluginLibrary.Agents.Models;
 
 namespace BlazorWithSematicKernel.Components.AgentComponents
 {

@@ -2,8 +2,6 @@
 
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.SemanticKernel.Services;
 
 namespace SkPluginLibrary.Examples;

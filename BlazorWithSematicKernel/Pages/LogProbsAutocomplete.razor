@@ -1,0 +1,13 @@
+﻿@page "/logprobsautocomplete"
+@using Radzen.Blazor.Rendering
+
+<RadzenRow>
+    <RadzenColumn Size="6" Offset="3">
+        <RadzenCard>
+            <RadzenTextArea @ref=_textArea @bind-Value="@_text" @bind-Value:after="HandleInput" Style="width:100%"></RadzenTextArea>
+            <Popup @ref=_popup Visible="@(_options.Count > 0)" Style="display:none;position:absolute;height:fit-content; width:fit-content">
+                <RadzenListBox Data="_options" TValue="AutocompleteOption" TextProperty="Text" ValueChanged="HandleSelect" Style="width:40vw" ></RadzenListBox>
+            </Popup>
+        </RadzenCard>
+    </RadzenColumn>
+</RadzenRow>

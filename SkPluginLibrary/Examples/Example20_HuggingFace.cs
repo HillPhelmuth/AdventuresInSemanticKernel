@@ -1,6 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
-using Microsoft.SemanticKernel;
+
 
 // The following example shows how to use Semantic Kernel with HuggingFace API.
 namespace SkPluginLibrary.Examples;

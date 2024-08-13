@@ -1,7 +1,5 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
-using Microsoft.SemanticKernel;
-
 namespace SkPluginLibrary.Examples;
 
 public static class Example61_MultipleLLMs

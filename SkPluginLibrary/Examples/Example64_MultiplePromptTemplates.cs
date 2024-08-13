@@ -1,6 +1,5 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
-using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.PromptTemplates.Handlebars;
 
 // This example shows how to use multiple prompt template formats.

@@ -12,6 +12,27 @@ public class FileHelper
     {
         return Encoding.UTF8.GetBytes(content);
     }
+    public static byte[] GenerateHtmlFile(Dictionary<string, string> chapters)
+    {
+        var chapterText = string.Join("<br/>", chapters.Values);
+        var htmlText = HtmlBoilerPlate.Replace("--novelText--", chapterText);
+        return GenerateTextFile(htmlText);
+    }
+    private const string HtmlBoilerPlate = """
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Your Novel Title</title>
+            <!-- Additional meta tags can be added here for SEO, author information, etc. -->
+        </head>
+        <body>
+            <h1>Your Novel Title</h1>
+            --novelText--
+        </body>
+        </html>
+        """;
     public static async Task<T> ExtractFromAssemblyAsync<T>(string fileName)
     {
         var assembly = Assembly.GetExecutingAssembly();

@@ -1,0 +1,95 @@
+﻿// Copyright (c) Microsoft. All rights reserved.
+
+using Microsoft.SemanticKernel.Agents;
+using Microsoft.SemanticKernel.Agents.OpenAI;
+using Microsoft.SemanticKernel.ChatCompletion;
+using static SkPluginLibrary.Examples.SamplesHelper;
+
+namespace SkPluginLibrary.Examples;
+
+/// <summary>
+/// This example demonstrates that outside of initialization (and cleanup), using
+/// <see cref="OpenAIAssistantAgent"/> is no different from <see cref="ChatCompletionAgent"/>
+/// even with with a <see cref="KernelPlugin"/>.
+/// </summary>
+public static class Agents_Step8_OpenAIAssistant
+{
+    private const string HostName = "Host";
+    private const string HostInstructions = "Answer questions about the menu.";
+
+    
+    public static async Task RunAsync()
+    {
+        // Define the agent
+        OpenAIAssistantAgent agent =
+            await OpenAIAssistantAgent.CreateAsync(
+                kernel: new(),
+                clientProvider: OpenAIClientProvider.ForOpenAI(TestConfiguration.OpenAI.ApiKey), 
+                new(TestConfiguration.OpenAI.Gpt35ModelId)
+                {
+                    Instructions = HostInstructions,
+                    Name = HostName
+                });
+
+        // Initialize plugin and add to the agent's Kernel (same as direct Kernel usage).
+        KernelPlugin plugin = KernelPluginFactory.CreateFromType<MenuPlugin>();
+        agent.Kernel.Plugins.Add(plugin);
+
+        // Create a chat for agent interaction.
+        var chat = new AgentGroupChat();
+
+        // Respond to user input
+        try
+        {
+            await InvokeAgentAsync("Hello");
+            await InvokeAgentAsync("What is the special soup?");
+            await InvokeAgentAsync("What is the special drink?");
+            await InvokeAgentAsync("Thank you");
+        }
+        finally
+        {
+            await agent.DeleteAsync();
+        }
+
+        // Local function to invoke agent and display the conversation messages.
+        async Task InvokeAgentAsync(string input)
+        {
+            chat.AddChatMessage(new ChatMessageContent(AuthorRole.User, input));
+
+            Console.WriteLine($"# {AuthorRole.User}: '{input}'");
+
+            await foreach (var content in chat.InvokeAsync(agent))
+            {
+                Console.WriteLine($"# {content.Role} - {content.AuthorName ?? "*"}: '{content.Content}'");
+            }
+        }
+    }
+
+    private sealed class MenuPlugin
+    {
+        public const string CorrelationIdArgument = "correlationId";
+
+        private readonly List<string> _correlationIds = [];
+
+        public IReadOnlyList<string> CorrelationIds => this._correlationIds;
+
+        [KernelFunction, Description("Provides a list of specials from the menu.")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1024:Use properties where appropriate", Justification = "Too smart")]
+        public string GetSpecials()
+        {
+            return @"
+Special Soup: Clam Chowder
+Special Salad: Cobb Salad
+Special Drink: Chai Tea
+";
+        }
+
+        [KernelFunction, Description("Provides the price of the requested menu item.")]
+        public string GetItemPrice(
+            [Description("The name of the menu item.")]
+            string menuItem)
+        {
+            return "$9.99";
+        }
+    }
+}

@@ -1,5 +1,4 @@
-﻿using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Memory;
+﻿using Microsoft.SemanticKernel.Memory;
 using SkPluginLibrary.Services;
 
 namespace SkPluginLibrary.Abstractions;
