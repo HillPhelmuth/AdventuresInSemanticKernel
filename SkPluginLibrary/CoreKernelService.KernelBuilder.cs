@@ -73,8 +73,6 @@ public partial class CoreKernelService
         _nativePlugins.TryAdd(nameof(WebSearchEnginePlugin), webSearchPlugin);
         var searchUrlPlugin = new SearchUrlPlugin();
         _nativePlugins.TryAdd(nameof(SearchUrlPlugin), searchUrlPlugin);
-        var codeInterpreter = new SessionsPythonPlugin(new SessionsPythonSettings(Guid.NewGuid().ToString(),new Uri(_configuration["AzureContainerApps:Endpoint"]!)),_httpClientFactory);
-        _nativePlugins.TryAdd(nameof(SessionsPythonPlugin), codeInterpreter);
         return _nativePlugins;
     }
 
