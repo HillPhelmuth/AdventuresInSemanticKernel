@@ -73,10 +73,10 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
 
 	public static Kernel ChatCompletionKernel()
 	{
-		return Kernel.CreateBuilder().AddAIChatCompletion(AIModel.Gpt35)
+		return Kernel.CreateBuilder().AddAIChatCompletion(AIModel.Gpt4OMini)
 			.Build();
 	}
-	public static Kernel CreateKernel(AIModel aiModel = AIModel.Gpt35)
+	public static Kernel CreateKernel(AIModel aiModel = AIModel.Gpt4OMini)
 	{
 		var kernelBuilder = Kernel.CreateBuilder();
 		kernelBuilder.Services.AddLogging(builder =>
@@ -88,7 +88,7 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
 		{
 			c.AddStandardResilienceHandler().Configure(o =>
 			{
-				o.Retry.ShouldHandle = args => ValueTask.FromResult(args.Outcome.Result?.StatusCode is HttpStatusCode.TooManyRequests);
+				o.Retry.ShouldHandle = args => ValueTask.FromResult(args.Outcome.Result?.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.InternalServerError);
 				o.Retry.BackoffType = DelayBackoffType.Exponential;
 				o.AttemptTimeout = new HttpTimeoutStrategyOptions { Timeout = TimeSpan.FromSeconds(90) };
 				o.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(180);
@@ -191,7 +191,7 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
 		var kernelBuilder = Kernel.CreateBuilder();
 		kernelBuilder.Services.AddLogging(builder => builder.AddConsole());
 		var kernel = kernelBuilder
-			.AddAIChatCompletion(AIModel.Gpt35)
+			.AddAIChatCompletion(AIModel.Gpt4OMini)
 			.Build();
 		var semanticMemory = await ChatWithSkKernelMemory();
 		var textMemory = KernelPluginFactory.CreateFromObject(new TextMemoryPlugin(semanticMemory), "TextMemoryPlugin");

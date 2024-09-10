@@ -1,0 +1,75 @@
+﻿@page "/agentGroupChat"
+<RadzenSteps @bind-SelectedIndex="_step">
+    <Steps>
+        <RadzenStepsItem Text="Intro" NextText="Build Group">
+            <RadzenRow>
+                <RadzenColumn Size="8" Offset="2">
+                    <RadzenCard>
+                        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle2">Agent Group Chats in Semantic Kernel</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2">Agent group chats in Semantic Kernel allow you to orchestrate conversations between multiple AI agents, each with its own role and instructions. This enables you to create complex workflows and automate tasks that require collaboration between different AI personalities.<br />An agent group chat is initiated by creating an <code style="display:inline;background-color:white !important">AgentGroupChat</code> instance and adding participating agents. You can then provide an initial message to start the conversation. The chat then proceeds according to the configured <code style="display:inline;background-color:white !important">SelectionStrategy</code> and <code style="display:inline;background-color:white !important">TerminationStrategy</code>. </RadzenText><br />
+                        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle2">Selection Strategy</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2">
+                            The <code style="display:inline;background-color:white !important">SelectionStrategy</code> determines which agent gets to respond next in the conversation. This can be a simple round-robin approach or a more sophisticated strategy based on the conversation history and the agents' roles.<br />
+                            Semantic Kernel provides two built-in selection strategies:
+                            <ul style="list-style:disc; padding-left:1.5rem; margin-bottom:.5rem">
+                                <li><strong>RoundRobinSelectionStrategy:</strong> Agents take turns responding in the order they were added to the chat.</li>
+                                <li><strong>KernelFunctionSelectionStrategy:</strong> A KernelFunction is used to analyze the conversation history or other context and decide which agent should respond next. This allows for more dynamic and context-aware agent selection.</li>
+                            </ul>
+                        </RadzenText><br />
+
+                        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle2">Termination Strategy</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2">
+                            The <code style="display:inline;background-color:white !important">TerminationStrategy</code> defines the conditions under which the chat ends. This could be after a certain number of turns, when a specific goal is achieved, or when a particular agent provides a certain response.<br />
+                            Semantic Kernel offers these built-in termination strategies:
+                            <ul style="list-style:disc; padding-left:1.5rem; margin-bottom:.5rem">
+                               
+                                <li><strong>MaxTurnsTerminationStrategy::</strong> The chat ends after a specified number of turns.</li>
+                                <li><strong>KernelFunctionTerminationStrategy:</strong> A KernelFunction is used to analyze the conversation history or other context and determine if the chat should terminate. This enables flexible and customizable termination conditions based on the conversation's content.</li>
+                            </ul>
+                        </RadzenText>
+                        
+                        <br />
+                        <RadzenButton Style="margin-left:45%" Text="Get Started" Click="GetStarted"></RadzenButton>
+                    </RadzenCard>
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenStepsItem>
+        <RadzenStepsItem Text="Build Agent Group" NextText="Start Group Chat">
+            <RadzenRow>
+                <RadzenColumn>
+                    <RadzenButton Size=ButtonSize.Small Click="UseExample" Text="Use Moderated Debate Example"></RadzenButton>
+                </RadzenColumn>
+                <RadzenColumn>
+                    <RadzenTemplateForm TItem="FileUploadData" Data="_fileUploadData" Submit="HandleFile">
+                        <RadzenFileInput Name="Fileupload" Error="HandleError" MaxFileSize="FileUploadData.MaxFileSize" ChooseText="Upload previous Agent Group" @bind-FileName="@_fileUploadData.FileName" TValue="string" @bind-Value="@_fileUploadData.FileBase64" @bind-FileSize="_fileUploadData.FileSize" Accept="text/plain,application/json"></RadzenFileInput>
+                        <RadzenRequiredValidator Component="Fileupload" Popup=true Style="position:absolute"></RadzenRequiredValidator>
+                        @if (!string.IsNullOrEmpty(_fileUploadData.FileBase64))
+                        {
+                            <RadzenButton ButtonType="ButtonType.Submit" Text="Upload" Size="ButtonSize.ExtraSmall"></RadzenButton>
+                        }
+                        <RadzenButton Text="Save Agent Group" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" Click="DownloadToFile"></RadzenButton>
+                    </RadzenTemplateForm>
+                    
+                </RadzenColumn>
+            </RadzenRow>
+            <RadzenRow>
+                <RadzenColumn>
+                    <AgentBuilder @bind-AgentsGenerated="_agentProxies" AgentsCompleted="HandleAgentProxies"></AgentBuilder>
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenStepsItem>
+        <RadzenStepsItem Text="Group Chat">
+            <RadzenButton Text="Reset" Size="ButtonSize.ExtraSmall" Click="Reset"></RadzenButton>
+            @if (!string.IsNullOrWhiteSpace(_summary))
+            {
+                <span class="blinking-input">
+                    <RadzenButton Size="ButtonSize.ExtraSmall" Click="ShowSummary" Text="Summary"></RadzenButton>
+                </span>
+            }
+            <RadzenCard>
+                <ChatView @ref="_chatView" ViewId="agentgroupchat"></ChatView>
+            </RadzenCard>
+            <UserInput UserInputSubmit="HandleUserInput" ButtonLabel="Send" HelperText="User Input" IsBusy="_isBusy" CancelRequest="Cancel" CssClass="@Css"></UserInput>
+        </RadzenStepsItem>
+    </Steps>
+</RadzenSteps>

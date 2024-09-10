@@ -5,6 +5,7 @@ using SemanticKernelAgentOrchestration.Extensions;
 using SemanticKernelAgentOrchestration.Models;
 using SkPluginLibrary.Abstractions;
 using SkPluginLibrary.Agents;
+using SkPluginLibrary.Agents.Models;
 using static SkPluginLibrary.CoreKernelService;
 
 namespace BlazorWithSematicKernel.Components.AgentComponents;
@@ -184,12 +185,7 @@ public partial class AgentBuilder
     }
     
 }
-public enum GroupTransitionType
-{
-    HubAndSpoke,
-    RoundRobin,
-    PromptBased
-}
+
 public class AgentGroupCompletedArgs
 {
     public List<AgentProxy> Agents { get; set; } = [];

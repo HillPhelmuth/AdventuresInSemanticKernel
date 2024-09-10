@@ -13,6 +13,7 @@ using SemanticKernelAgentOrchestration.Group;
 using SemanticKernelAgentOrchestration.Models;
 using SemanticKernelAgentOrchestration.Models.Events;
 using SkPluginLibrary.Abstractions;
+using SkPluginLibrary.Agents.Models;
 
 
 namespace BlazorWithSematicKernel.Pages;
@@ -49,7 +50,7 @@ public partial class GroupChatPage : ComponentBase
     private class SelectAgentForm
     {
         public AgentProxy? AdminAgent { get; set; }
-        public List<AgentProxy> Agents { get; set; } = new();
+        public List<AgentProxy> Agents { get; set; } = [];
         public GroupTransitionType GroupTransitionType { get; set; }
         public string StopStatement { get; set; } = "[STOP]";
         public int Rounds { get; set; }
@@ -88,7 +89,7 @@ public partial class GroupChatPage : ComponentBase
         {
             GroupTransitionType.HubAndSpoke => new GroupChat(adminAgent, agents, transitionGraph: graph,
                 endStatement: selectAgentForm.StopStatement),
-            GroupTransitionType.RoundRobin => new GroupChat(adminAgent, agents,
+            GroupTransitionType.Sequential => new GroupChat(adminAgent, agents,
                 endStatement: selectAgentForm.StopStatement, isRoundRobin: true),
             _ => new GroupChat(adminAgent, agents)
         };
@@ -106,21 +107,21 @@ public partial class GroupChatPage : ComponentBase
 		    if (agent.Name == adminProxy.Name) continue;
 		    var model = agent.GptModel switch
 		    {
-			    "Gpt4" => AIModel.Gpt4Turbo,
-			    "Gpt35" => AIModel.Gpt35,
+			    "Gpt4" => AIModel.Gpt4O,
+			    "Gpt35" => AIModel.Gpt4OMini,
 			    "gemini-1.0-pro" => AIModel.Gemini10,
 			    "gemini-1.5-pro-latest" => AIModel.Gemini15,
 			    _ => AIModel.Gpt4Turbo
 		    };
 		    Kernel kernel;
-		    if (model is AIModel.Gpt35 or AIModel.Gpt4Turbo)
-			    kernel = CoreKernelService.CreateKernel(model);
-		    else
-		    {
-			    kernel = CoreKernelService.CreateKernelGoogle();
+            if (model is not (AIModel.Gpt4OMini or AIModel.Gpt4Turbo or AIModel.Gpt4O))
+            {
+                kernel = CoreKernelService.CreateKernelGoogle();
+            }
+            else
+                kernel = CoreKernelService.CreateKernel(model);
 
-		    }
-		    if (agent.IsUserProxy)
+            if (agent.IsUserProxy)
 		    {
 			    var user = new UserProxyAgent(agent, kernel);
 			    user.AgentInputRequest += HandleInteractiveAgentInputRequest;
@@ -138,7 +139,7 @@ public partial class GroupChatPage : ComponentBase
 
     protected override Task OnInitializedAsync()
     {
-        var aiModel = AIModel.Gpt4Turbo;
+        var aiModel = AIModel.Gpt4O;
         _kernel = CoreKernelService.CreateKernel(aiModel);
         _agentsAsPlugins = FileHelper.ExtractFromAssembly<List<AgentProxy>>("agentsExample.json");
         return base.OnInitializedAsync();
