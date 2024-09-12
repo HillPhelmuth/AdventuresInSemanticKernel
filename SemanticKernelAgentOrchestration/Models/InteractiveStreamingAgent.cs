@@ -64,7 +64,7 @@ namespace SemanticKernelAgentOrchestration.Models
                     {
                         message.Content += update.Content;
                     }
-                    var agentChatMessageContent = new StreamingChatMessageContent(update.Role, update.Content, update.InnerContent, update.ChoiceIndex, update.ModelId, update.Encoding, update.Metadata) { AuthorName = update.AuthorName};
+                    var agentChatMessageContent = new StreamingChatMessageContent(update.Role, update.Content, update.InnerContent, update.ChoiceIndex, update.ModelId, update.Encoding, update.Metadata) { AuthorName = Name};
                     finalMessage = agentChatMessageContent;
                     this.OnAgentResponse(new AgentResponseArgs(agentChatMessageContent) { IsStartToken = !hasStarted});
                     hasStarted = true;

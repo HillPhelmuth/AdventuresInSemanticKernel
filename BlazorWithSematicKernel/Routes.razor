@@ -1,6 +1,6 @@
 ﻿<CascadingValue Name="PageTitle" Value="@_pageTitle">
     <CascadingAuthenticationState>
-        <Router AppAssembly="@typeof(Routes).Assembly" OnNavigateAsync="HandleNavigation" >
+        <Router AppAssembly="@typeof(Routes).Assembly" OnNavigateAsync="HandleNavigation">
             <Found Context="routeData">
                 <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
                     <NotAuthorized>
@@ -10,13 +10,11 @@
                     </NotAuthorized>
                 </AuthorizeRouteView>
                 <FocusOnNavigate RouteData="@routeData" Selector="h1" />
-            </Found>           
+            </Found>
         </Router>
     </CascadingAuthenticationState>
 </CascadingValue>
-<RadzenTooltip />
-<RadzenDialog />
-<RadzenNotification />
+<RadzenComponents />
 <SkPluginComponents.AskUser />
 @code {
 
@@ -39,6 +37,8 @@
             "cluster" => "SK Memory & Custom Hdbscan Clustering",
             "textchunking" => "Chunking and Tokenization",
             "tokens" => "Tinker with Tokens and LogitBias",
+            "groupChat" => "Custom Agent Group Chat",
+            "agentGroupChat" => "Agent Group Chat in Semantic Kernel",
             _ => "Adventures in Semantic Kernel"
         };
         StateHasChanged();

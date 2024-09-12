@@ -1,10 +1,12 @@
 ﻿using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Identity;
 using Radzen.Blazor;
 using SemanticKernelAgentOrchestration.Extensions;
 using SemanticKernelAgentOrchestration.Models;
 using SkPluginLibrary.Abstractions;
 using SkPluginLibrary.Agents;
+using SkPluginLibrary.Agents.Models;
 using static SkPluginLibrary.CoreKernelService;
 
 namespace BlazorWithSematicKernel.Components.AgentComponents;
@@ -23,7 +25,8 @@ public partial class AgentBuilder
     private IEnumerable<PluginData> _selectedPlugins = [];
     private RadzenDropDownDataGrid<IEnumerable<PluginData>> _pluginGrid;
     private RadzenDataGrid<AgentProxy>? _agentGrid;
-
+    [Parameter]
+    public string StopText { get; set; } = "[STOP]";
     //private List<AgentProxy> _generatedAgents = [];
     [Parameter]
     public EventCallback<List<AgentProxy>> AgentsGeneratedChanged { get; set; }
@@ -105,7 +108,7 @@ public partial class AgentBuilder
         StateHasChanged();
     }
     private List<GroupTransitionType> _transitionTypes = Enum.GetValues<GroupTransitionType>().ToList();
-    private AgentGroupForm _agentGroupForm = new();
+    private AgentGroupForm _agentGroupForm => new(){StopStatement = StopText};
     private List<string> _models = ["Gpt35", "Gpt4"];
     private AgentForm _agentForm = new();
 
@@ -184,16 +187,11 @@ public partial class AgentBuilder
     }
     
 }
-public enum GroupTransitionType
-{
-    HubAndSpoke,
-    RoundRobin,
-    PromptBased
-}
+
 public class AgentGroupCompletedArgs
 {
     public List<AgentProxy> Agents { get; set; } = [];
     public GroupTransitionType TransitionType { get; set; }
-    public string StopStatement { get; set; } = "[STOP]";
+    public string StopStatement { get; set; } = "approve";
     public int Rounds { get; set; } = 10;
 }

@@ -3,6 +3,7 @@ using Markdig;
 using Microsoft.AspNetCore.Components;
 using OpenAI.Chat;
 using SkPluginLibrary.Abstractions;
+using SkPluginLibrary.Models.Helpers;
 
 namespace BlazorWithSematicKernel.Pages
 {
@@ -28,7 +29,7 @@ namespace BlazorWithSematicKernel.Pages
             public float Tempurature { get; set; } = 1.0f;
             public float TopP { get; set; } = 1.0f;
         }
-        private List<string> _models = ["gpt-3.5-turbo", "gpt-4-turbo", "gpt-4o"];
+        private List<string> _models = [AIModel.Gpt4OMini.GetOpenAIModelName(), AIModel.Gpt4O.GetOpenAIModelName(), AIModel.Gpt35Turbo.GetOpenAIModelName(), AIModel.Gpt4OChatGptLatest.GetOpenAIModelName()];
         private LogProbInputForm _logProbInputForm = new();
         private async void SendQuery(LogProbInputForm logProbInputForm)
         {
@@ -37,7 +38,7 @@ namespace BlazorWithSematicKernel.Pages
             await Task.Delay(1);
             ChatCompletion? choice = await LogProbService.GetLogProbs(logProbInputForm.UserInput!,logProbInputForm.Tempurature,logProbInputForm.TopP, logProbInputForm.SystemPrompt, logProbInputForm.Model);
             
-            _output = choice?.Content?.ToString() ?? "";
+            _output = choice?.ToString() ?? "";
             _tokens = choice?.ContentTokenLogProbabilities.ToList() ?? [];
             _isBusy = false;
             StateHasChanged();
