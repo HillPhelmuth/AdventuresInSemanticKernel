@@ -37,7 +37,7 @@
         <RadzenStepsItem Text="Build Agent Group" NextText="Start Group Chat">
             <RadzenRow>
                 <RadzenColumn>
-                    <RadzenButton Size=ButtonSize.Small Click="UseExample" Text="Use Moderated Debate Example"></RadzenButton>
+                    <RadzenButton Size=ButtonSize.Small Click="UseExample" Text="Use Art Director Example"></RadzenButton>
                 </RadzenColumn>
                 <RadzenColumn>
                     <RadzenTemplateForm TItem="FileUploadData" Data="_fileUploadData" Submit="HandleFile">
@@ -54,7 +54,7 @@
             </RadzenRow>
             <RadzenRow>
                 <RadzenColumn>
-                    <AgentBuilder @bind-AgentsGenerated="_agentProxies" AgentsCompleted="HandleAgentProxies"></AgentBuilder>
+                    <AgentBuilder @bind-AgentsGenerated="_agentProxies" AgentsCompleted="HandleAgentProxies" StopText="approved for print"></AgentBuilder>
                 </RadzenColumn>
             </RadzenRow>
         </RadzenStepsItem>

@@ -155,7 +155,7 @@ internal sealed class TextTerminationStrategy : TerminationStrategy
 
     public TextTerminationStrategy(string? approve = null)
     {
-        _approve ??= "approve";
+        _approve = approve ?? "approve";
     }
 
     // Terminate when the final message contains the term "approve"

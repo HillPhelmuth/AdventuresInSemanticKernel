@@ -1,0 +1,37 @@
+
+.autocomplete-container {
+    position: relative; /* Required for absolute positioning of the suggestion box */
+    display: inline-block; /* Prevents the container from taking up the full width */
+}
+
+.autocomplete-input {
+    border: 1px solid #ccc;
+    padding: 5px;
+    font-size: 16px;
+    width: 100%; /* Make the input take up the full width of the container */
+    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+    resize: none; /* Prevent the textarea from being resized */
+}
+
+.autocomplete-suggestion {
+    position: absolute;
+    top: 100%; /* Position the suggestion box below the input */
+    left: 0;
+    width: 100%;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    z-index: 10; /* Ensure the suggestion box is on top of other elements */
+    padding: 5px;
+    font-size: 16px;
+    white-space: pre-wrap; /* Allow for multiple lines and word wrap within the suggestion box */
+    box-sizing: border-box;
+}
+
+.highlighted {
+    color: black; /* Normal text color */
+}
+
+.suggested {
+    color: #888; /* Light gray for the suggested part */
+    /*text-decoration: underline wavy red;*/
+}

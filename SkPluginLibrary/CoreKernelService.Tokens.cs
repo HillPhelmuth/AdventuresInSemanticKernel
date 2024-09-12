@@ -131,7 +131,7 @@ public partial class CoreKernelService
 	//	}
 	//}
 
-	public async IAsyncEnumerable<string> GenerateAutoCompleteOptions(string text, int maxTokens = 10, AIModel model = AIModel.Gpt4OMini)
+	public async IAsyncEnumerable<string> GenerateAutoCompleteOptions(string text, int maxTokens = 10, AIModel model = AIModel.Gpt4O)
 	{
 		var kernel = CreateKernel(model);
 		var plugin = kernel.ImportPluginFromType<RawCompletionPlugin>();
@@ -147,5 +147,12 @@ public partial class CoreKernelService
 		}
 
 	}
-	#endregion
+
+    public async Task<string> GenearteSingleAutoComplete(string text, int maxTokens = 10, AIModel model = AIModel.Gpt4OMini)
+    {
+        var firstItem = await GenerateAutoCompleteOptions(text, maxTokens, model).FirstOrDefaultAsync();
+        return firstItem;
+    }
+
+    #endregion
 }

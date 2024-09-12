@@ -21,6 +21,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<None Remove="AgentsExample-sk.json" />
 		<None Remove="agentsExample.json" />
 		<None Remove="Agents\ParrotAgent.yaml" />
 		<None Remove="Agents\ToolAgent.yaml" />
@@ -41,7 +42,7 @@
 		<PackageReference Include="Azure.Storage.Queues" Version="12.17.1" />
 		<PackageReference Include="AI.Dev.OpenAI.GPT" Version="1.0.2" />
 		<PackageReference Include="Docker.DotNet" Version="3.125.15" />
-		<PackageReference Include="Google.Apis.YouTube.v3" Version="1.68.0.3421" />
+		<PackageReference Include="Google.Apis.YouTube.v3" Version="1.68.0.3513" />
 		<PackageReference Include="HdbscanSharp" Version="2.0.0" />
 		<PackageReference Include="Html2Markdown" Version="6.2.1.4" />
 		<PackageReference Include="Microsoft.ApplicationInsights" Version="2.22.0" />
@@ -55,29 +56,29 @@
 		<PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="7.5.2" />
 		<PackageReference Include="Microsoft.ML" Version="3.0.1" />
 		<PackageReference Include="Microsoft.ML.Tokenizers" Version="0.21.1" />
-		<PackageReference Include="Microsoft.SemanticKernel" Version="1.18.1-rc" />
-		<PackageReference Include="Microsoft.SemanticKernel.Agents.Core" Version="1.18.1-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Agents.OpenAI" Version="1.18.1-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.AzureAISearch" Version="1.18.1-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Chroma" Version="1.18.1-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Google" Version="1.18.1-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.HuggingFace" Version="1.18.1-preview" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.MistralAI" Version="1.18.1-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Pinecone" Version="1.18.1-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Qdrant" Version="1.18.1-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Redis" Version="1.18.1-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Sqlite" Version="1.18.1-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Weaviate" Version="1.18.1-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Experimental.Agents" Version="1.18.1-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Planners.Handlebars" Version="1.18.1-preview" />
-		<PackageReference Include="Microsoft.SemanticKernel.Planners.OpenAI" Version="1.18.1-preview" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Core" Version="1.18.1-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Document" Version="1.18.1-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Grpc" Version="1.18.1-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Memory" Version="1.18.1-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.MsGraph" Version="1.18.1-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.OpenApi" Version="1.18.1-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Web" Version="1.18.1-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel" Version="1.19.0" />
+		<PackageReference Include="Microsoft.SemanticKernel.Agents.Core" Version="1.19.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Agents.OpenAI" Version="1.19.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.AzureAISearch" Version="1.19.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Chroma" Version="1.19.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Google" Version="1.19.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.HuggingFace" Version="1.19.0-preview" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.MistralAI" Version="1.19.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Pinecone" Version="1.19.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Qdrant" Version="1.19.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Redis" Version="1.19.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Sqlite" Version="1.19.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Weaviate" Version="1.19.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Experimental.Agents" Version="1.18.2-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Planners.Handlebars" Version="1.19.0-preview" />
+		<PackageReference Include="Microsoft.SemanticKernel.Planners.OpenAI" Version="1.19.0-preview" />
+		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Core" Version="1.19.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Document" Version="1.19.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Grpc" Version="1.19.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Memory" Version="1.19.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Plugins.MsGraph" Version="1.19.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Plugins.OpenApi" Version="1.19.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Web" Version="1.19.0-alpha" />
 		<PackageReference Include="PdfPig" Version="0.1.9-alpha-20240215-3bdc9" />
 		<PackageReference Include="ReverseMarkdown" Version="4.4.0" />
 		<PackageReference Include="SharpToken" Version="2.0.2" />
@@ -116,6 +117,7 @@
 		</EmbeddedResource>
 		<EmbeddedResource Include="Resources\GenerateStory.yaml" />
 		<EmbeddedResource Include="Resources\GenerateStoryHandlebars.yaml" />
+		<EmbeddedResource Include="AgentsExample-sk.json" />
 		<Content Include="SemanticPlugins\**\config.json">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>

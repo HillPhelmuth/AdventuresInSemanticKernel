@@ -12,11 +12,22 @@ namespace SkPluginLibrary.Plugins;
 public class RawCompletionPlugin
 {
 	private const string RawCompletionPrompt =
-					"""
-					You are a text completion AI. Continue the text below. No introductions or other pleasantries. Simply pick up precisely where the Text left off as naturally as possible.
-					## Text:
+                    """
+					You are a text completion AI. Continue the text below. No introductions or other pleasantries. Simply pick up precisely where the Text left off as naturally as possible. DO NOT INCLUDE THE TEXT ITSELF IN YOUR RESPONSE.
+					
+					## Example
+					**Text:**
+					I am a pro foot
+					
+					**Completion:**
+					ball player.
+					
+					## Actual Work
+					
+					**Text:**
 					{{ $text }}
-													   
+					
+					**Completion:**								   
 					""";
 	[KernelFunction, Description("Generates a completion for the given text")]
 	public async Task<string> Complete(Kernel kernel, string text, int maxTokens = 10)

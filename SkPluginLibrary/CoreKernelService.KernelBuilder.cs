@@ -175,7 +175,7 @@ public partial class CoreKernelService
     {
         var kernel = CreateKernel();
         var uri = manifest.Api.Url;
-        var executionParameters = new OpenAIFunctionExecutionParameters { IgnoreNonCompliantErrors = true, EnableDynamicPayload = true, EnablePayloadNamespacing = true };
+        var executionParameters = new OpenApiFunctionExecutionParameters(ignoreNonCompliantErrors:true,enableDynamicOperationPayload:true, enablePayloadNamespacing:true);
         if (!string.IsNullOrEmpty(manifest.OverrideUrl))
         {
             executionParameters.ServerUrlOverride = new Uri(manifest.OverrideUrl);

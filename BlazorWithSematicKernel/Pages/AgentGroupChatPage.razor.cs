@@ -87,7 +87,7 @@ public partial class AgentGroupChatPage : ComponentBase
     }
     private void UseExample()
     {
-        _agentProxies = FileHelper.ExtractFromAssembly<List<AgentProxy>>("agentsExample.json");
+        _agentProxies = FileHelper.ExtractFromAssembly<List<AgentProxy>>("AgentsExample-sk.json");
         StateHasChanged();
 
     }
