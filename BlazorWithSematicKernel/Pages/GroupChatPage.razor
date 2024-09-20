@@ -21,7 +21,8 @@
         <RadzenStepsItem Text="Build Agent" NextText="Start Agent Chat">
             <RadzenRow>
                 <RadzenColumn>
-                    <RadzenButton Size=ButtonSize.Small Click="UseLast" Text="Use Moderated Debate Example"></RadzenButton>
+                    <RadzenButton Size=ButtonSize.Small Click="@(() => UseLast())" Text="Use Moderated Debate Example"></RadzenButton>
+                    <RadzenButton Size=ButtonSize.Small Click="@(() => UseLast("agentsExample-researcher.json"))" Text="Use Research Group Example"></RadzenButton>
                 </RadzenColumn>
                 <RadzenColumn>
                     <RadzenTemplateForm TItem="FileUploadData" Data="_fileUploadData" Submit="HandleFile">

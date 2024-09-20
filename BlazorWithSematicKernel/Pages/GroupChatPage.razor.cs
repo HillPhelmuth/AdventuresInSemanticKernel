@@ -56,9 +56,15 @@ public partial class GroupChatPage : ComponentBase
         public int Rounds { get; set; }
     }
     private SelectAgentForm _selectAgentForm = new();
-    private void UseLast()
+    private void UseLast(string agentsexampleJson = "agentsExample.json")
     {
-        _agentProxies = FileHelper.ExtractFromAssembly<List<AgentProxy>>("agentsExample.json") /*JsonSerializer.Deserialize<List<AgentProxy>>(File.ReadAllText("agentsExample.json"))*/;
+        _agentProxies = FileHelper.ExtractFromAssembly<List<AgentProxy>>(agentsexampleJson) /*JsonSerializer.Deserialize<List<AgentProxy>>(File.ReadAllText("agentsExample.json"))*/;
+        foreach (var agent in _agentProxies.Where(agent => agent.PluginNames.Count > 0))
+        {
+            Console.WriteLine($"Agent {agent.Name} has {agent.PluginNames.Count} Plugins");
+            var pluginNames = agent.PluginNames;
+            agent.Plugins.AddRange(_allKernelPlugins.Where(x => pluginNames.Contains(x.Name)));
+        }
         StateHasChanged();
 
     }

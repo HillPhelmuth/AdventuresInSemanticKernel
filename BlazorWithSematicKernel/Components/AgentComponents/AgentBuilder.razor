@@ -1,4 +1,5 @@
 ﻿@using SemanticKernelAgentOrchestration.Models
+@using SkPluginLibrary.Agents.Models
 <RadzenRow>
     <RadzenColumn Size="6">
         <RadzenCard>
@@ -6,24 +7,24 @@
             <RadzenTemplateForm Data="_agentForm" TItem="AgentForm" Submit="GenerateAgent">
                 <RadzenFormField Text="Name" Style="width:100%">
                     <ChildContent>
-                        <RadzenTextBox Name="Name" Style="width:100%" @bind-Value=_agentForm.Name></RadzenTextBox>
+                        <RadzenTextBox Name="Name" Style="width:100%" @bind-Value="_agentForm.Name"></RadzenTextBox>
                     </ChildContent>
                     <Helper>
                         <RadzenRequiredValidator Component="Name"></RadzenRequiredValidator>
                     </Helper>
                 </RadzenFormField>
                 <RadzenLabel>
-                    <RadzenCheckBox Value="_agentForm.IsUserProxy" TValue=bool ValueChanged="ConfirmUserProxy"></RadzenCheckBox> Assign as User Proxy (You)
+                    <RadzenCheckBox Value="_agentForm.IsUserProxy" TValue="bool" ValueChanged="ConfirmUserProxy"></RadzenCheckBox> Assign as User Proxy (You)
                 </RadzenLabel>
                 <RadzenFormField Text="Description" Style="width:100%">
                     <ChildContent>
-                        <RadzenTextArea Style="width:100%;height:4rem;" @bind-Value=_agentForm.Description></RadzenTextArea>
+                        <RadzenTextArea Style="width:100%;height:4rem;" @bind-Value="_agentForm.Description"></RadzenTextArea>
                     </ChildContent>
                     <Helper></Helper>
                 </RadzenFormField>
                 <RadzenFormField Text="Instructions" Style="width:100%">
                     <ChildContent>
-                        <RadzenTextArea Style="width:100%;height:9rem;" @bind-Value=_agentForm.Instructions></RadzenTextArea>
+                        <RadzenTextArea Style="width:100%;height:9rem;" @bind-Value="_agentForm.Instructions"></RadzenTextArea>
                     </ChildContent>
                     <Helper>
                         <RadzenText TextStyle="TextStyle.Caption" Text="Add instructions for agent, similar to a 'System' prompt"></RadzenText>
@@ -32,7 +33,7 @@
                
                 <RadzenFormField Text="Required Model">
                     <ChildContent>
-                        <RadzenDropDown Data="@_models" AllowClear="true" @bind-Value=@_agentForm.Model Style="width:100%"></RadzenDropDown>
+                        <RadzenDropDown Data="@_models" AllowClear="true" @bind-Value="@_agentForm.Model" Style="width:100%"></RadzenDropDown>
                     </ChildContent>
                     <Helper>
                         <RadzenText TextStyle="TextStyle.Caption" Text="Select the model to use for the agent"></RadzenText>
@@ -40,7 +41,7 @@
                 </RadzenFormField>
                 <RadzenFormField Text="Plugins" Style="width:100%">
                     <ChildContent>
-                        <RadzenDropDownDataGrid @ref=_pluginGrid Data="@_allPlugins.AsEnumerable()" Chips="true" AllowFilteringByAllStringColumns=true AllowSorting=true PageSize=10 MaxSelectedLabels=3 AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowClear="true" @bind-Value=@_agentForm.Plugins TextProperty="Name" Multiple="true" Density="Density.Compact">
+                        <RadzenDropDownDataGrid @ref="_pluginGrid" Data="@_allPlugins.AsEnumerable()" Chips="true" AllowFilteringByAllStringColumns="true" AllowSorting="true" PageSize="10" MaxSelectedLabels="3" AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowClear="true" @bind-Value="@_agentForm.Plugins" TextProperty="Name" Multiple="true" Density="Density.Compact">
 
                             <Columns>
                                 <RadzenDropDownDataGridColumn Property="KernelPlugin.Name" Title="Name" Width="30%"></RadzenDropDownDataGridColumn>
@@ -50,7 +51,7 @@
                                         @{
                                             var kernelPlugin = (plugin as PluginData).KernelPlugin;
                                         }
-                                        <RadzenButton Size=ButtonSize.ExtraSmall Text="Functions" Icon="functions" @onclick:stopPropagation Click="@(() => ShowFunctions(kernelPlugin))"></RadzenButton>
+                                        <RadzenButton Size="ButtonSize.ExtraSmall" Text="Functions" Icon="functions" @onclick:stopPropagation Click="@(() => ShowFunctions(kernelPlugin))"></RadzenButton>
                                     </Template>
                                 </RadzenDropDownDataGridColumn>
                             </Columns>
@@ -61,7 +62,7 @@
                     </Helper>
                 </RadzenFormField>
                 <br />
-                <RadzenButton Size=ButtonSize.Small ButtonType="ButtonType.Submit" Text="Generate Agent"></RadzenButton>
+                <RadzenButton Size="ButtonSize.Small" ButtonType="ButtonType.Submit" Text="Generate Agent"></RadzenButton>
             </RadzenTemplateForm>
         </RadzenCard>
 
@@ -132,13 +133,13 @@
                 <br />
                 <RadzenTemplateForm Data="_agentGroupForm" TItem="AgentGroupForm" Submit="Finish">
                     <RadzenFormField Text="Transition Type">
-                        <RadzenDropDown Data="_transitionTypes" @bind-Value=_agentGroupForm.GroupTransitionType></RadzenDropDown>
+                        <RadzenDropDown Data="_transitionTypes" TValue="GroupTransitionType" @bind-Value="_agentGroupForm.GroupTransitionType" ></RadzenDropDown>
                     </RadzenFormField>
                     <RadzenFormField Text="Stop Statement">
-                        <RadzenTextBox @bind-Value=_agentGroupForm.StopStatement></RadzenTextBox>
+                        <RadzenTextBox @bind-Value="@_agentGroupForm.StopStatement"></RadzenTextBox>
                     </RadzenFormField>
                     <RadzenFormField Text="Rounds">
-                        <RadzenNumeric @bind-Value=_agentGroupForm.Rounds Min="5" Max="50"></RadzenNumeric>
+                        <RadzenNumeric @bind-Value="_agentGroupForm.Rounds" Min="5" Max="50"></RadzenNumeric>
                     </RadzenFormField>
                     <br />
 
@@ -147,6 +148,6 @@
 
             }
         </RadzenCard>
-
+        
     </RadzenColumn>
 </RadzenRow>

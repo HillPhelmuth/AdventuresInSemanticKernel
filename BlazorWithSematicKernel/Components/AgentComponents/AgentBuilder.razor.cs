@@ -38,6 +38,11 @@ public partial class AgentBuilder
     public List<AgentProxy> AgentsAsPlugins { get; set; } = [];
     //[Parameter]
     //public EventCallback<AgentGroupCompletedArgs> AgentGroupCompleted { get; set; }
+    protected override Task OnParametersSetAsync()
+    {
+        _agentGroupForm.StopStatement = StopText;
+        return base.OnParametersSetAsync();
+    }
 
     private class PluginData(PluginType pluginType, KernelPlugin kernelPlugin)
     {
@@ -108,7 +113,7 @@ public partial class AgentBuilder
         StateHasChanged();
     }
     private List<GroupTransitionType> _transitionTypes = Enum.GetValues<GroupTransitionType>().ToList();
-    private AgentGroupForm _agentGroupForm => new(){StopStatement = StopText};
+    private AgentGroupForm _agentGroupForm = new();
     private List<string> _models = ["Gpt35", "Gpt4"];
     private AgentForm _agentForm = new();
 
