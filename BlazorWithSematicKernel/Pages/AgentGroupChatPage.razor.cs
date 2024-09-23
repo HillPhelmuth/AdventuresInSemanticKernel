@@ -58,7 +58,7 @@ public partial class AgentGroupChatPage : ComponentBase
         StateHasChanged();
 
     }
-    private async void OnAgentInputRequest(object? sender, SkAgentInputRequestArgs args)
+    private void OnAgentInputRequest(object? sender, SkAgentInputRequestArgs args)
     {
         Console.WriteLine("User input requested");
         _requestingAgent = args.Agent;
@@ -71,8 +71,14 @@ public partial class AgentGroupChatPage : ComponentBase
         _chatView.ChatState.Reset();
         StateHasChanged();
     }
-    private async void HandleMessage(string message)
+    private void HandleMessage(string message)
     {
+        if (message == "[DONE]")
+        {
+            _isBusy = false;
+            StateHasChanged();
+            return;
+        }
         _chatView?.ChatState?.UpsertAssistantMessage(message);
     }
 
@@ -159,8 +165,8 @@ public partial class AgentGroupChatPage : ComponentBase
             StateHasChanged();
             return;
         }
-
-        await _chatCompletionGroup.ExecuteCustomAgentGroup(input);
+        var token = _cancellationTokenSource.Token;
+        await _chatCompletionGroup.ExecuteCustomAgentGroup(input!, token);
     }
     private void ShowSummary()
     {
@@ -172,6 +178,7 @@ public partial class AgentGroupChatPage : ComponentBase
         _cancellationTokenSource.Cancel();
         _isBusy = false;
         StateHasChanged();
+        _cancellationTokenSource = new CancellationTokenSource();
     }
     private JsonSerializerOptions? _jsonSerializerOptions;
     private JsonSerializerOptions JsonSerializerOptions

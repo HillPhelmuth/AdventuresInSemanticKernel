@@ -35,7 +35,6 @@ public class ChatCompletionGroup
 
         var textTerminationStrategy = new TextTerminationStrategy(stop)
         {
-            // Only the art-director may approve.
             Agents = _activeAgents.Any(x => x is UserProxySkAgent) ? [_activeAgents.Find(x => x is UserProxySkAgent)!] : null,
             AutomaticReset = true,
             // Limit total number of turns
@@ -47,8 +46,6 @@ public class ChatCompletionGroup
             ExecutionSettings =
                 new AgentGroupChatSettings
                 {
-                    // Here a TerminationStrategy subclass is used that will terminate when
-                    // an assistant message contains the term "approve".
                     TerminationStrategy = textTerminationStrategy,
                     SelectionStrategy = selectionStrategy
                 }
@@ -68,10 +65,10 @@ public class ChatCompletionGroup
     {
         AgentInputRequest?.Invoke(this, e);
     }
-    public async Task ExecuteCustomAgentGroup(string initialInput)
+    public async Task ExecuteCustomAgentGroup(string initialInput, CancellationToken cancellationToken = default)
     {
         
-        await RunAsync(initialInput);
+        await RunAsync(initialInput, cancellationToken: cancellationToken);
     }
 
     private List<Agent> _activeAgents = [];
@@ -122,7 +119,7 @@ public class ChatCompletionGroup
         _activeAgents = [agentWriter, agentReviewer, userProxySkAgent];
         await RunAsync(input, [agentReviewer, userProxySkAgent]);
     }
-    public async Task RunAsync(string input, IEnumerable<Agent>? terminationAgents = null)
+    public async Task RunAsync(string input, IEnumerable<Agent>? terminationAgents = null, CancellationToken cancellationToken = default)
     {
         // Define the agents
         terminationAgents ??= _activeAgents.Any(x => x is UserProxySkAgent) ? new[] { _activeAgents.First(x => x is UserProxySkAgent) } : _activeAgents;
@@ -136,16 +133,17 @@ public class ChatCompletionGroup
         chat.AddChatMessage(new ChatMessageContent(AuthorRole.User, input));
 
         var currentAgent = "";
-        await foreach (var content in chat.InvokeStreamingAsync())
+        await foreach (var content in chat.InvokeStreamingAsync(cancellationToken))
         {
             var isCurrent = content.AuthorName == currentAgent;
-            var output = isCurrent ? content.Content : $"**{content.Role} - {content.AuthorName ?? "*"}:** '{content.Content}'";
+            var output = isCurrent ? content.Content : $"<br/>**{content.Role} - {content.AuthorName ?? "*"}:**\n {content.Content}";
             currentAgent = content.AuthorName ?? "";
             if (string.IsNullOrEmpty(output)) continue;
             WriteLine(output);
         }
 
-        WriteLine($"_IS COMPLETE:_ {chat.IsComplete}");
+        WriteLine($"\n_IS COMPLETE:_ {chat.IsComplete}");
+        WriteLine("[DONE]");
     }
     protected Kernel CreateKernelWithChatCompletion()
     {
