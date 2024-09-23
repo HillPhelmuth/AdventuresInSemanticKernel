@@ -134,11 +134,15 @@ public class ChatCompletionGroup
         // Invoke chat and display messages.
         
         chat.AddChatMessage(new ChatMessageContent(AuthorRole.User, input));
-       
 
-        await foreach (var content in chat.InvokeAsync())
+        var currentAgent = "";
+        await foreach (var content in chat.InvokeStreamingAsync())
         {
-            WriteLine($"**{content.Role} - {content.AuthorName ?? "*"}:** '{content.Content}'");
+            var isCurrent = content.AuthorName == currentAgent;
+            var output = isCurrent ? content.Content : $"**{content.Role} - {content.AuthorName ?? "*"}:** '{content.Content}'";
+            currentAgent = content.AuthorName ?? "";
+            if (string.IsNullOrEmpty(output)) continue;
+            WriteLine(output);
         }
 
         WriteLine($"_IS COMPLETE:_ {chat.IsComplete}");

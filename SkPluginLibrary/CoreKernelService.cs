@@ -96,7 +96,6 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
 			});
 		});
 		var providor = aiModel.GetModelProvidors().FirstOrDefault();
-		Console.WriteLine($"AI: {providor}");
 		if (providor.Contains("OpenAI"))
 			kernelBuilder.AddAIChatCompletion(aiModel);
 		if (providor == "GoogleAI")

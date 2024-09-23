@@ -73,8 +73,7 @@ public partial class AgentGroupChatPage : ComponentBase
     }
     private async void HandleMessage(string message)
     {
-        Console.WriteLine("Message handled");
-        _chatView?.ChatState?.AddAssistantMessage(message);
+        _chatView?.ChatState?.UpsertAssistantMessage(message);
     }
 
     private void HandleAgentProxies(AgentGroupCompletedArgs agentGroupCompleted)
@@ -85,9 +84,15 @@ public partial class AgentGroupChatPage : ComponentBase
         _step = 2;
         StateHasChanged();
     }
-    private void UseExample()
+    private void UseExample(string agentsexampleSkJson = "AgentsExample-sk.json")
     {
-        _agentProxies = FileHelper.ExtractFromAssembly<List<AgentProxy>>("AgentsExample-sk.json");
+        _agentProxies = FileHelper.ExtractFromAssembly<List<AgentProxy>>(agentsexampleSkJson);
+        foreach (var agent in _agentProxies.Where(agent => agent.PluginNames.Count > 0))
+        {
+            Console.WriteLine($"Agent {agent.Name} has {agent.PluginNames.Count} Plugins");
+            var pluginNames = agent.PluginNames;
+            agent.Plugins.AddRange(_allKernelPlugins.Where(x => pluginNames.Contains(x.Name)));
+        }
         StateHasChanged();
 
     }

@@ -147,7 +147,7 @@ public class GroupChat : IGroupChat
         }
         else
         {
-            nextSpeaker = await AutoSelectNextAgent(groupConversion, agents, ct);
+            nextSpeaker = await AutoSelectNextAgent(groupConversion, agents.Where(x => x.Name != lastSpeaker.Name), ct);
         }
 
         return nextSpeaker;

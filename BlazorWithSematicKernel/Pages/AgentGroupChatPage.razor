@@ -37,7 +37,8 @@
         <RadzenStepsItem Text="Build Agent Group" NextText="Start Group Chat">
             <RadzenRow>
                 <RadzenColumn>
-                    <RadzenButton Size=ButtonSize.Small Click="UseExample" Text="Use Art Director Example"></RadzenButton>
+                    <RadzenButton Size=ButtonSize.Small Click="@(() => UseExample())" Text="Use Art Director Example"></RadzenButton>
+                    <RadzenButton Size=ButtonSize.Small Click="@(() => UseExample("agentsExample-researcher.json"))" Text="Use Researcher Example"></RadzenButton>
                 </RadzenColumn>
                 <RadzenColumn>
                     <RadzenTemplateForm TItem="FileUploadData" Data="_fileUploadData" Submit="HandleFile">
