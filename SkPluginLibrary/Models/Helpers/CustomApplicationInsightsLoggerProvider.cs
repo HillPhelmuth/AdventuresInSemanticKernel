@@ -38,11 +38,6 @@ namespace SkPluginLibrary.Models.Helpers
                 telemetryClient.Context.GlobalProperties["HResult"] = exception?.HResult.ToString();
                 telemetryClient.Context.GlobalProperties["ErrorMessage"] = exception?.Message ?? "No message";
                 telemetryClient.Context.GlobalProperties["StackTrace"] = exception?.StackTrace ?? string.Empty;
-                var metrics = new Dictionary<string, double>
-                {
-                    { "Timestamp", DateTimeOffset.UtcNow.ToUnixTimeSeconds() }
-                };
-                telemetryClient.GetMetric("Timestamp")?.TrackValue(metrics["Timestamp"]);
                 telemetryClient.TrackException(exception);
                 telemetryClient.TrackTrace(traceTelemetry);
             }

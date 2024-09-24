@@ -42,8 +42,6 @@ var appInsightsConnectionString = configuration["APPLICATIONINSIGHTS_CONNECTION_
 services.AddApplicationInsightsTelemetry(options =>
 {
     options.ConnectionString = appInsightsConnectionString;
-    options.EnableDebugLogger = true;
-    options.EnableAdaptiveSampling = false;
 });
 
 builder.Logging.AddApplicationInsights(
