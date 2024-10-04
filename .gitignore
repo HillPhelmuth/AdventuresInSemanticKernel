@@ -391,3 +391,4 @@ FodyWeavers.xsd
 /BlazorWithSematicKernel/Pages/AgentGroupChatPage.razor
 /BlazorWithSematicKernel/Pages/AgentGroupChatPage.razor
 /BlazorWithSematicKernel/Pages/AgentGroupChatPage.razor.cs
+/BlazorWithSematicKernel/AutoSeqAgents.json

@@ -21,8 +21,13 @@ public abstract class ChatAgent : IChatAgent
 	public string Name { get; }
 	public string Description { get; }
 	public string SystemPrompt { get; }
-	public Kernel Kernel { get; }
-	protected List<Func<ChatHistory, Task<ChatHistory>>>? PreReplyHooks { get; set; }
+	public string SystemPromptOverride(string prompt, bool includeSystemPrompt = true)
+    {
+        return includeSystemPrompt ? $"{SystemPrompt}\n{prompt}" : prompt;
+    }
+    public Kernel Kernel { get; }
+	public ChatHistoryType ChatHistoryType { get; set; } = ChatHistoryType.All;
+    protected List<Func<ChatHistory, Task<ChatHistory>>>? PreReplyHooks { get; set; }
 	public void RegisterPreReplyHook(Func<ChatHistory, Task<ChatHistory>> hook)
 	{
 		PreReplyHooks ??= new();
@@ -86,4 +91,15 @@ public abstract class ChatAgent : IChatAgent
 		Tcs = new TaskCompletionSource<string?>();
 	}
 	public TaskCompletionSource<string?> Tcs { get; set; } = new();
+    public override string ToString()
+    {
+        return $"Name: {Name}\nDescription/Objective: {Description}";
+    }
+}
+
+public enum ChatHistoryType
+{
+	All,
+	SelfAndUser,
+	None
 }

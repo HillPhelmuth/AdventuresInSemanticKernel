@@ -30,7 +30,7 @@ public class AgentProxy
             _plugins = value;
         }
     }
-
+    public ChatHistoryType ChatHistoryType { get; set; } = ChatHistoryType.All;
     private List<KernelPlugin> _plugins = [];
     private List<string> _pluginNames = [];
     public List<string> PluginNames

@@ -39,6 +39,16 @@
                         <RadzenText TextStyle="TextStyle.Caption" Text="Select the model to use for the agent"></RadzenText>
                     </Helper>
                 </RadzenFormField>
+                <RadzenFormField Text="Chat History">
+                    <ChildContent>
+                        <RadzenDropDown Data="@(Enum.GetValues<ChatHistoryType>())" TValue="ChatHistoryType" @bind-Value="_agentForm.ChatHistoryType" Style="width:100%">
+                            <Template Context="historyType">@historyType.ToString()</Template>
+                        </RadzenDropDown>
+                    </ChildContent>
+                <Helper>
+                    <RadzenText TextStyle="TextStyle.Caption" Text="Select the agent-specific chat history"></RadzenText>
+                </Helper>
+                </RadzenFormField>
                 <RadzenFormField Text="Plugins" Style="width:100%">
                     <ChildContent>
                         <RadzenDropDownDataGrid @ref="_pluginGrid" Data="@_allPlugins.AsEnumerable()" Chips="true" AllowFilteringByAllStringColumns="true" AllowSorting="true" PageSize="10" MaxSelectedLabels="3" AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowClear="true" @bind-Value="@_agentForm.Plugins" TextProperty="Name" Multiple="true" Density="Density.Compact">

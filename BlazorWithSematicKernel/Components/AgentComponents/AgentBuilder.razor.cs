@@ -88,6 +88,7 @@ public partial class AgentBuilder
         public bool IsPrimary { get; set; }
         public string? Model { get; set; } = "Gpt4";
         public bool IsUserProxy { get; set; }
+        public ChatHistoryType ChatHistoryType { get; set; } = ChatHistoryType.All;
 
     }
     private class AgentGroupForm
@@ -128,7 +129,8 @@ public partial class AgentBuilder
             Plugins = agentForm.Plugins.Select(x => x.KernelPlugin).ToList(),
             IsPrimary = agentForm.IsPrimary,
             IsUserProxy = agentForm.IsUserProxy,
-            GptModel = agentForm.Model
+            GptModel = agentForm.Model,
+            ChatHistoryType = agentForm.ChatHistoryType
         };
         //Console.WriteLine($"Agent Generated:\n {proxy.AsJson()}");
         AgentsGenerated.Add(proxy);

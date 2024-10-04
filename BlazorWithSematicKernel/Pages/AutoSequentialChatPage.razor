@@ -1,0 +1,59 @@
+﻿@page "/autoSequentialChatPage"
+<RadzenSteps @bind-SelectedIndex="_step">
+    <Steps>
+        <RadzenStepsItem Text="Intro" NextText="Build Agent">
+            <RadzenRow>
+                <RadzenColumn Size="8" Offset="2">
+                    <RadzenCard>
+                        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle1">The core building blocks of an agent are <em>plugins</em>, <em>planners</em>, and a <em>persona</em>.</RadzenText>
+                        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle2">Dynamic Agent Chat</RadzenText>
+                       
+                        <br />
+                        <RadzenButton Style="margin-left:45%" Text="Get Started" Click="GetStarted"></RadzenButton>
+                    </RadzenCard>
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenStepsItem>
+        <RadzenStepsItem Text="Build Agent" NextText="Start Agent Chat">
+            <RadzenRow>
+                <RadzenColumn>
+                    <RadzenButton Size=ButtonSize.Small Click="@(() => UseLast())" Text="Use Moderated Debate Example"></RadzenButton>
+                    <RadzenButton Size=ButtonSize.Small Click="@(() => UseLast("agentsExample-asc.json"))" Text="Use Research Group Example"></RadzenButton>
+                </RadzenColumn>
+                <RadzenColumn>
+                    <RadzenTemplateForm TItem="FileUploadData" Data="_fileUploadData" Submit="HandleFile">
+                        <RadzenFileInput Name="Fileupload" Error="HandleError" MaxFileSize="FileUploadData.MaxFileSize" ChooseText="Upload previous Agent Group" @bind-FileName="@_fileUploadData.FileName" TValue="string" @bind-Value="@_fileUploadData.FileBase64" @bind-FileSize="_fileUploadData.FileSize" Accept="text/plain,application/json"></RadzenFileInput>
+                        <RadzenRequiredValidator Component="Fileupload" Popup=true Style="position:absolute"></RadzenRequiredValidator>
+                        @if (!string.IsNullOrEmpty(_fileUploadData.FileBase64))
+                        {
+                            <RadzenButton ButtonType="ButtonType.Submit" Text="Upload" Size="ButtonSize.ExtraSmall"></RadzenButton>
+                        }
+                        <RadzenButton Text="Save Agent Group" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" Click="DownloadToFile"></RadzenButton>
+                    </RadzenTemplateForm>
+
+                </RadzenColumn>
+            </RadzenRow>
+            <RadzenRow>
+                <RadzenColumn>
+                    <AgentBuilder @bind-AgentsGenerated=_agentProxies AgentsAsPlugins=_agentsAsPlugins AgentsCompleted="HandleAgentProxies"></AgentBuilder>
+                </RadzenColumn>
+                @*  <RadzenColumn>
+
+                </RadzenColumn> *@
+            </RadzenRow>
+        </RadzenStepsItem>
+        <RadzenStepsItem Text="Execute Agent">
+            <RadzenButton Text="Reset" Size="ButtonSize.ExtraSmall" Click="Reset"></RadzenButton>
+            @if (!string.IsNullOrWhiteSpace(_summary))
+            {
+                <span class="blinking-input">
+                    <RadzenButton Size="ButtonSize.ExtraSmall" Click="ShowSummary" Text="Summary"></RadzenButton>
+                </span>
+            }
+            <RadzenCard>
+                <ChatView @ref=_chatView ViewId="autoagentchat"></ChatView>
+            </RadzenCard>
+            <UserInput UserInputSubmit="HandleUserInput" ButtonLabel="Send" HelperText="User Input" IsBusy=_isBusy CancelRequest="Cancel" CssClass="@Css"></UserInput>
+        </RadzenStepsItem>
+    </Steps>
+</RadzenSteps>

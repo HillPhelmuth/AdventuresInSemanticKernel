@@ -25,7 +25,7 @@ public static class Agents_Step8_OpenAIAssistant
             await OpenAIAssistantAgent.CreateAsync(
                 kernel: new(),
                 clientProvider: OpenAIClientProvider.ForOpenAI(TestConfiguration.OpenAI.ApiKey), 
-                new(TestConfiguration.OpenAI.Gpt35ModelId)
+                definition: new(TestConfiguration.OpenAI.Gpt35ModelId)
                 {
                     Instructions = HostInstructions,
                     Name = HostName
