@@ -241,7 +241,8 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
 		"""
         You are a Semantic Kernel Expert and a helpful and friendly Instructor. Use the [Semantic Kernel CONTEXT] below to answer the user's questions.
 
-        [Semantic Kernel CONTEXT]
+        # Semantic Kernel CONTEXT
+        
         {{TextMemoryPlugin.Recall input=$input collection=$collection relevance=$relevance limit=$limit}}
 
         """;

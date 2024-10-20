@@ -109,6 +109,8 @@ public partial class CoreKernelService
         _customNativePlugins.TryAdd(nameof(KernelChatPlugin), chatWithSkPlugin);
         var langchainChatPlugin = new LangchainChatPlugin();
         _customNativePlugins.TryAdd(nameof(LangchainChatPlugin), langchainChatPlugin);
+        var weatherPlugin = new WeatherPlugin();
+        _customNativePlugins.TryAdd(nameof(WeatherPlugin), weatherPlugin);
         return _customNativePlugins;
     }
 
