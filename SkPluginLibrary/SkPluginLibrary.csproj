@@ -81,6 +81,7 @@
 		<PackageReference Include="Microsoft.SemanticKernel.Plugins.MsGraph" Version="1.21.1-alpha" />
 		<PackageReference Include="Microsoft.SemanticKernel.Plugins.OpenApi" Version="1.21.1-alpha" />
 		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Web" Version="1.21.1-alpha" />
+		<PackageReference Include="OpenMeteo.dotnet" Version="2.0.0" />
 		<PackageReference Include="PdfPig" Version="0.1.9-alpha-20240215-3bdc9" />
 		<PackageReference Include="ReverseMarkdown" Version="4.4.0" />
 		<PackageReference Include="SharpToken" Version="2.0.2" />
