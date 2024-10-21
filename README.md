@@ -35,11 +35,16 @@ Build a simple agent by providing a persona and collection of plugins used toget
 
 ![Function Image](/Images/AgentBuilder.jpeg)
 
+### Build Agent Group Chat
+Build a group chat comprised of `ChatCompletionAgent`s using `AgentGroupChat`
+
+![GroupChat Image](/Images/BuildSKGroupChat.png)
+
 ### Build Planner
 Select plugins and functions to build and execute your own:
-  - OpenAI Function Calling Agent
-  - Handlebars planner
-  - Stepwise planner
+  - **OpenAI Function Calling** Agent
+  - *Handlebars planner* (Still available, but usage is discouraged in favor of Function Calling. See [Planners vs Function Calling](https://learn.microsoft.com/en-us/semantic-kernel/concepts/planning?pivots=programming-language-csharp#what-about-the-function-calling-stepwise-and-handlebars-planners) for more information.)
+  - *Stepwise planner* (Still available, but usage is discouraged in favor of Function Calling. See [Planners vs Function Calling](https://learn.microsoft.com/en-us/semantic-kernel/concepts/planning?pivots=programming-language-csharp#what-about-the-function-calling-stepwise-and-handlebars-planners) for more information.)
 
 ![Planner Image](/Images/BuildPlanner.jpeg)
 
