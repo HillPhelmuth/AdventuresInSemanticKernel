@@ -11,9 +11,16 @@ namespace SemanticKernelAgentOrchestration.Plugins;
 
 public class TransitionPlugin(ChatContext chatContext)
 {
-    [KernelFunction, Description("Transition to next agent when user indicates readiness to move forward")]
-    public void TransitionToNextAgent()
+    [KernelFunction, Description("Transition to next agent when your objectives are completed")]
+    public void TransitionToNextAgent(Kernel kernel)
     {
+        var chatContext = kernel.GetRequiredService<ChatContext>();
+        
+        if (chatContext.ActiveForms.Any() && chatContext.ActiveAgent.Name == "FormBuilder")
+        {
+            Console.WriteLine("Cannot transition to next agent until all forms are completed");
+            return;
+        }
         Console.WriteLine("Transitioning to next agent");
         chatContext.IsTranstionNext = true;
     }
