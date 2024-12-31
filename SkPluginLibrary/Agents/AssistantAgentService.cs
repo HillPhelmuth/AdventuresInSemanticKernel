@@ -100,7 +100,7 @@ public class AssistantAgentService : IAsyncDisposable
         var kernelBuilder = Kernel.CreateBuilder();
         kernelBuilder.Services.AddLogging(builder => builder.AddConsole());
 
-        var kernel = kernelBuilder.AddAIChatCompletion(AIModel.Gpt4O).Build();
+        var kernel = kernelBuilder.AddAIChatCompletion(AIModel.Gpt4OCurrent).Build();
         if (hasAgents)
         {
             foreach (var agent in Agents)

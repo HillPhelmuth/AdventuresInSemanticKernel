@@ -12,10 +12,16 @@ public enum AIModel
     Gpt4OMini,
     [ModelName("gpt-4o-2024-08-06")]
     [AzureOpenAIModel("gpt-4o")]
+    [Description("Current gpt-4o")]
+    [ModelProvidor("OpenAI")]
+    [ModelProvidor("AzureOpenAI")]
+    Gpt4OCurrent,
+    [ModelName("gpt-4o-2024-11-20")]
+    [AzureOpenAIModel("gpt-4o")]
     [Description("Latest gpt-4o")]
     [ModelProvidor("OpenAI")]
     [ModelProvidor("AzureOpenAI")]
-    Gpt4O,
+    Gpt4OLatest,
     [ModelName("gpt-3.5-turbo")]
     [AzureOpenAIModel("gpt-35-turbo")]
     [Description("Latest gpt-3.5-turbo")]
@@ -33,6 +39,10 @@ public enum AIModel
     [Description("Dynamic gpt-4o")]
     [ModelProvidor("OpenAI")]
     Gpt4OChatGptLatest,//ft:gpt-4o-mini-2024-07-18:hillphelmuth:novel-gen-mini:A138kqIT
+    [ModelName("o1-mini")]
+    [Description("OpenAI o1-mini")]
+    [ModelProvidor("OpenAI")]
+    O1SeriesMini,
     [ModelName("gemini-pro")]
     [Description("Latest Gemini 1.0 Pro")]
     [ModelProvidor("GoogleAI")]

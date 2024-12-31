@@ -16,6 +16,9 @@ using SkPluginLibrary.Models.Hooks;
 using Azure.AI.OpenAI;
 using Microsoft.SemanticKernel.Connectors.Google;
 using Microsoft.SemanticKernel.Plugins.Core.CodeInterpreter;
+using Azure.Core;
+using Azure.Identity;
+using Google.Apis.Auth.OAuth2;
 
 namespace SkPluginLibrary;
 
@@ -43,7 +46,6 @@ public partial class CoreKernelService
         var result = await kernel.InvokeAsync(function, args);
         return result;
     }
-
 
     private Dictionary<string, object>? _nativePlugins;
     private Dictionary<string, object>? _customNativePlugins;
@@ -85,10 +87,10 @@ public partial class CoreKernelService
         _customNativePlugins.TryAdd(nameof(NovelWriterPlugin), novelWriterPlugin);
         var csharpPlugin = new ReplCsharpPlugin(kernel);
         _customNativePlugins.TryAdd(nameof(ReplCsharpPlugin), csharpPlugin);
-        var csharpExecutePlugin = new CodeExecuterPlugin();
-        _customNativePlugins.TryAdd(nameof(CodeExecuterPlugin), csharpExecutePlugin);
-        var webToMarkdownPlugin = new WebToMarkdownPlugin();
-        _customNativePlugins.TryAdd(nameof(WebToMarkdownPlugin), webToMarkdownPlugin);
+        var csharpExecutePlugin = new CodeExecutorPlugin();
+        _customNativePlugins.TryAdd(nameof(CodeExecutorPlugin), csharpExecutePlugin);
+        //var webToMarkdownPlugin = new WebToMarkdownPlugin();
+        //_customNativePlugins.TryAdd(nameof(WebToMarkdownPlugin), webToMarkdownPlugin);
         var webCrawlPlugin = new WebCrawlPlugin(_bingSearchService);
         _customNativePlugins.TryAdd(nameof(WebCrawlPlugin), webCrawlPlugin);
         var dndPlugin = new DndPlugin();
@@ -111,9 +113,26 @@ public partial class CoreKernelService
         _customNativePlugins.TryAdd(nameof(LangchainChatPlugin), langchainChatPlugin);
         var weatherPlugin = new WeatherPlugin();
         _customNativePlugins.TryAdd(nameof(WeatherPlugin), weatherPlugin);
+        //var codeInterpretorPlugin = new SessionsPythonPlugin(new SessionsPythonSettings(Guid.NewGuid().ToString(),new Uri(TestConfiguration.AzureContainerApps.Endpoint)), _httpClientFactory, TokenProvider, _loggerFactory);
+        //_customNativePlugins.TryAdd(nameof(SessionsPythonPlugin), codeInterpretorPlugin);
+        //var streamingPlugin = new StreamingPlugin(this);
+        //_customNativePlugins.TryAdd(nameof(StreamingPlugin), streamingPlugin);
         return _customNativePlugins;
-    }
+        //async Task<string> TokenProvider()
+        //{
+        //    if (cachedToken is null)
+        //    {
+        //        var credential = new ClientSecretCredential("b21a25da-7614-4b5b-9448-5439dcc9c31c", "08dc1536-394e-43da-a159-0104d2bea2cd", TestConfiguration.AzureContainerApps.ClientSecret);
+        //        var token = credential.GetToken(new TokenRequestContext(new[] { "https://dynamicsessions.io/.default" }));
+        //        var accessToken = token.Token;
+                
+        //        cachedToken = accessToken;
+        //    }
 
+        //    return cachedToken;
+        //}
+    }
+    //private static string? cachedToken;
     private IEnumerable<string> CustomNativePluginNames =>
         _customNativePlugins?.Keys.ToList() ?? [.. GetCustomNativePlugins().Keys];
 
@@ -546,7 +565,7 @@ public partial class CoreKernelService
 
     }
 
-    private static Kernel CreateKernelWithPlugins(IEnumerable<KernelPlugin> pluginFunctions, AIModel model = AIModel.Gpt4O)
+    private static Kernel CreateKernelWithPlugins(IEnumerable<KernelPlugin> pluginFunctions, AIModel model = AIModel.Gpt4OCurrent)
     {
         var kernel = CreateKernel(model);
         kernel.Plugins.AddRange(pluginFunctions);

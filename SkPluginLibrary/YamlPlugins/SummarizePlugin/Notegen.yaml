@@ -1,7 +1,8 @@
+name: Notegen
 description: Automatically generate compact notes for any text or text document.
 execution_settings:
   default:
-    max_tokens: 256
+    max_tokens: 1024
     temperature: 0.0
     top_p: 0.0
     presence_penalty: 0.0
@@ -10,26 +11,81 @@ input_variables:
 - name: input
   description: Text from which to generate notes
   default: ''
-name: Notegen
 template: |
- Analyze the text excerpt provided below and distill it into key points that are crucial for memory. Follow these guidelines for your analysis:
+ Analyze the text excerpt provided below and distill it into key points that are crucial for memory. Ensure that all information are included as memories. Follow these guidelines for your analysis:
 
-   - Identify and Name the Memory: Assign a descriptive name to the memory based on the content analyzed.
-   - Focus on Memorable Points: Extract only the elements or details that are significant and worth remembering.
-   - Brevity and Conciseness: Summarize the information into concise key points. Lengthy explanations are not necessary.
-   - Simplified Language: Utilize straightforward or simplified English for clarity. Perfect grammar is not required.
-   - Application: The distilled key points will be used for further analysis of this document and for other related tasks.
- Provide the analysis in a structured format as shown in the example below:
+ 1. **Identify and Name the Memories**: Assign descriptive names to the memories that capture the essence of the text in 3-5 words. Avoid overly generic or vague names.
+ 2. **Focus on Memorable Points**: Extract elements or details that are unique, central to the text’s meaning, or likely to be referenced later. Avoid unnecessary or irrelevant details.
+ 3. **Brevity and Clarity**: Summarize the information into concise key points. Limit the number of key points to a maximum of five for clarity and focus. Use clear and straightforward language, prioritizing simplicity over perfect grammar.
+ 4. **Handle Ambiguity or Sparse Input**: If the input text lacks sufficient detail or is ambiguous, summarize the main idea or explicitly state that the content is incomplete.
+ 5. **Simplify Dense or Complex Input**: For overly detailed or complex texts, focus on summarizing the core ideas while omitting minor or repetitive information.
 
-    [Input]
-    "My name is Macbeth. I used to be King of Scotland, but I died. My wife's name is Lady Macbeth and we were married for 15 years. We had no children. Our beloved dog Toby McDuff was a famous hunter of rats in the forest. My story was immortalized by Shakespeare in a play."
+ Provide the analysis in the structured format below:
 
-    [Example Output]
-    Name: Macbeth's Legacy
-    Key Points:
-    Macbeth, former King of Scotland.
-    Spouse: Lady Macbeth, 15 years, no offspring.
-    Dog: Toby McDuff, rat hunter.
-    Story captured in a Shakespeare play.
-    [Input]
-    {{$input}}
+ [Input]
+
+ "{input}"
+
+ [Example Output]
+
+ Name: {Memory 1 Name}
+
+ Key Points:
+ 1. {Key Point 1}
+ 2. {Key Point 2}
+ 3. {Key Point 3}
+ 4. {Key Point 4}
+ 5. {Key Point 5}
+
+ Name: {Memory 2 Name}
+
+ Key Points:
+ 1. {Key Point 1}
+ 2. {Key Point 2}
+ 3. {Key Point 3}
+ 4. {Key Point 4}
+ 5. {Key Point 5}
+
+ Examples:
+
+ [Input]
+ "My name is Macbeth. I used to be King of Scotland, but I died. My wife’s name is Lady Macbeth and we were married for 15 years. We had no children. Our beloved dog Toby McDuff was a famous hunter of rats in the forest. My story was immortalized by Shakespeare in a play."
+
+ [Example Output]
+
+ Name: Macbeth’s Legacy
+
+ Key Points:
+ 1. Macbeth, former King of Scotland.
+ 2. Spouse: Lady Macbeth, 15 years, no offspring.
+ 3. Dog: Toby McDuff, rat hunter.
+ 4. Story captured in a Shakespeare play.
+
+ Name: Macbeth’s Family
+
+ Key Points:
+ 1. Wife: Lady Macbeth
+ 2. Duration: 15 years
+ 3. Children: None
+ 4. Dog: Toby McDuff
+
+ [Input]
+ "The Great Fire of London occurred in 1666. It destroyed much of the city, including 87 churches and approximately 13,200 houses. Despite the devastation, only six verified deaths were recorded. The fire also led to significant improvements in urban planning and firefighting methods."
+
+ [Example Output]
+ Name: The Great Fire
+
+ Key Points:
+ 1. Occurred in 1666, devastating London.
+ 2. Destroyed 87 churches and 13,200 houses.
+ 3. Only six verified deaths.
+ 4. Prompted advancements in urban planning and firefighting.
+
+ Name: Post-Fire Reforms
+
+ Key Points:
+ 1. Urban planning improvements
+ 2. Enhanced firefighting methods
+
+ [Input]
+ {{$input}}

@@ -8,7 +8,7 @@ using Microsoft.SemanticKernel.Connectors.MistralAI;
 
 namespace SkPluginLibrary.Plugins;
 
-public class NovelWriterPlugin(AIModel aIModel = AIModel.Gpt4O)
+public class NovelWriterPlugin(AIModel aIModel = AIModel.Gpt4OCurrent)
 {
 	private AIModel _aIModel = aIModel;
 
@@ -158,6 +158,8 @@ Since novel itself will be written by a different writer, you must include all p
 	{
 		
 		var settings = new OpenAIPromptExecutionSettings { MaxTokens = 4096, Temperature = 0.85 };
+        if (_aIModel == AIModel.O1SeriesMini)
+            settings.Temperature = null;
 		var args = new KernelArguments(settings)
 		{
 			["theme"] = theme,

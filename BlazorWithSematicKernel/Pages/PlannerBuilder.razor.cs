@@ -40,9 +40,9 @@ namespace BlazorWithSematicKernel.Pages
         private class ExecutionTypeForm
         {
             public ExecutionType ExecutionType { get; set; }
-            public AIModel AIModel { get; set; } = AIModel.Gpt4O;
+            public AIModel AIModel { get; set; } = AIModel.Gpt4OCurrent;
         }
-        private static Dictionary<AIModel, string> AIModelDescriptions => GetEnumsWithDescriptions<AIModel>().Where(x => x.Key is AIModel.Gpt4O or AIModel.Gemini10 or AIModel.None).ToDictionary(x => x.Key, y => y.Value);
+        private static Dictionary<AIModel, string> AIModelDescriptions => GetEnumsWithDescriptions<AIModel>().Where(x => x.Key is AIModel.Gpt4OCurrent or AIModel.Gemini10 or AIModel.None).ToDictionary(x => x.Key, y => y.Value);
 
         private void SetExecutionType(ExecutionTypeForm form)
         {

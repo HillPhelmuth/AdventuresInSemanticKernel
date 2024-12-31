@@ -19,8 +19,8 @@ public class WebCrawlPlugin
     public WebCrawlPlugin(BingWebSearchService bingWebSearchService)
     {
         var kernel = CreateKernel();
-        var summarizePlugin = kernel.ImportPluginFromPromptDirectory(Path.Combine(RepoFiles.PluginDirectoryPath, "SummarizePlugin"), "SummarizePlugin");
-        _summarizeWebContent = summarizePlugin["Notegen"];
+        var summarizePlugin = kernel.ImportPluginFromPromptDirectoryYaml("SummarizePlugin");
+        _summarizeWebContent = summarizePlugin["SummarizeLong"];
         _kernel = kernel;
         _searchService = bingWebSearchService;
 
@@ -108,21 +108,21 @@ public class WebCrawlPlugin
 
         try
         {
-            var crawler = new CrawlService();
-            var text = await crawler.CrawlAsync(url);
+            var crawler = new CrawlService(ConsoleLogger.LoggerFactory);
+            var text = await crawler.CrawlAsync(url, true);
             var tokens = StringHelpers.GetTokens(text);
             var count = tokens / 4096;
             var segments = ChunkIntoSegments(text, Math.Max(count, 1), 4096, title).ToList();
             Console.WriteLine($"Segment count: {segments.Count}");
             var argList = segments.Select(segment => new KernelArguments { ["input"] = segment, ["query"] = input }).ToList();
-            var summaryResults = new List<FunctionResult>();
+            var summaryResults = new List<SearchResultItem>();
             foreach (var arg in argList)
             {
-                var result = await _kernel.InvokeAsync(_summarizeWebContent, arg);
-                summaryResults.Add(result);
+                var result = await _kernel.InvokeAsync<string>(_summarizeWebContent, arg);
+                summaryResults.Add(new SearchResultItem(url){Title = title, Content = result});
             }
 
-            return summaryResults.Select(x => new SearchResultItem(url) { Title = title, Content = x.Result() }).ToList();
+            return summaryResults;
         }
         catch (Exception ex)
         {

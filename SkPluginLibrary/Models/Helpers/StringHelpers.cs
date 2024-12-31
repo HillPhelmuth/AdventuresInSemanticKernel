@@ -5,16 +5,16 @@ namespace SkPluginLibrary.Models.Helpers
 {
     public static class StringHelpers
     {
-        private static Encoding? _tokenizer;
+        private static Encoder? _tokenizer;
         
         static StringHelpers()
         {
-            _tokenizer = Encoding.ForModel("gpt-4o");
+            _tokenizer = ModelToEncoder.For("gpt-4o");
         }
         public static List<TokenString> EncodeDecodeWithSpaces(string? input)
         {
             if (input == null) return new List<TokenString>();
-            _tokenizer ??= Encoding.ForModel("gpt-4o");
+            _tokenizer ??= ModelToEncoder.For("gpt-4o");
             //encode string and keep spaces
             var encodedValues = new List<int>();
             var words = input.Split(' ');
@@ -46,7 +46,7 @@ namespace SkPluginLibrary.Models.Helpers
         
         public static int GetTokens(string text)
         {
-            _tokenizer ??= Encoding.ForModel("gpt-4o");
+            _tokenizer ??= ModelToEncoder.For("gpt-4o");
             return _tokenizer.CountTokens(text);
         }
         

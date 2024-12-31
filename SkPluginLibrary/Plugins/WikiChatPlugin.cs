@@ -7,6 +7,7 @@ using System.Collections.Concurrent;
 using DocumentFormat.OpenXml.Wordprocessing;
 using System.Text.Json;
 using static SkPluginLibrary.CoreKernelService;
+using Microsoft.SemanticKernel;
 
 namespace SkPluginLibrary.Plugins;
 
@@ -17,7 +18,7 @@ public class WikiChatPlugin
     public WikiChatPlugin()
     {
         _kernel = CreateKernel();
-        var summarizePlugin = _kernel.ImportPluginFromPromptDirectory(Path.Combine(RepoFiles.PluginDirectoryPath, "SummarizePlugin"), "SummarizePlugin");
+        var summarizePlugin = _kernel.ImportPluginFromPromptDirectoryYaml("SummarizePlugin");
         _summarizeWebContent = summarizePlugin["Summarize"];
     }
     [KernelFunction, Description("Search Wikipedia, summarize the content of each result and generate citations.")]
@@ -44,7 +45,7 @@ public class WikiChatPlugin
 
         try
         {
-            var crawler = new CrawlService();
+            var crawler = new CrawlService(ConsoleLogger.LoggerFactory);
             var text = await crawler.CrawlAsync(url);
             var tokens = StringHelpers.GetTokens(text);
             var count = tokens / 2048;

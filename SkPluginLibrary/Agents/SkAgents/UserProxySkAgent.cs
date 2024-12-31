@@ -52,4 +52,8 @@ public class UserProxySkAgent : ChatHistoryKernelAgent
         Tcs = new TaskCompletionSource<string?>();
     }
     public TaskCompletionSource<string?> Tcs { get; set; } = new();
+    protected override Task<AgentChannel> RestoreChannelAsync(string channelState, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
 }

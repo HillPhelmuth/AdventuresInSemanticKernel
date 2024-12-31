@@ -113,14 +113,14 @@ public partial class GroupChatPage : ComponentBase
 		    if (agent.Name == adminProxy.Name) continue;
 		    var model = agent.GptModel switch
 		    {
-			    "Gpt4" => AIModel.Gpt4O,
+			    "Gpt4" => AIModel.Gpt4OCurrent,
 			    "Gpt35" => AIModel.Gpt4OMini,
 			    "gemini-1.0-pro" => AIModel.Gemini10,
 			    "gemini-1.5-pro-latest" => AIModel.Gemini15,
 			    _ => AIModel.Gpt4Turbo
 		    };
 		    Kernel kernel;
-            if (model is not (AIModel.Gpt4OMini or AIModel.Gpt4Turbo or AIModel.Gpt4O))
+            if (model is not (AIModel.Gpt4OMini or AIModel.Gpt4Turbo or AIModel.Gpt4OCurrent))
             {
                 kernel = CoreKernelService.CreateKernelGoogle();
             }
@@ -145,7 +145,7 @@ public partial class GroupChatPage : ComponentBase
 
     protected override Task OnInitializedAsync()
     {
-        var aiModel = AIModel.Gpt4O;
+        var aiModel = AIModel.Gpt4OCurrent;
         _kernel = CoreKernelService.CreateKernel(aiModel);
         _agentsAsPlugins = FileHelper.ExtractFromAssembly<List<AgentProxy>>("agentsExample.json");
         return base.OnInitializedAsync();

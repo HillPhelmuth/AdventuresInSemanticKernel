@@ -7,6 +7,8 @@ namespace ChatComponents
         [Parameter]
         public string HelperText { get; set; } = "";
         [Parameter]
+        public string DefaultInput { get; set; } = "";
+        [Parameter]
         public bool IsBusy { get; set; }
 
         [Parameter]
@@ -27,6 +29,7 @@ namespace ChatComponents
         protected override Task OnParametersSetAsync()
         {
             _requestForm.UserInputRequest.UserInputType = UserInputType;
+            _requestForm.UserInputRequest.ChatInput = DefaultInput;
             return base.OnParametersSetAsync();
         }
 

@@ -29,7 +29,7 @@ namespace SkPluginLibrary;
 
 public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSamples, IMemoryConnectors, ITokenization, ICustomNativePlugins, ICustomCombinations, IChatWithSk
 {
-	private static IConfiguration _configuration;
+	private static IConfiguration? _configuration;
 	private readonly IMemoryStore _memoryStore;
 	private readonly CompilerService _compilerService;
 	private readonly ScriptService _scriptService;
@@ -77,36 +77,42 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
 			.Build();
 	}
 	public static Kernel CreateKernel(AIModel aiModel = AIModel.Gpt4OMini)
-	{
-		var kernelBuilder = Kernel.CreateBuilder();
-		kernelBuilder.Services.AddLogging(builder =>
-		{
-			builder.AddConsole();
-		});
-		kernelBuilder.Services.AddSingleton(_configuration);
-		kernelBuilder.Services.ConfigureHttpClientDefaults(c =>
-		{
-			c.AddStandardResilienceHandler().Configure(o =>
-			{
-				o.Retry.ShouldHandle = args => ValueTask.FromResult(args.Outcome.Result?.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.InternalServerError);
-				o.Retry.BackoffType = DelayBackoffType.Exponential;
-				o.AttemptTimeout = new HttpTimeoutStrategyOptions { Timeout = TimeSpan.FromSeconds(90) };
-				o.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(180);
-				o.TotalRequestTimeout = new HttpTimeoutStrategyOptions { Timeout = TimeSpan.FromMinutes(5) };
-			});
-		});
-		var providor = aiModel.GetModelProvidors().FirstOrDefault();
-		if (providor.Contains("OpenAI"))
-			kernelBuilder.AddAIChatCompletion(aiModel);
-		if (providor == "GoogleAI")
-			kernelBuilder.AddGoogleAIGeminiChatCompletion(aiModel.GetOpenAIModelName(), TestConfiguration.GoogleAI.ApiKey);
-		if (providor == "MistralAI")
-			kernelBuilder.AddMistralChatCompletion(aiModel.GetOpenAIModelName(), TestConfiguration.MistralAI.ApiKey);
-		return kernelBuilder
+    {
+        var kernelBuilder = GetKernelBuilder(aiModel);
+        return kernelBuilder
 			.Build();
+    }
 
-	}
-	public static Kernel CreateKernelGoogle(string modelId = "gemini-1.0-pro")
+    public static IKernelBuilder GetKernelBuilder(AIModel aiModel)
+    {
+        var kernelBuilder = Kernel.CreateBuilder();
+        kernelBuilder.Services.AddLogging(builder =>
+        {
+            builder.AddConsole();
+        });
+        if (_configuration is not null)
+            kernelBuilder.Services.AddSingleton(_configuration);
+        kernelBuilder.Services.ConfigureHttpClientDefaults(c =>
+        {
+            c.AddStandardResilienceHandler().Configure(o =>
+            {
+                o.Retry.ShouldHandle = args => ValueTask.FromResult(args.Outcome.Result?.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.InternalServerError);
+                o.Retry.BackoffType = DelayBackoffType.Exponential;
+                o.AttemptTimeout = new HttpTimeoutStrategyOptions { Timeout = TimeSpan.FromSeconds(90) };
+                o.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(180);
+                o.TotalRequestTimeout = new HttpTimeoutStrategyOptions { Timeout = TimeSpan.FromMinutes(5) };
+            });
+        });
+        var providor = aiModel.GetModelProvidors().FirstOrDefault();
+        if (providor.Contains("OpenAI"))
+            kernelBuilder.AddAIChatCompletion(aiModel);
+        if (providor == "GoogleAI")
+            kernelBuilder.AddGoogleAIGeminiChatCompletion(aiModel.GetOpenAIModelName(), TestConfiguration.GoogleAI.ApiKey);
+        if (providor == "MistralAI")
+            kernelBuilder.AddMistralChatCompletion(aiModel.GetOpenAIModelName(), TestConfiguration.MistralAI.ApiKey);
+        return kernelBuilder;
+    }
+    public static Kernel CreateKernelGoogle(string modelId = "gemini-1.0-pro")
 	{
 		var kernelBuilder = Kernel.CreateBuilder();
 		kernelBuilder.AddGoogleAIGeminiChatCompletion(modelId, TestConfiguration.GoogleAI.ApiKey);
@@ -198,7 +204,7 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
 		return kernel;
 	}
 
-	internal static async Task<ISemanticTextMemory> ChatWithSkKernelMemory()
+	internal static async Task<ISemanticTextMemory> ChatWithSkKernelMemory(bool drop = false)
 	{
 		var sqliteMemoryStore = await SqliteMemoryStore.ConnectAsync(TestConfiguration.Sqlite!.ChatContentConnectionString!);
 		var collections = await sqliteMemoryStore.GetCollectionsAsync().ToListAsync();
@@ -207,36 +213,72 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
 		{
 			await sqliteMemoryStore.CreateCollectionAsync(CollectionName.SkDocsCollection);
 		}
+		else if (drop)
+		{
+			await sqliteMemoryStore.DeleteCollectionAsync(CollectionName.SkDocsCollection);
+		}
 		return new MemoryBuilder()
 			.WithMemoryStore(sqliteMemoryStore)
 			.WithLoggerFactory(ConsoleLogger.LoggerFactory)
 			.WithOpenAITextEmbeddingGeneration(TestConfiguration.OpenAI.EmbeddingModelId, TestConfiguration.OpenAI.ApiKey)
 			.Build();
 	}
-	public static async Task SaveNewSKPdf()
-	{
-		var pdfPath = @"C:\Users\adamh\Downloads\semantic-kernel.pdf";
-		var fileData = await File.ReadAllBytesAsync(pdfPath);
-		var sb = new StringBuilder();
-		using var document = PdfDocument.Open(fileData, new ParsingOptions { UseLenientParsing = true });
-		foreach (var page in document.GetPages())
-		{
-			var pageText = page.Text;
-			sb.Append(pageText);
-		}
-		var textString = sb.ToString();
-		var lines = TextChunker.SplitPlainTextLines(textString, 128, StringHelpers.GetTokens);
-		var paragraphs = TextChunker.SplitPlainTextParagraphs(lines, 512, 96, "semantic-kernel Documentation", StringHelpers.GetTokens);
-		var memory = await ChatWithSkKernelMemory();
-		var index = 0;
-		var ids = new List<string>();
-		foreach (var paragraph in paragraphs)
-		{
-			var id = await memory.SaveInformationAsync(CollectionName.SkDocsCollection, paragraph, $"SKDocs_P_{index++}", "semantic-kernel Documentation");
-			ids.Add(id);
-		}
-		Console.WriteLine($"Saved {ids.Count} Items to {CollectionName.SkDocsCollection}");
-	}
+	//public static async Task SaveNewSKPdf()
+	//{
+	//	var pdfPath = @"C:\Users\adamh\Downloads\semantic-kernel _ Microsoft Learn_10-19.pdf";
+	//	var fileData = await File.ReadAllBytesAsync(pdfPath);
+	//	var sb = new StringBuilder();
+	//	using var document = PdfDocument.Open(fileData, new ParsingOptions { UseLenientParsing = true });
+	//	var kernel = CreateKernel(AIModel.Gpt4OMini);
+	//	var chatService = kernel.GetRequiredService<IChatCompletionService>();
+		
+	//	foreach (var page in document.GetPages())
+	//	{
+	//		var pageText = page.Text;
+	//		var images = page.GetImages();
+	//		var imageBuilder = new StringBuilder();
+	//		imageBuilder.AppendLine("## Page Image Descriptions");
+	//		var imageIndex = 0;
+	//		foreach (var image in images ?? [])
+	//		{
+	//			var history = new ChatHistory("Provide a detailed description and summary of provided images");
+	//			//var imageBytes = image.RawBytes.ToArray();
+	//			if (!image.TryGetPng(out var imageBytes))
+	//			{
+	//				Console.WriteLine("Could not get PNG image bytes");
+	//				continue;
+	//			}
+
+	//			history.Add(new ChatMessageContent(AuthorRole.User,
+	//			[
+	//				new ImageContent(new ReadOnlyMemory<byte>(imageBytes), "image/png"),
+	//				new TextContent("describe and summarize image")
+	//			]));
+	//			var content = await chatService.GetChatMessageContentAsync(history, new OpenAIPromptExecutionSettings { MaxTokens = 512 });
+	//			Console.WriteLine($"{content.Content}");
+	//			var text = content.Content;
+	//			text = $"Image {++imageIndex}\n{text}";
+	//			imageBuilder.AppendLine(text);
+	//		}
+
+	//		pageText += $"\n{imageBuilder}";
+			
+	//		sb.Append(pageText);
+	//	}
+	//	var textString = sb.ToString();
+	//	await File.WriteAllTextAsync("TempSKContent.txt", textString);
+	//	var lines = TextChunker.SplitPlainTextLines(textString, 128, StringHelpers.GetTokens);
+	//	var paragraphs = TextChunker.SplitPlainTextParagraphs(lines, 1024, 200, "semantic-kernel Documentation", StringHelpers.GetTokens);
+	//	var memory = await ChatWithSkKernelMemory(true);
+	//	var index = 0;
+	//	var ids = new List<string>();
+	//	foreach (var paragraph in paragraphs)
+	//	{
+	//		var id = await memory.SaveInformationAsync(CollectionName.SkDocsCollection, paragraph, $"SKDocs_P_{index++}", "semantic-kernel Documentation");
+	//		ids.Add(id);
+	//	}
+	//	Console.WriteLine($"Saved {ids.Count} Items to {CollectionName.SkDocsCollection}");
+	//}
 	private const string ChatWithSkSystemPromptTemplate =
 		"""
         You are a Semantic Kernel Expert and a helpful and friendly Instructor. Use the [Semantic Kernel CONTEXT] below to answer the user's questions.
@@ -288,7 +330,7 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
 		var detailString = $" a {details.Race} {details.Class} with a {details.Alignment} alignment";
 		characterDescription += detailString;
 
-		var kernel = CreateKernel(AIModel.Gpt4O);
+		var kernel = CreateKernel(AIModel.Gpt4OCurrent);
 		var functionHook = new FunctionFilterHook();
 		kernel.FunctionInvocationFilters.Add(functionHook);
 		var dndApiPlugin = await kernel.ImportPluginFromOpenApiAsync("DndApiPlugin", Path.Combine(RepoFiles.ApiPluginDirectoryPath, "DndApiPlugin", "openapi.json"), new OpenApiFunctionExecutionParameters { IgnoreNonCompliantErrors = true }, cancellationToken: cancellationToken);

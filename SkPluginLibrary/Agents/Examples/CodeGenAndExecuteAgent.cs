@@ -41,7 +41,7 @@ public class CodeGenAndExecuteAgent
     }
     private static async Task GenerateExecutorAgent(string? agentId = null)
     {
-        var executerPlugin = KernelPluginFactory.CreateFromType<CodeExecuterPlugin>("CodeExecuter");
+        var executerPlugin = KernelPluginFactory.CreateFromType<CodeExecutorPlugin>("CodeExecuter");
         if (!string.IsNullOrEmpty(agentId))
         {
             var agent = await new AgentBuilder().GetAsync(agentId);

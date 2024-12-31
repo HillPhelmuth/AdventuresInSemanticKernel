@@ -1,5 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
+using System.ClientModel;
 using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.Agents.OpenAI;
 using Microsoft.SemanticKernel.ChatCompletion;
@@ -24,7 +25,7 @@ public static class Agents_Step8_OpenAIAssistant
         OpenAIAssistantAgent agent =
             await OpenAIAssistantAgent.CreateAsync(
                 kernel: new(),
-                clientProvider: OpenAIClientProvider.ForOpenAI(TestConfiguration.OpenAI.ApiKey), 
+                clientProvider: OpenAIClientProvider.ForOpenAI(new ApiKeyCredential(TestConfiguration.OpenAI.ApiKey)), 
                 definition: new(TestConfiguration.OpenAI.Gpt35ModelId)
                 {
                     Instructions = HostInstructions,

@@ -10,10 +10,10 @@ public interface ICustomNativePlugins
     IAsyncEnumerable<string> RunWikiSearchChat(string query);
     event Action<string>? AdditionalAgentText;
     event EventHandler<string>? TextToImageUrl;
-    IAsyncEnumerable<string> WriteNovel(string outline, AIModel aiModel = AIModel.Gpt4O,
+    IAsyncEnumerable<string> WriteNovel(string outline, AIModel aiModel = AIModel.Gpt4OCurrent,
 	    CancellationToken token = default);
     Task<string> CreateNovelOutline(string theme, string characterDetails = "", string plotEvents = "",
-	    string novelTitle = "", int chapters = 15, AIModel aIModel = AIModel.Gpt4O);
+	    string novelTitle = "", int chapters = 15, AIModel aIModel = AIModel.Gpt4OCurrent);
 
     Task<NovelOutline> GenerateNovelIdea(NovelGenre genre);
     IAsyncEnumerable<ReadOnlyMemory<byte>?> TextToAudioAsync(string text, CancellationToken cancellationToken = default);

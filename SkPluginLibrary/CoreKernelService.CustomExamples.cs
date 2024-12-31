@@ -91,7 +91,7 @@ public partial class CoreKernelService
 		functionHook.FunctionInvoking += (_, e) =>
 		{
 			var soemthing = e.Function;
-			if (e.Function.Name.StartsWith("func")) return;
+			if (e.Function.Name.StartsWith("InvokePromptStreamingAsync")) return;
 			AdditionalAgentText?.Invoke($"\n<h4> Executing {soemthing.Name} {soemthing.Metadata.PluginName}</h4>\n\n");
 		};
 		functionHook.FunctionInvoked += HandleCustomFunctionInvoked;
@@ -178,13 +178,13 @@ public partial class CoreKernelService
                               ## Genre
                               {{ $genre }}
                               """;
-		var settings = new OpenAIPromptExecutionSettings { MaxTokens = 1024, Temperature = 0.7, ResponseFormat = "json_object" };
+		var settings = new OpenAIPromptExecutionSettings { MaxTokens = 1024, Temperature = 0.7, ResponseFormat = typeof(NovelOutline) };
 		var args = new KernelArguments(settings) { ["genre"] = genre.ToString() };
 		var json = await kernel.InvokePromptAsync<string>(Prompt, args);
 		return JsonSerializer.Deserialize<NovelOutline>(json);
 	}
 	public async Task<string> CreateNovelOutline(string theme, string characterDetails = "", string plotEvents = "",
-		string novelTitle = "", int chapters = 15, AIModel aIModel = AIModel.Gpt4O)
+		string novelTitle = "", int chapters = 15, AIModel aIModel = AIModel.Gpt4OCurrent)
 	{
 		var kernel = CreateKernel(aIModel);
 		var novelWriter = new NovelWriterPlugin(aIModel);
@@ -216,7 +216,7 @@ public partial class CoreKernelService
 	}
 	private string _description = "";
 	private string _title = "";
-	public async IAsyncEnumerable<string> WriteNovel(string outline, AIModel aiModel = AIModel.Gpt4O,
+	public async IAsyncEnumerable<string> WriteNovel(string outline, AIModel aiModel = AIModel.Gpt4OCurrent,
 		[EnumeratorCancellation] CancellationToken cancellationToken = default)
 	{
 
@@ -388,7 +388,7 @@ public partial class CoreKernelService
 	private void HandleCustomFunctionInvoked(object? sender, FunctionInvocationContext invokedArgs)
 	{
 		var function = invokedArgs.Function;
-		if (invokedArgs.Function.Name.StartsWith("func")) return;
+		if (invokedArgs.Function.Name.StartsWith("func") || invokedArgs.Function.Name.StartsWith("InvokePromptStreamingAsync")) return;
 		AdditionalAgentText?.Invoke($"\n<h4> {function.Name} {function.Metadata.PluginName} Completed</h4>\n\n");
 		var result = $"<p>{invokedArgs.Result}</p>";
 		var resultsExpando = $"""

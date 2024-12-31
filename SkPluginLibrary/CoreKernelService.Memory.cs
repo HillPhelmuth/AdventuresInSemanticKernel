@@ -3,7 +3,6 @@ using Microsoft.SemanticKernel.Text;
 using SkPluginLibrary.Services;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Microsoft.SemanticKernel.Connectors.Sqlite;
 using UglyToad.PdfPig;
 
@@ -11,7 +10,7 @@ namespace SkPluginLibrary;
 
 public partial class CoreKernelService
 {
-    #region Memory and Embeddings (AddEmbeddings.razor, ClusteringPage.razor)
+    #region Memory and Embeddings (VectorPlaygroundPage.razor, ClusteringPage.razor)
 
     private (string titleResultValue, string summaryValue) _valueTuple;
     private ISemanticTextMemory? _playgroundTextMemory;
@@ -113,11 +112,6 @@ public partial class CoreKernelService
         }
         await File.WriteAllTextAsync($"clusterTitles_{distanceFunction}.json", JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true }));
         return result;
-    }
-
-    private class Topic
-    {
-        [JsonPropertyName("topics")] public List<string> Topics { get; set; }
     }
 
     private async Task<Dictionary<int, (string, string)>> AddClusterTitles(IEnumerable<MemoryResult> result,

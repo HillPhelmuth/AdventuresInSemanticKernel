@@ -23,6 +23,7 @@ export function getValue(id) {
 }
 export function setValue(id, value) {
     const editor = editorMap.get(id);
+    if (!editor || !editor.session) return;
     editor.session.setValue(value);
 }
 export function setLanguage(lang) {

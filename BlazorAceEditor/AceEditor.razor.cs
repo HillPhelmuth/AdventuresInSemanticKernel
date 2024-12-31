@@ -9,7 +9,7 @@ namespace BlazorAceEditor
         [Parameter]
         public string Id { get; set; } = default!;
         [Parameter]
-        public AceEditorOptions Options { get; set; } = default!;
+        public AceEditorOptions Options { get; set; } = new();
         [Parameter]
         public string? Style { get; set; }
         [Parameter]

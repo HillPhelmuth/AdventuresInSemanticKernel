@@ -54,7 +54,7 @@ public class RawCompletionPlugin
 			["text"] = text
 		};
 		var kernelResult = await kernel.InvokePromptAsync(RawCompletionPrompt, ctx);
-        var result = kernelResult.Metadata?["ContentTokenLogProbabilities"] as IReadOnlyList<ChatTokenLogProbabilityInfo>;
+        var result = kernelResult.Metadata?["ContentTokenLogProbabilities"] as IReadOnlyList<ChatTokenLogProbabilityDetails>;
 		Console.WriteLine($"FunctionResult.Metadata:\n-------------------------\n{JsonSerializer.Serialize(kernelResult.Metadata)} \n--------------------------------------\n");
 		Console.WriteLine($"RawCompletion function generated completion: '{result}'");
 		return result?[0].AsTokenString();

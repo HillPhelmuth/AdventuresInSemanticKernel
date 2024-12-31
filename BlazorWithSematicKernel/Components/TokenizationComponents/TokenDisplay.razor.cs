@@ -21,8 +21,6 @@ namespace BlazorWithSematicKernel.Components.TokenizationComponents
         protected override void OnParametersSet()
         {
             base.OnParametersSet();
-            //Console.WriteLine("Parameters for TokenDisplay.razor set");
-            //var encoding = Tiktoken.Encoding.ForModel("gpt-3.5-turbo");
             if (_token == TokenString.Token) return;
             _token = TokenString.Token;
             if (SpecifiedTokens == null || !SpecifiedTokens.Any() || SpecifiedTokens.Select(x => x.StringValue).Contains(TokenString.StringValue))

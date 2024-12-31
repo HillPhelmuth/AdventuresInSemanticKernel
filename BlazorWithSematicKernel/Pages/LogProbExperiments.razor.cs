@@ -15,7 +15,7 @@ namespace BlazorWithSematicKernel.Pages
         [Inject]
         private ITokenization LogProbService { get; set; } = default!;
         
-        private List<ChatTokenLogProbabilityInfo> _tokens = [];
+        private List<ChatTokenLogProbabilityDetails> _tokens = [];
         private string _output = string.Empty;
         private string _query = string.Empty;
         private bool _isBusy;
@@ -29,7 +29,7 @@ namespace BlazorWithSematicKernel.Pages
             public float Tempurature { get; set; } = 1.0f;
             public float TopP { get; set; } = 1.0f;
         }
-        private List<string> _models = [AIModel.Gpt4OMini.GetOpenAIModelName(), AIModel.Gpt4O.GetOpenAIModelName(), AIModel.Gpt35Turbo.GetOpenAIModelName(), AIModel.Gpt4OChatGptLatest.GetOpenAIModelName()];
+        private List<string> _models = [AIModel.Gpt4OMini.GetOpenAIModelName(), AIModel.Gpt4OCurrent.GetOpenAIModelName(), AIModel.Gpt35Turbo.GetOpenAIModelName(), AIModel.Gpt4OChatGptLatest.GetOpenAIModelName()];
         private LogProbInputForm _logProbInputForm = new();
         private async void SendQuery(LogProbInputForm logProbInputForm)
         {
