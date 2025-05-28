@@ -15,7 +15,7 @@ public sealed class Step6_Responsible_AI
         // Create a kernel with OpenAI chat completion
         var builder = Kernel.CreateBuilder()
             .AddOpenAIChatCompletion(
-                modelId: TestConfiguration.OpenAI.Gpt35ModelId,
+                modelId: TestConfiguration.OpenAI.Gpt4MiniModelId,
                 apiKey: TestConfiguration.OpenAI.ApiKey);
 
         

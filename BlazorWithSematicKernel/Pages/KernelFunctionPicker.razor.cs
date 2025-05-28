@@ -7,7 +7,7 @@ namespace BlazorWithSematicKernel.Pages
 {
     public partial class KernelFunctionPicker : ComponentBase
     {
-        public List<string?> Plugins => Directory.GetDirectories(RepoFiles.PluginDirectoryPath).Select(Path.GetFileName).ToList();
+        public List<string?> Plugins => Directory.GetDirectories(RepoFiles.PathToYamlPlugins).Select(Path.GetFileName).ToList();
         private List<ChatGptPluginManifest> ChatGptPluginsManifests = [];
         [Inject] private ICoreKernelExecution CoreKernelService { get; set; } = default!;
         [Inject] private NotificationService NotificationService { get; set; } = default!;
@@ -30,7 +30,6 @@ namespace BlazorWithSematicKernel.Pages
             }
             //_allPlugins = allPlugins.SelectMany(x => new PluginDisplay { PluginType = x.Key, Plugin = x.Value});
             ChatGptPluginsManifests = ChatGptPluginManifest.GetAllPluginManifests().Where(x => x.Auth.TypeEnum == TypeEnum.None).ToList();
-            await ChatGptPluginManifest.GetAndSaveAllNonAuthMantifestFiles();
             await base.OnInitializedAsync();
         }
 

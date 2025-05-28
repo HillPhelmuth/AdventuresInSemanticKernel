@@ -84,25 +84,37 @@ namespace BlazorWithSematicKernel.Components
             RequiredFunctionsChanged.InvokeAsync(RequiredFunctions);
         }
 
-        private async void ShowPrompt(KernelFunction function)
+        private void ShowPrompt(KernelFunction function)
         {
-            //if (!function.IsSemantic) return;
-            var promptPath = Path.Combine(RepoFiles.PluginDirectoryPath, function.Metadata?.PluginName??"",
-                function.Name, "skprompt.txt");
+            var pluginName = function.Metadata?.PluginName;
+            var functionName = function.Name;
+            if (string.IsNullOrEmpty(pluginName) || string.IsNullOrEmpty(functionName)) return;
+            var promptPath = Path.Combine(RepoFiles.PathToYamlPlugins, pluginName, $"{functionName}.yaml");
+            if (!File.Exists(promptPath)) return;
+            var yamlText = File.ReadAllText(promptPath);
+            var promptTemplateConfig = KernelFunctionYaml.ToPromptTemplateConfig(yamlText);
+            // return promptTemplateConfig.Template;
+            //var promptPath = Path.Combine(RepoFiles.PluginDirectoryPath, function.Metadata?.PluginName??"",
+            //    function.Name, "skprompt.txt");
             if (File.Exists(promptPath))
             {
-                var prompt = await File.ReadAllTextAsync(promptPath);
+                var prompt = promptTemplateConfig.Template;
                 DialogService.Open<ShowSkPrompt>("",
                     new Dictionary<string, object>()
-                        {{"Title", $"{function.Metadata.PluginName} {function.Name}"}, {"Prompt", prompt}});
+                        {{"Title", $"{function.Metadata.PluginName} - {function.Name}"}, {"Prompt", prompt}});
             }
         }
 
         private bool HasPrompt(KernelFunction function)
         {
-            var promptPath = Path.Combine(RepoFiles.PluginDirectoryPath, function.Metadata?.PluginName ?? "",
-                function.Name, "skprompt.txt");
-            return File.Exists(promptPath);
+            var pluginName = function.Metadata?.PluginName;
+            var functionName = function.Name;
+            if (string.IsNullOrEmpty(pluginName) || string.IsNullOrEmpty(functionName)) return false;
+            var promptPath = Path.Combine(RepoFiles.PathToYamlPlugins, pluginName, $"{functionName}.yaml");
+            if (!File.Exists(promptPath)) return false;
+            var yamlText = File.ReadAllText(promptPath);
+            var promptTemplateConfig = KernelFunctionYaml.ToPromptTemplateConfig(yamlText);
+            return !string.IsNullOrEmpty(promptTemplateConfig.Template);
         }
         private string _visiblePluginFunction = "";
         private void ShowParameters(IEnumerable<ParameterView> parameterView, string skillName, string functionName)

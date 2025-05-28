@@ -14,7 +14,7 @@ public sealed class Step7_Observability
         // Create a kernel with OpenAI chat completion
         IKernelBuilder kernelBuilder = Kernel.CreateBuilder();
         kernelBuilder.AddOpenAIChatCompletion(
-                modelId: TestConfiguration.OpenAI.Gpt35ModelId,
+                modelId: TestConfiguration.OpenAI.Gpt4MiniModelId,
                 apiKey: TestConfiguration.OpenAI.ApiKey);
 
         kernelBuilder.Plugins.AddFromType<TimeInformation>();

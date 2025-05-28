@@ -31,7 +31,7 @@
             string? modelOrDeploymentName;
             if (isAzure)
             {
-                modelOrDeploymentName = aIModel == AIModel.Gpt4OMini ? TestConfiguration.AzureOpenAI.Gpt35DeploymentName : TestConfiguration.AzureOpenAI.Gpt4DeploymentName;
+                modelOrDeploymentName = aIModel == AIModel.Gpt41Mini ? TestConfiguration.AzureOpenAI.Gpt35DeploymentName : TestConfiguration.AzureOpenAI.Gpt4DeploymentName;
                 modelName = aIModel.GetOpenAIModelName(isAzure);
             }
             else

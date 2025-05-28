@@ -2,6 +2,7 @@
 
 using Microsoft.SemanticKernel.Plugins.Core;
 using SkPluginLibrary.Plugins;
+using SkPluginLibrary.Plugins.NativePlugins;
 
 namespace SkPluginLibrary.Examples;
 

@@ -8,6 +8,10 @@ using SkPluginLibrary.Services;
 using SkPluginLibrary.Models.Helpers;
 using SkPluginComponents.Models;
 using BlazorWithSematicKernel;
+using Microsoft.Azure.Cosmos;
+using System.Text.Json;
+using Microsoft.Build.Locator;
+using Microsoft.CodeAnalysis.MSBuild;
 
 var builder = WebApplication.CreateBuilder(args);
 IConfiguration configuration = builder.Configuration;
@@ -28,6 +32,7 @@ builder.Services.Configure<HubOptions>(options =>
     options.MaximumReceiveMessageSize = null;
 });
 services.AddSkPluginLibraryServices(configuration);
+services.AddScoped<GithubCodeReaderService>();
 services.AddHttpClient();
 
 services.AddBlazorAceEditor();
@@ -59,8 +64,10 @@ services.AddLogging(config =>
 
 services.AddCascadingAuthenticationState();
 //services.AddSingleton<ActivityLogging>();
-
+var cosmosClient = new CosmosClient(configuration["Cosmos:ConnectionString"], new CosmosClientOptions() { UseSystemTextJsonSerializerWithOptions = JsonSerializerOptions.Default  });
+services.AddSingleton(cosmosClient);
 var app = builder.Build();
+//MSBuildLocator.RegisterDefaults();
 
 
 // Configure the HTTP request pipeline.

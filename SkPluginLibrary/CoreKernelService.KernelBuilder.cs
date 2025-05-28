@@ -19,6 +19,8 @@ using Microsoft.SemanticKernel.Plugins.Core.CodeInterpreter;
 using Azure.Core;
 using Azure.Identity;
 using Google.Apis.Auth.OAuth2;
+using SkPluginLibrary.Plugins.NativePlugins;
+using KernelPluginExtensions = SkPluginLibrary.Models.Helpers.KernelPluginExtensions;
 
 namespace SkPluginLibrary;
 
@@ -58,12 +60,8 @@ public partial class CoreKernelService
         _nativePlugins.TryAdd(nameof(FileIOPlugin), fileIo);
         var http = new HttpPlugin();
         _nativePlugins.TryAdd(nameof(HttpPlugin), http);
-        var mathPlugin = new MathPlugin();
-        _nativePlugins.TryAdd(nameof(MathPlugin), mathPlugin);
         var timePlugin = new TimePlugin();
         _nativePlugins.TryAdd(nameof(TimePlugin), timePlugin);
-        var waitPlugin = new WaitPlugin();
-        _nativePlugins.TryAdd(nameof(WaitPlugin), waitPlugin);
         var textMemoryPlugin = new TextMemoryPlugin(_semanticTextMemory);
         _nativePlugins.TryAdd(nameof(TextMemoryPlugin), textMemoryPlugin);
         var textPlugin = new TextPlugin();
@@ -83,6 +81,8 @@ public partial class CoreKernelService
         _customNativePlugins ??= [];
         //var result = new Dictionary<string, object>();
         var kernel = CreateKernel();
+        var agenticPlanningPlugin = new AgenticPlanningPlugin(_loggerFactory);
+        _customNativePlugins.TryAdd(nameof(AgenticPlanningPlugin), agenticPlanningPlugin);
         var novelWriterPlugin = new NovelWriterPlugin();
         _customNativePlugins.TryAdd(nameof(NovelWriterPlugin), novelWriterPlugin);
         var csharpPlugin = new ReplCsharpPlugin(kernel);
@@ -93,6 +93,12 @@ public partial class CoreKernelService
         //_customNativePlugins.TryAdd(nameof(WebToMarkdownPlugin), webToMarkdownPlugin);
         var webCrawlPlugin = new WebCrawlPlugin(_bingSearchService);
         _customNativePlugins.TryAdd(nameof(WebCrawlPlugin), webCrawlPlugin);
+        var webReseachPlugin = new WebResearchPlugin(_bingSearchService, _configuration, _loggerFactory);
+        _customNativePlugins.TryAdd(nameof(WebResearchPlugin), webReseachPlugin);
+        var arxivPlugin = new ArxivPlugin(ConsoleLogger.LoggerFactory);
+        _customNativePlugins.TryAdd(nameof(ArxivPlugin), arxivPlugin);
+        var arxivResearchPlugin = new ArxivResearchPlugin(_configuration, _loggerFactory);
+        _customNativePlugins.TryAdd(nameof(ArxivResearchPlugin), arxivResearchPlugin);
         var dndPlugin = new DndPlugin();
         _customNativePlugins.TryAdd(nameof(DndPlugin), dndPlugin);
         var jsonPlugin = new HandleJsonPlugin();
@@ -101,8 +107,10 @@ public partial class CoreKernelService
         _customNativePlugins.TryAdd(nameof(PromptExpertPlugin), promptExpertPlugin);
         var wikiPlugin = new WikiChatPlugin();
         _customNativePlugins.TryAdd(nameof(WikiChatPlugin), wikiPlugin);
-        var youtubePlugin = new YouTubePlugin(kernel, _configuration["YouTubeSearch:ApiKey"]!);
+        var youtubePlugin = new YouTubePlugin(_configuration["YouTubeSearch:ApiKey"]!);
         _customNativePlugins.TryAdd(nameof(YouTubePlugin), youtubePlugin);
+        var youtubeResearchPlugin = new YouTubeResearchPlugin(_configuration, _loggerFactory);
+        _customNativePlugins.TryAdd(nameof(YouTubeResearchPlugin), youtubeResearchPlugin);
         var askUserPlugin = new AskUserPlugin(_askUserService);
         _customNativePlugins.TryAdd(nameof(AskUserPlugin), askUserPlugin);
         var blazorChatPlugin = new BlazorMemoryPlugin();
@@ -113,24 +121,10 @@ public partial class CoreKernelService
         _customNativePlugins.TryAdd(nameof(LangchainChatPlugin), langchainChatPlugin);
         var weatherPlugin = new WeatherPlugin();
         _customNativePlugins.TryAdd(nameof(WeatherPlugin), weatherPlugin);
-        //var codeInterpretorPlugin = new SessionsPythonPlugin(new SessionsPythonSettings(Guid.NewGuid().ToString(),new Uri(TestConfiguration.AzureContainerApps.Endpoint)), _httpClientFactory, TokenProvider, _loggerFactory);
-        //_customNativePlugins.TryAdd(nameof(SessionsPythonPlugin), codeInterpretorPlugin);
-        //var streamingPlugin = new StreamingPlugin(this);
-        //_customNativePlugins.TryAdd(nameof(StreamingPlugin), streamingPlugin);
+        
+        
         return _customNativePlugins;
-        //async Task<string> TokenProvider()
-        //{
-        //    if (cachedToken is null)
-        //    {
-        //        var credential = new ClientSecretCredential("b21a25da-7614-4b5b-9448-5439dcc9c31c", "08dc1536-394e-43da-a159-0104d2bea2cd", TestConfiguration.AzureContainerApps.ClientSecret);
-        //        var token = credential.GetToken(new TokenRequestContext(new[] { "https://dynamicsessions.io/.default" }));
-        //        var accessToken = token.Token;
-                
-        //        cachedToken = accessToken;
-        //    }
-
-        //    return cachedToken;
-        //}
+       
     }
     //private static string? cachedToken;
     private IEnumerable<string> CustomNativePluginNames =>
@@ -169,7 +163,7 @@ public partial class CoreKernelService
             { PluginType.Prompt, []}, { PluginType.Native, []}, { PluginType.Api, []}
         };
         //var semantic = SemanticPlugins.Select(x => GetSemanticFunctions(x).ToPlugin(x, PluginType.Prompt));
-        var promptPlugins = SemanticPlugins.Select(name => Kernel.CreateBuilder().Build().ImportPluginFromPromptDirectoryYaml(name)).ToList();
+        var promptPlugins = SemanticPlugins.Where(x => x is not null).Select(KernelPluginExtensions.CreatePluginFromPromptDirectoryYaml!).ToList();
         var semanicPlugins = new List<KernelPlugin>();
         result[PluginType.Prompt] = promptPlugins;
         var coreNative = CoreNativePluginNames.Select(x =>
@@ -548,7 +542,7 @@ public partial class CoreKernelService
         Console.WriteLine($"InitialSysPrompt:\n{systemPrmpt}");
         IChatCompletionService chatService;
         if (TestConfiguration.CoreSettings.Service == "OpenAI")
-            chatService = new OpenAIChatCompletionService(TestConfiguration.OpenAI.Gpt35ModelId, TestConfiguration.OpenAI.ApiKey, loggerFactory: _loggerFactory);
+            chatService = new OpenAIChatCompletionService(TestConfiguration.OpenAI.Gpt4MiniModelId, TestConfiguration.OpenAI.ApiKey, loggerFactory: _loggerFactory);
         else
             chatService = new AzureOpenAIChatCompletionService(TestConfiguration.AzureOpenAI.Gpt35DeploymentName, TestConfiguration.AzureOpenAI.Endpoint, TestConfiguration.AzureOpenAI.ApiKey, modelId: TestConfiguration.AzureOpenAI.ModelId, loggerFactory: _loggerFactory);
 

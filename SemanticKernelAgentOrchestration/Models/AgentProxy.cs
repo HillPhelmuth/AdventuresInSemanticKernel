@@ -33,12 +33,21 @@ public class AgentProxy
     public ChatHistoryType ChatHistoryType { get; set; } = ChatHistoryType.All;
     private List<KernelPlugin> _plugins = [];
     private List<string> _pluginNames = [];
+    private List<string> _excludedFunctionNames = [];
+
     public List<string> PluginNames
     {
         get => Plugins.Count != 0 ? Plugins.Select(x => x.Name).ToList() : _pluginNames;
         set => _pluginNames = value;
     }
+    [JsonIgnore]
+    public List<KernelFunction> ExcludedFunctions { get; set; } = [];
 
+    public List<string> ExcludedFunctionNames
+    {
+        get => ExcludedFunctions.Count != 0 ? ExcludedFunctions.Select(x => x.Name).ToList() : _excludedFunctionNames;
+        set => _excludedFunctionNames = value;
+    }
 
     public bool IsUserProxy { get; set; }
 

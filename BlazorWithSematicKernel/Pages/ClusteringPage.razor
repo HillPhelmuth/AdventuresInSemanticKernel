@@ -7,7 +7,7 @@
         <RadzenCard>
             <RadzenText TextStyle="TextStyle.H5" TextAlign="TextAlign.Center" Text="Set Paramters for HDBSCAN"></RadzenText>
             <RadzenCard>
-                <RadzenText TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Center" Text="Example content is Semantic Kernel Documentation"></RadzenText>
+                <RadzenText TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Center" Text="Example content is a combination of Blazor and Semantic Kernel Documentation"></RadzenText>
             </RadzenCard>
 
             <RadzenTemplateForm Data="_clusterForm" TItem="ClusterForm" Submit="Submit">
@@ -56,8 +56,9 @@
 
         </RadzenCard>
 
-        <RadzenCard>
-            <RadzenTextArea Style="width:100%; height:20rem" Value="@_outputText"></RadzenTextArea>
+        <RadzenCard Style="height:20rem;overflow:auto">
+            @* <RadzenTextArea Style="width:100%; height:20rem" Value="@_outputText"></RadzenTextArea> *@
+            @((MarkupString)MarkdownAsHtml(_outputText))
         </RadzenCard>
     </RadzenColumn>
     <RadzenColumn Size="7">
@@ -71,12 +72,18 @@
                                 <RadzenCard Style="word-wrap: break-word;
                                                    overflow-wrap: break-word;
                                                    white-space: normal;
-                                                   overflow: visible;">
+                                                   overflow: auto;height:20rem">
                                     @((MarkupString)MarkdownAsHtml(cluster.Tags))
                                 </RadzenCard>
                             </RadzenTabsItem>
                             <RadzenTabsItem Text="Cluster Info">
                                 <RadzenDataGrid Data="@cluster.MemoryResults" TItem="MemoryResult" AllowSorting="true" AllowPaging="true" AllowFiltering="true" PageSize="5" Density="Density.Compact" ShowPagingSummary="true" Style="width: 100%">
+                                    <Template Context="memoryResult">
+                                        @foreach (var item in memoryResult.Relations)
+                                        {
+                                            <RadzenText TextAlign="TextAlign.Center">@item.Key - @item.Value.ToString("N5")</RadzenText>
+                                        }
+                                    </Template>
                                     <Columns>
                                         <RadzenDataGridColumn TItem="MemoryResult" Title="Title" Property="@nameof(MemoryResult.Title)" Width="85%"></RadzenDataGridColumn>
                                         <RadzenDataGridColumn TItem="MemoryResult" Width="15%">

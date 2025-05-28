@@ -38,7 +38,7 @@ public sealed class Step4_Dependency_Injection
         collection.AddSingleton(ConsoleLogger.LoggerFactory);
 
         var kernelBuilder = collection.AddKernel();
-        kernelBuilder.Services.AddOpenAIChatCompletion(TestConfiguration.OpenAI.Gpt35ModelId, TestConfiguration.OpenAI.ApiKey);
+        kernelBuilder.Services.AddOpenAIChatCompletion(TestConfiguration.OpenAI.Gpt4MiniModelId, TestConfiguration.OpenAI.ApiKey);
         kernelBuilder.Plugins.AddFromType<TimeInformation>();
 
         return collection.BuildServiceProvider();

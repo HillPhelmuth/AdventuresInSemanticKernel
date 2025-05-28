@@ -6,6 +6,7 @@ using System.Text.Json.Serialization;
 using System.Diagnostics;
 using SkPluginLibrary.Models.Helpers;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Xml;
 
 namespace BlazorWithSematicKernel.Components
 {
@@ -75,17 +76,25 @@ namespace BlazorWithSematicKernel.Components
                 fields.Add(new FunctionParameterField("Input", "Basic input for the function", "", typeof(string)));
             }
             _functionInputsForm.FunctionParameterFields = fields;
-            _promptText = PromptText(Function.SkFunction);
+            _promptText = PromptText(Function.SkFunction.PluginName, Function.SkFunction.Name);
             return base.OnParametersSetAsync();
         }
-        private static string? PromptText(KernelFunction function)
+        //private static string? PromptText(KernelFunction function)
+        //{
+        //    var promptPath = Path.Combine(RepoFiles.PluginDirectoryPath, function.Metadata?.PluginName ?? "", function.Name, "skprompt.txt");
+        //    if (!File.Exists(promptPath)) return null;
+        //    var prompt = File.ReadAllText(promptPath);
+        //    return prompt;
+        //}
+        private static string? PromptText(string? pluginName, string functionName)
         {
-            var promptPath = Path.Combine(RepoFiles.PluginDirectoryPath, function.Metadata?.PluginName ?? "", function.Name, "skprompt.txt");
+            if (string.IsNullOrEmpty(pluginName) || string.IsNullOrEmpty(functionName)) return null;
+            var promptPath = Path.Combine(RepoFiles.PathToYamlPlugins, pluginName, $"{functionName}.yaml");
             if (!File.Exists(promptPath)) return null;
             var prompt = File.ReadAllText(promptPath);
-            return prompt;
+            var promptTemplateConfig = KernelFunctionYaml.ToPromptTemplateConfig(prompt);
+            return promptTemplateConfig.Template;
         }
-
         private class InputArray
         {
             [JsonPropertyName("items")]

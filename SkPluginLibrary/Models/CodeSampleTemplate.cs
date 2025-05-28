@@ -20,7 +20,7 @@ public class CodeSampleTemplate
         return text;
     }
    
-    public const string PragmaCodes = "CA1050,CA1707,CA2007,VSTHRD111,CS1591,SKEXP0001,SKEXP0004,SKEXP0042,SKEXP0002,SKEXP0003,SKEXP0010,SKEXP0011,SKEXP0012,SKEXP0020,SKEXP0021,SKEXP0022,SKEXP0023,SKEXP0024,SKEXP0025,SKEXP0026,SKEXP0027,SKEXP0028,SKEXP0029,SKEXP0030,SKEXP0031,SKEXP0032,SKEXP0040,SKEXP0041,SKEXP0050,SKEXP0051,SKEXP0052,SKEXP0053,SKEXP0054,SKEXP0055,SKEXP0060,SKEXP0061,SKEXP0101,SKEXP0102";
+    public const string PragmaCodes = "CA1050,CA1707,CA2007,VSTHRD111,CS1591,SKEXP0001,SKEXP0010,SKEXP0020,SKEXP0030,SKEXP0040,SKEXP0050,SKEXP0060,SKEXP0070,SKEXP0090,SKEXP0100,SKEXP0101,SKEXP0110";
     public const string DisableWarning = $"#pragma warning disable {PragmaCodes}";
     public const string UsingStatements = """
                                           using Microsoft.SemanticKernel.Plugins.Core;
@@ -78,7 +78,6 @@ public class CodeSampleTemplate
                                           using Microsoft.SemanticKernel.PromptTemplates.Handlebars;
                                           using SkPluginLibrary.Examples.DictionaryPlugin;
                                           using Microsoft.SemanticKernel.Planning;
-                                          using Microsoft.SemanticKernel.Experimental.Agents;
                                           using SkPluginLibrary.Models;
                                           using SkPluginLibrary.Models.Helpers;
                                           using SkPluginLibrary.Models.Hooks;
@@ -90,5 +89,9 @@ public class CodeSampleTemplate
                                           using System.Threading;
                                           using System.Threading.Tasks;
                                           using JsonSerializer = System.Text.Json.JsonSerializer;
+                                          using Microsoft.SemanticKernel.Agents;
+                                          using static SkPluginLibrary.Examples.SamplesHelper;
+                                          using Xunit;
+                                          using Xunit.Abstractions;
                                           """;
 }

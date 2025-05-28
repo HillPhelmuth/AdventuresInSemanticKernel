@@ -1,11 +1,12 @@
-﻿using Microsoft.SemanticKernel.Memory;
-using SkPluginLibrary.Services;
+﻿using Microsoft.Extensions.VectorData;
+using Microsoft.SemanticKernel.Memory;
+using DistanceFunction = SkPluginLibrary.Services.DistanceFunction;
 
 namespace SkPluginLibrary.Abstractions;
 
 public interface IMemoryConnectors
 {
-    IAsyncEnumerable<ContextItem> SaveBatchToMemory(string collection, List<ContextItem> items,
+    IAsyncEnumerable<VectorStoreContextItem> SaveBatchToMemory(string collection, List<VectorStoreContextItem> items,
         MemoryStoreType storeType = MemoryStoreType.InMemory, bool delete = false,
         string model = "text-embedding-3-small");
     Task<List<MemoryQueryResult>> SearchKernelMemory(string query, string collection, int topN = 3, double minThreshold = 0.0);
@@ -17,4 +18,11 @@ public interface IMemoryConnectors
     Task<List<MemoryResult>> ItemClustersFromCollection(int minpoints, int minCluster,
         DistanceFunction distanceFunction,
         IEnumerable<MemoryQueryResult> itemList, Kernel kernel);
+
+    IAsyncEnumerable<VectorStoreContextItem> CreateVectorStoreTextSearch(string collection,
+        List<VectorStoreContextItem> items, bool delete = false, bool useCosmos = false);
+
+    IAsyncEnumerable<VectorSearchResult<VectorStoreContextItem>> GetVectorSearchResults(string query,
+        string collection, int topN = 3,
+        double minThreshold = 0.0, StringFilter filter = StringFilter.None, string filterText = "");
 }

@@ -2,6 +2,7 @@
 
 using Microsoft.SemanticKernel.Experimental.Agents;
 using SkPluginLibrary.Plugins;
+using SkPluginLibrary.Plugins.NativePlugins;
 using SkPluginLibrary.Resources;
 
 namespace SkPluginLibrary.Examples;

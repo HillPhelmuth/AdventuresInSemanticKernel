@@ -1,0 +1,43 @@
+description: Summarize given text or any text document in segments using previous summaries as context.
+execution_settings:
+  default:
+    max_tokens: 1024
+    temperature: 0.8
+    top_p: 1.0
+    presence_penalty: 0.0
+    frequency_penalty: 0.0
+input_variables:
+- name: input
+  description: Text to summarize
+  default: ''
+- name: query
+  description: Original user query
+  default: 'None'
+name: SummarizeLong
+template: |
+     Create a detailed and comprehensive outline of a given document by structuring and paraphrasing its contents. The outline should retain all relevant information and present the ideas clearly and cohesively while maintaining the original context. Consider the original user query `{{ $query }}` for context in this outline.
+                                           
+     # Steps
+                                           
+     1. **Read the Document Thoroughly**: Understand the main ideas, key points, and supporting details.
+     2. **Identify Key Information**: Select important facts, concepts, and arguments that are essential to the understanding of the document.
+     3. **Organize Content into Sections**: Create sections and subsections reflecting the structure of the document. 
+     4. **Paraphrase Content**: Rewrite the identified information of each section and sub-section in your own words, ensuring to maintain the original meaning and context.
+     5. **Provide Subheadings**: Use subheadings to clearly define each section, ensuring logical progression and clarity.
+     6. **Review and Revise**: Ensure the outline is coherent, free of errors, and accurately reflects the source material.
+                                           
+     # Output Format
+                                           
+     - The outline should include all crucial points structured logically with clear subheadings.
+     - The language should be clear, concise, and free of unnecessary jargon or filler.
+     - Outlines should succinctly cover the full scope of the document while adhering to the document's original structure.
+                                           
+     # Notes
+                                           
+     - Ensure that no significant details are omitted.
+     - Organize information in a way that maintains relevance and coherence.
+     - For large and complex documents, make use of detailed subheadings to enhance readability and understanding.
+     - Incorporate `{{ $query }}` to provide context and focus for the outline.
+                                           
+     Outline this:
+     {{ $input }}

@@ -12,7 +12,7 @@ namespace BlazorWithSematicKernel.Pages
         [Inject]
         private IMemoryConnectors CoreKernelService { get; set; } = default!;
 
-        private readonly List<ContextItem> _contextItems = new();
+        private readonly List<VectorStoreContextItem> _contextItems = new();
         private bool _isBusy;
         private bool _isChartRendered = true;
         private MemoryStoreType _memoryStoreType = MemoryStoreType.None;
@@ -142,11 +142,13 @@ namespace BlazorWithSematicKernel.Pages
             if (testForm.TestInputs.Count > 1)
             {
 
-                var contextItems = testForm.TestInputs.Select(x => new ContextItem() { Prompt = x.Input }).ToList();
+                var contextItems = testForm.TestInputs.Select(x => new VectorStoreContextItem() { Content = x.Input }).ToList();
                 if (testForm.VisualType == VisualType.ManyToManyHeatMap)
-                    contextItems.Add(new ContextItem() { Prompt = testForm.Input });
+                    contextItems.Add(new VectorStoreContextItem() { Content = testForm.Input });
                 _contextItems.Clear();
-                await foreach (var item in CoreKernelService.SaveBatchToMemory("testCollection", contextItems, _memoryStoreType, true, testForm.Model))
+               
+                await foreach (var item in CoreKernelService.CreateVectorStoreTextSearch("testCollection", contextItems,
+                                   true, true))
                 {
                     _contextItems.Add(item);
                 }
@@ -156,9 +158,9 @@ namespace BlazorWithSematicKernel.Pages
             {
                 case VisualType.OneToManyGrid:
                     {
-                        var scoredItems =
-                            await CoreKernelService.SearchKernelMemory(testForm.Input, "testCollection", _contextItems.Count);
-                        _scores = scoredItems.Select(x => new SimScore(x.Metadata.Text, x.Relevance)).ToList();
+                       var scoredItems = await CoreKernelService.GetVectorSearchResults(testForm.Input,
+                            "testCollection", _contextItems.Count).ToListAsync();
+                        _scores = scoredItems.Select(x => new SimScore(x.Record.Content!, x.Score.GetValueOrDefault())).ToList();
                         StateHasChanged();
                         break;
                     }
@@ -166,9 +168,9 @@ namespace BlazorWithSematicKernel.Pages
                     {
                         foreach (var item in _contextItems)
                         {
-                            var scoredItems =
-                                await CoreKernelService.SearchKernelMemory(item.Prompt!, "testCollection", _contextItems.Count + 1);
-                            _scores.AddRange(scoredItems.Select(x => new SimScore(item.Prompt, x.Relevance) { ComparedTo = x.Metadata.Text }));
+                            var scoredItems = await CoreKernelService.GetVectorSearchResults(item.Content,
+                                "testCollection", _contextItems.Count +1).ToListAsync();
+                            _scores.AddRange(scoredItems.Select(x => new SimScore(item.Content, x.Score.GetValueOrDefault()) { ComparedTo = x.Record.Content }));
                         }
                         StateHasChanged();
                         break;
@@ -178,8 +180,7 @@ namespace BlazorWithSematicKernel.Pages
             }
             _isBusy = false;
             StateHasChanged();
-            //await GetVectors();
-            //await Compare();
+           
         }
 
         [GeneratedRegex("^\\d+\\.\\s*")]

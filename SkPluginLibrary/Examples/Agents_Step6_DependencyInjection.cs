@@ -38,7 +38,7 @@ public static class Agents_Step6_DependencyInjection
 
 
 		serviceContainer.AddOpenAIChatCompletion(
-			TestConfiguration.OpenAI.Gpt35ModelId,
+			TestConfiguration.OpenAI.Gpt4MiniModelId,
 			TestConfiguration.OpenAI.ApiKey);
 
 

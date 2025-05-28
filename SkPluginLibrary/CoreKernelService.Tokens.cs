@@ -6,6 +6,7 @@ using System.Text.Json;
 using OpenAI;
 using SkPluginLibrary.Plugins;
 using OpenAI.Chat;
+using SkPluginLibrary.Plugins.NativePlugins;
 
 namespace SkPluginLibrary;
 
@@ -105,7 +106,7 @@ public partial class CoreKernelService
         return chatChoice;
     }
     public async IAsyncEnumerable<TokenString> GetStreamingLogProbs(ChatHistory history,
-        AIModel model = AIModel.Gpt4OMini, int maxTokens = 3)
+        AIModel model = AIModel.Gpt41Mini, int maxTokens = 3, float temp = 1.0f, float topP = 1.0f)
     {
         var options = new ChatCompletionOptions { TopLogProbabilityCount = 5, IncludeLogProbabilities = true, MaxOutputTokenCount = maxTokens};
         var messages = new List<ChatMessage>();
@@ -128,7 +129,7 @@ public partial class CoreKernelService
     }
     
 
-    public async IAsyncEnumerable<string> GenerateAutoCompleteOptions(string text, int maxTokens = 10, AIModel model = AIModel.Gpt4OCurrent)
+    public async IAsyncEnumerable<string> GenerateAutoCompleteOptions(string text, int maxTokens = 10, AIModel model = AIModel.Gpt41Mini)
     {
         var kernel = CreateKernel(model);
         var plugin = kernel.ImportPluginFromType<RawCompletionPlugin>();
@@ -140,12 +141,12 @@ public partial class CoreKernelService
         {
             var tokenArgs = new KernelArguments { ["text"] = text + token.StringValue, ["maxTokens"] = maxTokens };
             var completion = await kernel.InvokeAsync<string>(completionFunction, tokenArgs);
-            yield return $" {token.StringValue} {completion}";
+            yield return $"{token.StringValue} {completion}";
         }
 
     }
 
-    public async Task<string> GenearteSingleAutoComplete(string text, int maxTokens = 10, AIModel model = AIModel.Gpt4OMini)
+    public async Task<string> GenearteSingleAutoComplete(string text, int maxTokens = 10, AIModel model = AIModel.Gpt41Mini)
     {
         var firstItem = await GenerateAutoCompleteOptions(text, maxTokens, model).FirstOrDefaultAsync();
         return firstItem;

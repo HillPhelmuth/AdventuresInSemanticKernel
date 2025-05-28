@@ -1,0 +1,50 @@
+name: EvaluateStep
+description: Evaluate whether a plan step has been completed successfully based on its expected output.
+execution_settings:
+  default:
+    temperature: 0.3
+    top_p: 1.0
+input_variables:
+- name: step
+  description: The plan step to evaluate.
+  default: ''
+- name: stepResult
+  description: The result of executing the step actions.
+  default: ''
+template: |
+  # Step Evaluation
+
+  As an expert evaluator, your task is to assess whether a plan step has been completed successfully. 
+  You will compare the actual result with the expected output defined in the step.
+
+  ## Evaluation Criteria
+  1. **Completeness**: Does the result address all aspects of the expected output?
+  2. **Accuracy**: Is the information in the result correct and relevant?
+  3. **Alignment**: Does the result align with the step's objective?
+  4. **Success**: Based on the above criteria, determine if the step is completed successfully.
+
+  ## Plan Step Information
+  {{ $step }}
+
+  ## Result to Evaluate
+  {{ $stepResult }}
+
+  ## Your Evaluation
+
+  Provide a detailed assessment of whether the step result meets the expected output criteria.
+  
+  ### Analysis
+  - Analyze how the result compares to the expected output
+  - Identify any missing elements or unexpected information
+  - Note any strengths or weaknesses in the result
+
+  ### Conclusion
+  Provide a clear determination of whether the step has been successfully completed.
+  
+  Use one of the following conclusions:
+  - "COMPLETED: The step has been successfully completed." (When all criteria are met)
+  - "PARTIALLY COMPLETED: The step has been partially completed." (When some but not all criteria are met)
+  - "NOT COMPLETED: The step has not been completed." (When the result fails to meet the criteria)
+  
+  ### Improvement Suggestions
+  If the step is not fully completed, provide specific recommendations on what additional actions are needed.

@@ -27,7 +27,9 @@ namespace BlazorWithSematicKernel.Components.LogProbComponents
             {
                 Console.WriteLine("Token LogProbs: " + JsonSerializer.Serialize(tokenString, new JsonSerializerOptions { WriteIndented=true}));
             }
+            StateHasChanged();
             return base.OnParametersSetAsync();
+           
         }
     }
 }

@@ -2,6 +2,7 @@
 
 using System.Globalization;
 using SkPluginLibrary.Plugins;
+using SkPluginLibrary.Plugins.NativePlugins;
 
 // This example shows how to use kernel arguments when invoking functions.
 namespace SkPluginLibrary.Examples;

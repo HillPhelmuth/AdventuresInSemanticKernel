@@ -71,6 +71,22 @@
                         <RadzenText TextStyle="TextStyle.Caption" Text="Add plugins as avaialable Agent tools (optional)"></RadzenText>
                     </Helper>
                 </RadzenFormField>
+                @if (_agentForm.Plugins.Select(x => x.KernelPlugin).SelectMany(x => x).Any())
+                {
+                    <RadzenFormField Text="Exluded Plugins" Style="width:100%">
+                        <ChildContent>
+                            <RadzenDropDownDataGrid Data="@_agentForm.Plugins.Select(x => x.KernelPlugin).SelectMany(x => x).ToList()" Chips="true" Multiple="true" @bind-Value="_agentForm.ExcludedFunctions" MaxSelectedLabels="10">
+                                <Columns>
+                                    <RadzenDropDownDataGridColumn Property="@(nameof(KernelFunction.Name))" Title="Name" Width="30%"></RadzenDropDownDataGridColumn>
+                                    <RadzenDropDownDataGridColumn Property="@(nameof(KernelFunction.Description))" Title="Type" Width="70%"></RadzenDropDownDataGridColumn>
+                                </Columns>
+                            </RadzenDropDownDataGrid>
+                        </ChildContent>
+                        <Helper>
+                            <RadzenText TextStyle="TextStyle.Caption" Text="Select plugin-functions to exclude from agent tools (optional)"></RadzenText>
+                        </Helper>
+                    </RadzenFormField>
+                }
                 <br />
                 <RadzenButton Size="ButtonSize.Small" ButtonType="ButtonType.Submit" Text="Generate Agent"></RadzenButton>
             </RadzenTemplateForm>
@@ -93,6 +109,26 @@
                                 </RadzenTabsItem>
                                 <RadzenTabsItem Text="Plugins">
                                     <RadzenDataGrid Data="@agent.Plugins" TItem="KernelPlugin" Density="Density.Compact">
+                                        <Template Context="plugin">
+                                            <RadzenDataGrid Data="@plugin.Select(x => x).ToList()" TItem="KernelFunction" Density="Density.Compact">
+                                                <Columns>
+                                                    <RadzenDataGridColumn TItem="KernelFunction" Property="@nameof(KernelFunction.Name)" Width="25%"></RadzenDataGridColumn>
+                                                    <RadzenDataGridColumn TItem="KernelFunction" Property="@nameof(KernelFunction.Description)" Width="50%"></RadzenDataGridColumn>
+                                                    <RadzenDataGridColumn TItem="KernelFunction" Width="25%">
+                                                        <Template Context="function">
+                                                            @if (!agent.ExcludedFunctionNames.Contains(function.Name))
+                                                            {
+                                                                <RadzenIcon Style="font-size:2rem;font-weight:600" IconStyle=IconStyle.Success Icon="check_circle" MouseEnter="@((e) => TooltipService.Open(e, "Available Tool Call"))"></RadzenIcon>
+                                                            }
+                                                            else
+                                                            {
+                                                                <RadzenIcon Style="font-size:2rem;font-weight:600" IconStyle=IconStyle.Danger Icon="close" MouseEnter="@((e) => TooltipService.Open(e, "Excluded From Tool Calls"))"></RadzenIcon>
+                                                            }
+                                                        </Template>
+                                                    </RadzenDataGridColumn>
+                                                </Columns>
+                                            </RadzenDataGrid>
+                                        </Template>
                                         <Columns>
                                             <RadzenDataGridColumn TItem="KernelPlugin" Title="Name" Property="Name" Width="30%"></RadzenDataGridColumn>
                                             <RadzenDataGridColumn TItem="KernelPlugin" Title="Description" Property="Description" Width="70%"></RadzenDataGridColumn>

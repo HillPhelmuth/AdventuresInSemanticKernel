@@ -174,7 +174,7 @@ public class AdventureStoryAgents(AskUserService askUserService) : IAsyncDisposa
     private static async Task<IAgent> GenerateCommanderAstra()
     {
         return Track(await new AgentBuilder()
-            .WithOpenAIChatCompletion(TestConfiguration.OpenAI.Gpt35ModelId, TestConfiguration.OpenAI.ApiKey)
+            .WithOpenAIChatCompletion(TestConfiguration.OpenAI.Gpt4MiniModelId, TestConfiguration.OpenAI.ApiKey)
             .WithInstructions(AstraInstructions)
             .WithDescription("Gruff but crafty leader of the crew.")
             .WithName("Commander Astra")
@@ -183,7 +183,7 @@ public class AdventureStoryAgents(AskUserService askUserService) : IAsyncDisposa
     private static async Task<IAgent> GenerateZanar()
     {
         return Track(await new AgentBuilder()
-            .WithOpenAIChatCompletion(TestConfiguration.OpenAI.Gpt35ModelId, TestConfiguration.OpenAI.ApiKey)
+            .WithOpenAIChatCompletion(TestConfiguration.OpenAI.Gpt4MiniModelId, TestConfiguration.OpenAI.ApiKey)
             .WithName("Engineer Zanar")
             .WithDescription("A brilliant but quirky engineer character who specializes in technology and gadgetry. Provides information on fictional technologies, solves technical puzzles, or creates imaginative solutions to challenges faced by the team")
             .WithInstructions(ZanarInstructions)
@@ -193,7 +193,7 @@ public class AdventureStoryAgents(AskUserService askUserService) : IAsyncDisposa
     {
         return Track(
             await new AgentBuilder()
-                .WithOpenAIChatCompletion(TestConfiguration.OpenAI.Gpt35ModelId, TestConfiguration.OpenAI.ApiKey)
+                .WithOpenAIChatCompletion(TestConfiguration.OpenAI.Gpt4MiniModelId, TestConfiguration.OpenAI.ApiKey)
                 .WithName("Mystic Elara")
                 .WithDescription("A character with deep knowledge of the universe's mystical and magical aspects. Offers insights into alien cultures, ancient lore, and cosmic mysteries, adding a layer of fantasy and intrigue to the narrative.")
                 .WithInstructions(ElaraInstructions)

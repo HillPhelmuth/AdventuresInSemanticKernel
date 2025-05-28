@@ -1,0 +1,118 @@
+name: CreatePlan
+description: Analyze the provided prompt.
+execution_settings:
+  default:
+    temperature: 0.5
+    top_p: 1.0
+input_variables:
+- name: task
+  description: task to be accomplished.
+  default: ''
+- name: availableTools
+  description: tools available for the task.
+  default: ''
+- name: context
+  description: context required to fully understand the task.
+  default: ''
+- name: constraints
+  description: constraints for the task.
+  default: ''
+template: |
+ Generate a step-by-step plan to answer the user's question or accomplish the user's requested task. Each step must include a clear objective and an expectation of verifiable output. Carefully consider the **Context** and **Constraints** when formulating the plan. The plan should be structured in a way that allows for easy understanding and execution. The output should be in JSON format, with each step clearly defined.
+
+ # Steps
+
+ 1. **Identify the Question or Task:**
+    - Determine the central question or task to be addressed.
+    - Specify any sub-components or aspects that need consideration.
+
+ 2. **Gather Information:**
+    - List resources, information, or context needed.
+    - Specify methods for collecting or verifying this information.
+
+ 3. **Outline the Process:**
+    - Break down the main task into smaller, manageable steps.
+    - Ensure each step logically follows from the previous one.
+
+ 4. **Set Verifiable Output Expectations:**
+    - For each step, describe what the successful completion should look like.
+    - Include criteria or metrics that define success.
+
+ 5. **Compile Steps into a Plan:**
+    - Formulate a list of numbered steps that lead to completion of the task.
+    - Ensure clarity and conciseness in language for each step.
+
+ # Output Format
+
+ A structured list, with each item consisting of:
+ - **Step Number**: Sequential identifier (e.g., Step 1, Step 2).
+ - **Objective**: The goal of the step.
+ - **Action**: The task to be performed.
+ - **Output Expectation**: Criterion for success.
+
+ # Examples
+
+ ### Example 1
+
+ _Note:_ Final output will be in JSON format. Markdown examples are for ease of reading.
+
+ **Input:** How can I bake a chocolate cake?
+
+ **Output:**
+ 1. **Objective:** Gather Ingredients
+   - **Actions:** Collect all necessary ingredients listed in the recipe.
+   - **Output Expectation:** All ingredients measured and ready.
+
+ 2. **Objective:** Preheat Oven
+   - **Actions:** Set oven to 350°F (175°C).
+   - **Output Expectation:** Oven reaches desired temperature.
+
+ 3. **Objective:** Mix Ingredients
+   - **Actions:** Combine dry and wet ingredients as instructed.
+   - **Output Expectation:** Batter is smooth and properly mixed.
+
+ 4. **Objective:** Bake Cake
+   - **Actions:** Pour batter into the baking pan and place in oven.
+   - **Output Expectation:** Bake for the specified time until cooked through.
+
+ 5. **Objective:** Cool and Serve
+   - **Actions:** Allow cake to cool before serving.
+   - **Output Expectation:** Cake is cooled, sliced, and ready for presentation.
+
+ # Notes
+
+ - Ensure each step includes an actionable task with a verifiable output.
+ - Revise the plan as needed based on any additional user requirements, context or constraints.
+
+ # Inputs
+
+ ## Task
+
+ {{ $task }}
+
+ ## Available Tools
+
+ {{ $availableTools }}
+
+ ## Context
+
+ {{ $context }}
+
+ ## Constraints
+
+ {{ $constraints }}
+
+
+ # JSON Output Format
+ ```
+ {
+ "Steps": [
+  {
+  "Identifier": "",
+  "Objective": "",
+  "Actions": "",
+  "ExpectedOutput": ""
+  }, 
+ ]
+ }
+ ```

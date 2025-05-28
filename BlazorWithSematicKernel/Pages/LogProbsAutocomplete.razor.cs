@@ -2,7 +2,6 @@
 using DocumentFormat.OpenXml.Office.Word;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
-using Radzen.Blazor;
 using Radzen.Blazor.Rendering;
 using SkPluginLibrary.Abstractions;
 
@@ -17,23 +16,15 @@ public partial class LogProbsAutocomplete
     private List<AutocompleteOption> _options = [];
     private string _text = "";
     private Popup _popup;
-    private RadzenTextArea _textArea;
     private bool _popupOpen;
 
-    private async Task HandleInput()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        _options.Clear();
-        await foreach (var option in LogProbService.GenerateAutoCompleteOptions(_text))
+        if (firstRender)
         {
-            _options.Add(new AutocompleteOption(option));
-            if (!_popupOpen)
-            {
-                await _popup.ToggleAsync(_textArea.Element);
-                _popupOpen = true;
-            }
-
-            await InvokeAsync(StateHasChanged);
+            await JSRuntime.InvokeVoidAsync("alignScroll", _overlay, _textArea);
         }
+        await base.OnAfterRenderAsync(firstRender);
     }
 
     private async Task HandleSelect(AutocompleteOption option)
@@ -57,24 +48,31 @@ public partial class LogProbsAutocomplete
     // Update autocomplete as user types
     private async void UpdateAutocomplete(ChangeEventArgs e)
     {
-        var previousSuggestion = _remainingSuggestion;
-        _userInput = e.Value.ToString();
-        if (!string.IsNullOrEmpty(previousSuggestion) &&
-            !previousSuggestion.StartsWith(_userInput[previousSuggestion.Length..], StringComparison.OrdinalIgnoreCase))
-        {
-            _remainingSuggestion = ""; // Clear the suggestion
-        }
-        // Cancel the previous debounce task if it's still running
-        await _debounceCts.CancelAsync();
-        _debounceCts = new CancellationTokenSource();
-
         try
         {
+            var previousSuggestion = _remainingSuggestion;
+            _userInput = e.Value.ToString();
+            if (!string.IsNullOrEmpty(previousSuggestion) &&
+                !previousSuggestion.StartsWith(_userInput[previousSuggestion.Length..], StringComparison.OrdinalIgnoreCase))
+            {
+                _remainingSuggestion = ""; // Clear the suggestion
+            }
+            // Cancel the previous debounce task if it's still running
+            await _debounceCts.CancelAsync();
+            _debounceCts = new CancellationTokenSource();
+
+
             // Wait for 1 second (1000 milliseconds) before executing the request
-            await Task.Delay(1500, _debounceCts.Token);
+            await Task.Delay(1000, _debounceCts.Token);
 
             // Generate the autocomplete suggestion
-            _suggestions = await LogProbService.GenerateAutoCompleteOptions(_userInput).Take(3).ToListAsync();
+            //await foreach (var suggestion in LogProbService.GenerateAutoCompleteOptions(_userInput))
+            //{
+            //    if (_suggestions.Count >= 3) break;
+            //    _suggestions.Add(suggestion);
+            //    await InvokeAsync(StateHasChanged);
+            //}
+            _suggestions = await LogProbService.GenerateAutoCompleteOptions(_userInput, 3).Take(3).ToListAsync();
             _selectedSuggestionIndex = 0;
             _suggestion = _suggestions[_selectedSuggestionIndex];
             await InvokeAsync(StateHasChanged);
@@ -92,26 +90,49 @@ public partial class LogProbsAutocomplete
         {
             // If the task was canceled, ignore and return (user kept typing)
         }
+        catch (Exception ex)
+        {
+            // Handle any other exceptions that may occur
+            Console.WriteLine($"Error: {ex.Message}");
+        }
     }
-    ElementReference _textArea2;
+    private ElementReference _textArea;
+    private ElementReference _overlay;
+
     [Inject]
-    private IJSRuntime JSRuntime { get; set; }
+    private IJSRuntime JSRuntime { get; set; } = default!;
+    private bool _preventDefault;
+
+    private async Task HandleKeyUp()
+    {
+        if (_preventDefault)
+        {
+            Console.WriteLine("Preventing default behavior");
+            await _textArea.FocusAsync();
+            _preventDefault = false; // Reset the flag
+        }
+    }
     private async Task HandleKeyPress(KeyboardEventArgs args)
     {
-        if (args.Key is "Enter" or "Tab" or "ArrowUp" or "ArrowDown")
-        {
-            await JSRuntime.InvokeVoidAsync("window.event.preventDefault");
-        }
+        // Only prevent default for handled keys using JS interop
+        //await JSRuntime.InvokeVoidAsync("maybePreventDefault", args);
         switch (args.Key)
         {
-            case "Tab":
-            case "Enter":
+            //case "Tab":
+            case "ArrowRight":
+                _preventDefault = true;
                 _userInput += _remainingSuggestion;
+                StateHasChanged();
                 _remainingSuggestion = ""; // Clear the suggestion after accepting
                 _suggestions.Clear(); // Clear the suggestion list
                 _selectedSuggestionIndex = 0;
-                StateHasChanged();
-                await _textArea2.FocusAsync();
+                await InvokeAsync(StateHasChanged);
+                await Task.Delay(1); // Let the render complete
+                
+                //await JSRuntime.InvokeVoidAsync("eval", $@"document.getElementById(""textbox0"").focus()");
+                _popupOpen = false;
+                //await _popup.CloseAsync();
+              
                 return;
             case "Escape":
                 _remainingSuggestion = ""; // Clear the suggestion
@@ -135,6 +156,11 @@ public partial class LogProbsAutocomplete
                 _remainingSuggestion = _suggestion;
                 // _remainingSuggestion = _suggestion.Substring(_userInput.Length);
                 break;
+            //default:
+            //    _userInput += args.ShiftKey ? args.Key.ToUpper() : args.Key.ToLower();
+            //    StateHasChanged();
+            //    await Task.Delay(1); // Let the render complete
+            //    break;
         }
         await InvokeAsync(StateHasChanged);
     }

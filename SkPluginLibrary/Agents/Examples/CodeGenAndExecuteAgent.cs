@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using SemanticKernelAgentOrchestration.Models;
 using SkPluginLibrary.Agents.Extensions;
 using SkPluginLibrary.Plugins;
+using SkPluginLibrary.Plugins.NativePlugins;
 
 
 namespace SkPluginLibrary.Agents.Examples;
