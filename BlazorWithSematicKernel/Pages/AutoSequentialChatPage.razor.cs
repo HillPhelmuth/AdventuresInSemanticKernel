@@ -70,7 +70,9 @@ public partial class AutoSequentialChatPage
         File.WriteAllText("AutoSeqAgents.json", JsonSerializer.Serialize(_agentProxies, JsonSerializerOptions));
 #endif
         Console.WriteLine("AutoSequentialChat Started");
+
         _groupChat = new DynamicAgentChatService(selectAgentForm.Agents, _chatContext, CoreKernelService.CreateKernel(AIModel.Gpt4OCurrent));
+
         _step = 1;
         StateHasChanged();
         _step = 2;
@@ -87,6 +89,7 @@ public partial class AutoSequentialChatPage
             {
                 "Gpt4" => AIModel.Gpt4OCurrent,
                 "Gpt35" => AIModel.Gpt41Mini,
+                "Gpt35" => AIModel.Gpt4OMini,
                 "gemini-1.0-pro" => AIModel.Gemini10,
                 "gemini-1.5-pro-latest" => AIModel.Gemini15,
                 _ => AIModel.Gpt4Turbo
