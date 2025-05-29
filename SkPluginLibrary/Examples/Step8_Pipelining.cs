@@ -16,7 +16,7 @@ public sealed class Step8_Pipelining
     {
         IKernelBuilder builder = Kernel.CreateBuilder();
         builder.AddOpenAIChatCompletion(
-            TestConfiguration.OpenAI.Gpt35ModelId,
+            TestConfiguration.OpenAI.Gpt4MiniModelId,
             TestConfiguration.OpenAI.ApiKey);
         builder.Services.AddLogging(c => c.AddConsole().SetMinimumLevel(LogLevel.Trace));
         Kernel kernel = builder.Build();

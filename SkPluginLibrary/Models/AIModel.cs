@@ -10,6 +10,24 @@ public enum AIModel
     [ModelProvidor("OpenAI")]
     [ModelProvidor("AzureOpenAI")]
     Gpt4OMini,
+    [ModelName("gpt-4.1-mini")]
+    [AzureOpenAIModel("gpt-4.1-mini")]
+    [Description("gpt-4.1-mini")]
+    [ModelProvidor("OpenAI")]
+    [ModelProvidor("AzureOpenAI")]
+    Gpt41Mini,
+    [ModelName("gpt-4.1-nano")]
+    [AzureOpenAIModel("gpt-4.1-nano")]
+    [Description("gpt-4.1-nano")]
+    [ModelProvidor("OpenAI")]
+    [ModelProvidor("AzureOpenAI")]
+    Gpt41Nano,
+    [ModelName("gpt-4.1")]
+    [AzureOpenAIModel("gpt-4.1")]
+    [Description("gpt-4.1")]
+    [ModelProvidor("OpenAI")]
+    [ModelProvidor("AzureOpenAI")]
+    Gpt41,
     [ModelName("gpt-4o-2024-08-06")]
     [AzureOpenAIModel("gpt-4o")]
     [Description("Current gpt-4o")]
@@ -22,6 +40,18 @@ public enum AIModel
     [ModelProvidor("OpenAI")]
     [ModelProvidor("AzureOpenAI")]
     Gpt4OLatest,
+    [ModelName("o4-mini")]
+    [AzureOpenAIModel("o4-mini")]
+    [Description("o4-mini")]
+    [ModelProvidor("OpenAI")]
+    [ModelProvidor("AzureOpenAI")]
+    O4Mini,
+    [ModelName("o3")]
+    [AzureOpenAIModel("o3")]
+    [Description("o3")]
+    [ModelProvidor("OpenAI")]
+    [ModelProvidor("AzureOpenAI")]
+    O3,
     [ModelName("gpt-3.5-turbo")]
     [AzureOpenAIModel("gpt-35-turbo")]
     [Description("Latest gpt-3.5-turbo")]

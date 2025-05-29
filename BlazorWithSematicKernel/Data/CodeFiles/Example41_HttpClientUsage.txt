@@ -37,7 +37,7 @@ public static class Example41_HttpClientUsage
         // If you need to use a custom HttpClient, simply pass it as an argument for the httpClient parameter.
         var kernel = Kernel.CreateBuilder()
             .AddOpenAIChatCompletion(
-                modelId: TestConfiguration.OpenAI.Gpt35ModelId,
+                modelId: TestConfiguration.OpenAI.Gpt4MiniModelId,
                 apiKey: TestConfiguration.OpenAI.ApiKey,
                 httpClient: httpClient)
             .Build();

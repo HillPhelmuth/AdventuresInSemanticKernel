@@ -12,7 +12,7 @@ public sealed class Step5_Chat_Prompt
         // Create a kernel with OpenAI chat completion
         Kernel kernel = Kernel.CreateBuilder()
             .AddOpenAIChatCompletion(
-                modelId: TestConfiguration.OpenAI.Gpt35ModelId,
+                modelId: TestConfiguration.OpenAI.Gpt4MiniModelId,
                 apiKey: TestConfiguration.OpenAI.ApiKey)
             .Build();
 

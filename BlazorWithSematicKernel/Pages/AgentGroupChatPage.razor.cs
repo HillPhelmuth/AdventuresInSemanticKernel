@@ -98,6 +98,8 @@ public partial class AgentGroupChatPage : ComponentBase
             Console.WriteLine($"Agent {agent.Name} has {agent.PluginNames.Count} Plugins");
             var pluginNames = agent.PluginNames;
             agent.Plugins.AddRange(_allKernelPlugins.Where(x => pluginNames.Contains(x.Name)));
+            var excludedFunctionNames = agent.ExcludedFunctionNames;
+            agent.ExcludedFunctions.AddRange(agent.Plugins.SelectMany(x => x).Where(x => excludedFunctionNames.Contains(x.Name)));
         }
         StateHasChanged();
 

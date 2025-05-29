@@ -1,38 +1,61 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Bing.WebSearch;
+using Microsoft.Bing.WebSearch.Models;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
+using WebSearchApiKeyServiceClientCredentials = Microsoft.Bing.WebSearch.ApiKeyServiceClientCredentials;
 
-namespace SkPluginLibrary.Services
+namespace SkPluginLibrary.Services;
+
+public interface IWebSearchService
 {
-    public class BingWebSearchService
+    Task<List<SearchResultItem>?> SearchAsync(string query, int answerCount = 10, string? freshness = null);
+
+    Task<List<SearchResultItem>> DeepSearchAsync(string query, int maxResults = 3,
+        string? freshness = null);
+}
+
+public class BingWebSearchService(ILoggerFactory loggerFactory) : IWebSearchService
+{
+    //private readonly WebSearchClient _webSearchClient;
+    private readonly WebSearchClient _webSearchClient = new(new WebSearchApiKeyServiceClientCredentials(TestConfiguration.Bing.ApiKey));
+    private readonly ILogger<BingWebSearchService> _logger = loggerFactory.CreateLogger<BingWebSearchService>();
+    private readonly CrawlService _crawler = new(loggerFactory);
+    public async Task<List<SearchResultItem>?> SearchAsync(string query, int answerCount = 10, string? freshness = null)
     {
-        //private readonly WebSearchClient _webSearchClient;
-        private readonly IHttpClientFactory _httpClientFactory;
-        private readonly HttpClient _httpClient;
+        if (answerCount < 3) answerCount = 3;
+        _logger.LogInformation("Searching Bing for {query} with answerCount {answerCount}", query, answerCount);
+           
+        SearchResponse? serviceResponse = await _webSearchClient.Web.SearchAsync(query, answerCount: answerCount, freshness:freshness);
+        var webPages = serviceResponse?.WebPages?.Value;
+           
+        _logger.LogInformation("Search Bing Results:\n {result}",
+            string.Join("\n", webPages?.Select(x => x.DisplayUrl) ?? []));
+        return ConvertToSearchResults(webPages?.ToList());
 
-        private readonly ILogger<BingWebSearchService> _logger;
-        public BingWebSearchService(IConfiguration configuration, IHttpClientFactory httpClientFactory, ILoggerFactory loggerFactory)
+    }
+    public async Task<List<SearchResultItem>> DeepSearchAsync(string query, int maxResults = 3,
+        string? freshness = null)
+    {
+        var results = new List<SearchResultItem>();
+        var initialResults = (await SearchAsync(query, maxResults, freshness))?.ToList() ?? [];
+        foreach (var searchResultItem in initialResults)
         {
-            _httpClientFactory = httpClientFactory;
-            _logger = loggerFactory.CreateLogger<BingWebSearchService>();
-            var subscriptionKey = TestConfiguration.Bing.ApiKey;
-            _httpClient = _httpClientFactory.CreateClient();
-            _httpClient.BaseAddress = new Uri("https://api.bing.microsoft.com/");
-            _httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", subscriptionKey);
+            var additionalLinks = await _crawler.CrawlAndExtractUrls(searchResultItem.Url);
+            searchResultItem.AdditionalLinks = additionalLinks;
         }
+        results.AddRange(initialResults);
+        
+        return results;
+    }
 
-        public async Task<List<BingSearchResult>?> SearchAsync(string query, int answerCount = 10)
+    private static List<SearchResultItem> ConvertToSearchResults(List<WebPage>? webPages)
+    {
+        if (webPages is null) return [];
+        return webPages.Select(x => new SearchResultItem(x.Id)
         {
-            if (answerCount < 3) answerCount = 3;
-            _logger.LogInformation("Searching Bing for {query} with answerCount {answerCount}", query, answerCount);
-            var response = await _httpClient.GetAsync($"v7.0/search?q={query}&answerCount={answerCount}");
-            var content = await response.Content.ReadAsStringAsync();
-            var searchResult = JsonSerializer.Deserialize<SearchResult>(content);
-            var bingSearchResults = searchResult?.BingSearchResults;
-            _logger.LogInformation("Search Bing Results:\n {result}",
-                string.Join("\n", bingSearchResults?.Select(x => x.ToString()) ?? Array.Empty<string>()));
-            return bingSearchResults;
-
-        }
+            Title = x.Name,
+            Content = x.Snippet,
+            Url = x.Url,
+            Snippet = x.Snippet
+        }).ToList();
     }
 }

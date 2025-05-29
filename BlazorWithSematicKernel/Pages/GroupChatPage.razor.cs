@@ -114,13 +114,13 @@ public partial class GroupChatPage : ComponentBase
 		    var model = agent.GptModel switch
 		    {
 			    "Gpt4" => AIModel.Gpt4OCurrent,
-			    "Gpt35" => AIModel.Gpt4OMini,
+			    "Gpt35" => AIModel.Gpt41Mini,
 			    "gemini-1.0-pro" => AIModel.Gemini10,
 			    "gemini-1.5-pro-latest" => AIModel.Gemini15,
 			    _ => AIModel.Gpt4Turbo
 		    };
 		    Kernel kernel;
-            if (model is not (AIModel.Gpt4OMini or AIModel.Gpt4Turbo or AIModel.Gpt4OCurrent))
+            if (model is not (AIModel.Gpt41Mini or AIModel.Gpt4Turbo or AIModel.Gpt4OCurrent))
             {
                 kernel = CoreKernelService.CreateKernelGoogle();
             }

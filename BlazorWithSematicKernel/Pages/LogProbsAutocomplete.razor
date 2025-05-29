@@ -4,32 +4,20 @@
 <RadzenRow>
     <RadzenColumn Size="6" Offset="3">
         <RadzenText Style="color:red" TextAlign="TextAlign.Center" TextStyle="TextStyle.DisplayH5" Text="Just getting started with this..."></RadzenText>
-        @* <RadzenCard>
-            <RadzenTextArea @ref=_textArea @bind-Value="@_text" @bind-Value:after="HandleInput" Style="width:100%"></RadzenTextArea>
-            <Popup @ref=_popup Visible="@(_options.Count > 0)" Style="display:none;position:absolute;height:fit-content; width:fit-content">
-                <RadzenListBox Data="_options" TValue="AutocompleteOption" TextProperty="Text" ValueChanged="HandleSelect" Style="width:40vw"></RadzenListBox>
-            </Popup>
-        </RadzenCard> *@
-        <RadzenText TextStyle="TextStyle.Caption">Press Up, Down to see suggestions, Tab to complete.</RadzenText>
-        <RadzenCard>
+      
+        <RadzenText TextStyle="TextStyle.Caption">Press Up, Down to see suggestions, Right-Arrow to complete.</RadzenText>
+        <RadzenCard Style="min-height:5rem; padding-top:0" @onkeydown:stopPropagation="true">
             <div class="autocomplete-container">
-                <textarea @ref="_textArea2" @bind="_userInput" @oninput="UpdateAutocomplete" class="autocomplete-input" rows="3" cols="50" @onkeydown="HandleKeyPress"></textarea>
-                <div class="autocomplete-suggestion">
+                <div class="autocomplete-overlay" @ref="_overlay">
                     <span class="highlighted">@_userInput</span><span class="suggested">@_remainingSuggestion</span>
                 </div>
+                <textarea id="textbox0" @ref="_textArea" @bind="_userInput" @oninput="UpdateAutocomplete" class="autocomplete-input"  @onkeydown="HandleKeyPress" @onkeydown:preventDefault="false" autocomplete="off" spellcheck="false"></textarea>
             </div>
+           
         </RadzenCard>
     </RadzenColumn>
 </RadzenRow>
-@* <div class="autocomplete-container">
-    <textarea @bind="_userInput" @oninput="UpdateAutocomplete" class="autocomplete-input" rows="3" cols="50" @onkeydown="HandleKeyPress"></textarea>
-    <div class="autocomplete-suggestion">
-        <span class="highlighted">@_userInput</span><span class="suggested">@_remainingSuggestion</span>
-    </div>
-</div>
- *@
-@code
-{
-    
 
+@code {
+    
 }

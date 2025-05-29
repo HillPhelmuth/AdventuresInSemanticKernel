@@ -1,24 +1,27 @@
-﻿<CascadingValue Name="PageTitle" Value="@_pageTitle">
-    <CascadingAuthenticationState>
-        <Router AppAssembly="@typeof(Routes).Assembly" OnNavigateAsync="HandleNavigation">
-            <Found Context="routeData">
-                <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
-                    <NotAuthorized>
-                        <h1>Sorry</h1>
-                        <p>You're not authorized to access this page. You may need to log in.</p>
-                        <a href="MicrosoftIdentity/Account/SignIn">Log in</a>
-                    </NotAuthorized>
-                </AuthorizeRouteView>
-                <FocusOnNavigate RouteData="@routeData" Selector="h1" />
-            </Found>
-        </Router>
-    </CascadingAuthenticationState>
+﻿<CascadingValue Name="SelectedCodeFile" Value="@_selectedCodeFile">
+    <CascadingValue Name="PageTitle" Value="@_pageTitle">
+        <CascadingAuthenticationState>
+            <Router AppAssembly="@typeof(Routes).Assembly" OnNavigateAsync="HandleNavigation">
+                <Found Context="routeData">
+                    <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                        <NotAuthorized>
+                            <h1>Sorry</h1>
+                            <p>You're not authorized to access this page. You may need to log in.</p>
+                            <a href="MicrosoftIdentity/Account/SignIn">Log in</a>
+                        </NotAuthorized>
+                    </AuthorizeRouteView>
+                    <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+                </Found>
+            </Router>
+        </CascadingAuthenticationState>
+    </CascadingValue>
 </CascadingValue>
 <RadzenComponents />
 <SkPluginComponents.AskUser />
 @code {
 
     private string _pageTitle = "Adventures in Semantic Kernel";
+    private string _selectedCodeFile = "";
 
     private void HandleNavigation(NavigationContext navigationContext)
     {
@@ -40,6 +43,23 @@
             "groupChat" => "Custom Agent Group Chat",
             "agentGroupChat" => "Agent Group Chat in Semantic Kernel",
             _ => "Adventures in Semantic Kernel"
+        };
+        _selectedCodeFile = path switch
+        {
+            "samples" => CodeFilePartialName.CoreKernelService_Samples.GetPartialName(),
+            "executeFunction" => CodeFilePartialName.CoreKernelService_KernelBuilder.GetPartialName(),
+            "planBuilder" => CodeFilePartialName.CoreKernelService_KernelBuilder.GetPartialName(),
+            "web" => CodeFilePartialName.CoreKernelService_CustomExamples.GetPartialName(),
+            "wikiChat" => CodeFilePartialName.CoreKernelService_CustomExamples.GetPartialName(),
+            "repl" => CodeFilePartialName.CoreKernelService_CustomExamples.GetPartialName(),
+            "dnd" => CodeFilePartialName.CoreKernelService_CustomExamples.GetPartialName(),
+            "testEmbed" => CodeFilePartialName.CoreKernelService_Memory.GetPartialName(),
+            "cluster" => CodeFilePartialName.CoreKernelService_Memory.GetPartialName(),
+            "textchunking" => CodeFilePartialName.CoreKernelService_Tokens.GetPartialName(),
+            "tokens" => CodeFilePartialName.CoreKernelService_Tokens.GetPartialName(),
+            "groupChat" => CodeFilePartialName.CoreKernelService.GetPartialName(),
+            "agentGroupChat" => CodeFilePartialName.ChatCompletionGroup.GetPartialName(),
+            _ => CodeFilePartialName.None.GetPartialName()
         };
         StateHasChanged();
     }

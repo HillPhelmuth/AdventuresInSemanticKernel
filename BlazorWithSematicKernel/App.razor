@@ -2,116 +2,135 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="utf-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<base href="/" />
-	<link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
-	<link href="css/site.css" rel="stylesheet" />
-	<link href="BlazorWithSematicKernel.styles.css" rel="stylesheet" />
-	<link rel="icon" type="image/png" href="appIcon.png" />
-	<link rel="stylesheet" href="_content/Radzen.Blazor/css/standard.css">
-	<link rel="stylesheet" href="_content/ChatComponents/css/chat.css" />
-	<link rel="stylesheet" href="js/lib/prism/themes/prism.min.css">
-	<link rel="stylesheet" href="js/lib/prism/themes/prism-funky.min.css">
-	<link rel="stylesheet" href="js/lib/prism/plugins/toolbar/prism-toolbar.min.css" />
-	<link href="BlazorWithSemanticKernel.styles.css" rel="stylesheet">
-	<HeadOutlet @rendermode="@InteractiveServer" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
+    <link href="css/site.css" rel="stylesheet" />
+    <link href="BlazorWithSematicKernel.styles.css" rel="stylesheet" />
+    <link rel="icon" type="image/png" href="appIcon.png" />
+    <link rel="stylesheet" href="_content/Radzen.Blazor/css/standard.css">
+    <link rel="stylesheet" href="_content/ChatComponents/css/chat.css" />
+    <link rel="stylesheet" href="js/lib/prism/themes/prism.min.css">
+    <link rel="stylesheet" href="js/lib/prism/themes/prism-funky.min.css">
+    <link rel="stylesheet" href="js/lib/prism/plugins/toolbar/prism-toolbar.min.css" />
+    <HeadOutlet @rendermode="@InteractiveServer" />
 </head>
 <body>
-	<Routes @rendermode="@InteractiveServer"></Routes>
-	<div id="blazor-error-ui">
-		An unhandled error has occurred.
-		<a href="" class="reload">Reload</a>
-		<a class="dismiss">🗙</a>
-	</div>
+    <Routes @rendermode="@InteractiveServer"></Routes>
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
 
-	<script src="_framework/blazor.web.js"></script>
-	<script src="_content/Radzen.Blazor/Radzen.Blazor.js"></script>
-	<script src="https://unpkg.com/turndown/dist/turndown.js"></script>
-	<script src="js/lib/prism/prism.min.js"></script>
-	<script src="js/lib/prism/plugins/autoloader/prism-autoloader.min.js"></script>
-	<script src="js/lib/prism/plugins/toolbar/prism-toolbar.min.js"></script>
-	<script src="js/lib/prism/plugins/show-language/prism-show-language.min.js"></script>
-	<script src="js/lib\prism\plugins\copy-to-clipboard\prism-copy-to-clipboard.js"></script>
-	<script src="@("https://unpkg.com/@alenaksu/json-viewer@2.0.0/dist/json-viewer.bundle.js")"></script>
-	@* <script src="audioStreaming.js"></script> *@
-	<script>
-		window.convertHtmlToMarkdown = (id, html) => {
+    <script src="_framework/blazor.web.js"></script>
+    <script src="_content/Radzen.Blazor/Radzen.Blazor.js"></script>
+    <script src="https://unpkg.com/turndown/dist/turndown.js"></script>
+    <script src="js/lib/prism/prism.min.js"></script>
+    <script src="js/lib/prism/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="js/lib/prism/plugins/toolbar/prism-toolbar.min.js"></script>
+    <script src="js/lib/prism/plugins/show-language/prism-show-language.min.js"></script>
+    <script src="js/lib\prism\plugins\copy-to-clipboard\prism-copy-to-clipboard.js"></script>
+    <script src="@("https://unpkg.com/@alenaksu/json-viewer@2.0.0/dist/json-viewer.bundle.js")"></script>
+    @* <script src="audioStreaming.js"></script> *@
+    <script>
+        window.convertHtmlToMarkdown = (id, html) => {
 
-			const turndownService = new TurndownService();
-			turndownService.remove("style");
-			turndownService.remove("script");
-			const result = turndownService.turndown(html);
-			console.log(`html item with id: ${id} converted to markdown.`);
-			return {
-				Id: id,
-				Content: result
-			};
-		}
-	</script>
-	<script>
-		window.addCopyButtons = (element) => {
-			if (!element) {
-				console.log("No element in addCopyButtons");
-				return;
-			}
+            const turndownService = new TurndownService();
+            turndownService.remove("style");
+            turndownService.remove("script");
+            const result = turndownService.turndown(html);
+            console.log(`html item with id: ${id} converted to markdown.`);
+            return {
+                Id: id,
+                Content: result
+            };
+        }
+    </script>
+    <script>
+        window.addCopyButtons = (element) => {
+            if (!element) {
+                console.log("No element in addCopyButtons");
+                return;
+            }
 
-			Prism.highlightAllUnder(element);
-		}
-	</script>
-	<script>
-		window.downloadFile = async (filename, data) => {
-			const response = new Response(data);
-			const blob = await response.blob();
+            Prism.highlightAllUnder(element);
+        }
+    </script>
+    <script>
+        window.downloadFile = async (filename, data) => {
+            const response = new Response(data);
+            const blob = await response.blob();
 
-			const url = window.URL.createObjectURL(blob);
-			const link = document.createElement('a');
-			link.href = url;
-			link.download = filename;
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
 
-			document.body.appendChild(link);
-			link.click();
-			document.body.removeChild(link);
-		};
-	</script>
-	<script>
-		window.scrollToBottom = function (elementId) {
-			const element = document.getElementById(elementId);
-			if (element) {
-				element.scrollIntoView({ behavior: 'smooth', block: 'end' });
-			}
-		}
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+    </script>
+    <script>
+        window.scrollToBottom = function (elementId) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            }
+        }
 
-	</script>
-	<script>
-		window.addJsonToViewer = (jsonObj) => {
-			if (!jsonObj) {
-				console.log("No json object in addJsonToViewer");
-				return;
-			}
-			var element = document.getElementById("json");
-			if (!element) {
-				console.log("No element in addJsonToViewer");
-				return;
-			}
-			element.data = jsonObj;
+    </script>
+    <script>
+        window.addJsonToViewer = (jsonObj) => {
+            if (!jsonObj) {
+                console.log("No json object in addJsonToViewer");
+                return;
+            }
+            var element = document.getElementById("json");
+            if (!element) {
+                console.log("No element in addJsonToViewer");
+                return;
+            }
+            element.data = jsonObj;
 
-		}
-	</script>
-	<script>
+        }
+    </script>
+    <script>
 
 
-		window.playAudio = (audioUrl, dotNetObj) => {
-			var audio = document.getElementById('audioPlayer');
-			audio.src = audioUrl;
-			console.log("playAudio Invoked from c#");
-			audio.addEventListener('ended', function chapterEnded() {
-				audio.removeEventListener('ended', chapterEnded);
-				dotNetObj.invokeMethodAsync('PlayNextChapter');
-				console.log("PlayNextChapter invoked from JS");
-			});
-			audio.play();
-		}
-	</script>
+        window.playAudio = (audioUrl, dotNetObj) => {
+            var audio = document.getElementById('audioPlayer');
+            audio.src = audioUrl;
+            console.log("playAudio Invoked from c#");
+            audio.addEventListener('ended', function chapterEnded() {
+                audio.removeEventListener('ended', chapterEnded);
+                dotNetObj.invokeMethodAsync('PlayNextChapter');
+                console.log("PlayNextChapter invoked from JS");
+            });
+            audio.play();
+        }
+    </script>
+    <script>
+        window.maybePreventDefault = (e) => {
+            
+             console.log(e);
+                if (["Tab", "Enter", "ArrowUp", "ArrowDown", "Escape"].includes(e.key)) {
+                    e.preventDefault();
+                    console.log("Prevented default for key: " + e);
+                }
+            
+        }
+
+    </script>
+    <script>
+        window.alignScroll = (overlay, ta) => {
+         ta.addEventListener('scroll', () => {
+            overlay.scrollTop  = ta.scrollTop;
+            overlay.scrollLeft = ta.scrollLeft;
+        });
+        }
+    </script>
 </body>
 </html>

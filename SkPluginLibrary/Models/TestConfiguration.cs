@@ -31,7 +31,7 @@ public sealed class TestConfiguration
             "OpenAI" => new CoreAISettings
             {
                 ApiKey = OpenAI.ApiKey,
-                Gpt35ModelId = OpenAI.Gpt35ModelId,
+                Gpt35ModelId = OpenAI.Gpt4MiniModelId,
                 Gpt4ModelId = OpenAI.Gpt4ModelId,
                 ImageModelId = OpenAI.ImageModelId,
                 PlannerModelId = OpenAI.PlannerModelId
@@ -101,6 +101,12 @@ public sealed class TestConfiguration
     {
         get => _acs ?? LoadSection<AzureAISearchConfig>();
         set => _acs = value;
+    }
+    private static AzureContainerAppsConfig? _azureContainerApps;
+    public static AzureContainerAppsConfig? AzureContainerApps
+    {
+        get => _azureContainerApps ?? LoadSection<AzureContainerAppsConfig>();
+        set => _azureContainerApps = value;
     }
 
     private static QdrantConfig? _qdrant;
@@ -241,12 +247,13 @@ public sealed class TestConfiguration
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor.
     public class OpenAIConfig
     {
-        public string Gpt35ModelId { get; set; }
+        public string Gpt4MiniModelId { get; set; }
         public string Gpt4ModelId { get; set; }
         public string EmbeddingModelId { get; set; }
         public string ApiKey { get; set; }
         public string ImageModelId { get; set; }
         public string PlannerModelId { get; set; }
+        public string ChatModelId { get; set; }
     }
 
     public class AzureOpenAIConfig
@@ -277,6 +284,11 @@ public sealed class TestConfiguration
         public string IndexName { get; set; }
     }
 
+    public class AzureContainerAppsConfig
+    {
+        public string Endpoint { get; set; }
+        public string ClientSecret { get; set; }
+    }
     public class QdrantConfig
     {
         public string Endpoint { get; set; }

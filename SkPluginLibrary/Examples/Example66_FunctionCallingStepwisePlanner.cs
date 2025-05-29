@@ -3,6 +3,7 @@
 using Microsoft.SemanticKernel.Planning;
 using Microsoft.SemanticKernel.Plugins.Core;
 using SkPluginLibrary.Plugins;
+using SkPluginLibrary.Plugins.NativePlugins;
 
 namespace SkPluginLibrary.Examples;
 
@@ -48,11 +49,10 @@ public static class Example66_FunctionCallingStepwisePlanner
             //    endpoint: TestConfiguration.AzureOpenAI.Endpoint,
             //    apiKey: TestConfiguration.AzureOpenAI.ApiKey,
             //    modelId: TestConfiguration.AzureOpenAI.ChatModelId)
-            .AddOpenAIChatCompletion(TestConfiguration.OpenAI.Gpt35ModelId, TestConfiguration.OpenAI.ApiKey)
+            .AddOpenAIChatCompletion(TestConfiguration.OpenAI.Gpt4MiniModelId, TestConfiguration.OpenAI.ApiKey)
             .Build();
 
         kernel.ImportPluginFromType<EmailPlugin>();
-        kernel.ImportPluginFromType<MathPlugin>();
         kernel.ImportPluginFromType<TimePlugin>();
 
         return kernel;

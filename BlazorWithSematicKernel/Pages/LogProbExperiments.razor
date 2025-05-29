@@ -64,9 +64,10 @@
         {
             <RadzenCard Style="width:100%">
                 <RadzenText Text="Tokens" TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Center"></RadzenText>
-                @if (_tokens.Count > 0)
+                @if (_tokenStrings.Count > 0)
                 {
-                    <TextAsLogProbTokens TokenStrings="@_tokens.AsTokenStrings()" @bind-SelectedTokenString=_selectedTokenString></TextAsLogProbTokens>
+                    
+                    <TextAsLogProbTokens TokenStrings="@_tokenStrings" @bind-SelectedTokenString=_selectedTokenString></TextAsLogProbTokens>
                 }
 
             </RadzenCard>

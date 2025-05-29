@@ -1,31 +1,75 @@
 
+
 .autocomplete-container {
-    position: relative; /* Required for absolute positioning of the suggestion box */
-    display: inline-block; /* Prevents the container from taking up the full width */
+    position: relative;
+    /*display: inline-block;*/
+    width: 100%;
 }
+
+
 
 .autocomplete-input {
     border: 1px solid #ccc;
     padding: 5px;
     font-size: 16px;
-    width: 100%; /* Make the input take up the full width of the container */
-    box-sizing: border-box; /* Include padding and border in the element's total width and height */
-    resize: none; /* Prevent the textarea from being resized */
+    font-family: monospace;
+    line-height: 1.5;
+    width: 100%;
+    box-sizing: border-box;
+    resize: none;
+    background: transparent;
+    color: transparent; /* Hide textarea text, show only overlay */
+    caret-color: black; /* Keep caret visible */
+    position: absolute;
+    top: 0;
+    left: 0;
+    min-height: 5rem;
+    height: 5rem;
+    z-index: 2;
+    overflow:auto;
+}
+.autocomplete-overlay-textarea:focus {
+    outline: none;
+}
+.autocomplete-overlay-textarea {
+    /* merged into .autocomplete-input above */
 }
 
-.autocomplete-suggestion {
+.autocomplete-overlay {
+    pointer-events: none;
     position: absolute;
-    top: 100%; /* Position the suggestion box below the input */
+    top: 0;
     left: 0;
     width: 100%;
-    border: 1px solid #ccc;
-    background-color: #fff;
-    z-index: 10; /* Ensure the suggestion box is on top of other elements */
-    padding: 5px;
+    min-height: 5rem;
+    height: 5rem;
+    background: transparent;
+    color: black;
     font-size: 16px;
-    white-space: pre-wrap; /* Allow for multiple lines and word wrap within the suggestion box */
+    font-family: monospace;
+    line-height: 1.5;
+    padding: 5px;
     box-sizing: border-box;
+    white-space: pre-wrap;
+    z-index: 1;
+    overflow: auto;
 }
+/*.ta-wrapper textarea,
+.ta-wrapper .overlay {*/
+    /*font: 400 16px/1.5 "Inter", sans-serif;*/
+    /*font-family: monospace;
+    box-sizing: border-box;
+    padding: 8px;
+    border: 1px solid #ccc;
+    width: 100%;
+    height: 5rem;
+    resize: vertical;*/ /* keep user resizing in sync */
+    /*overflow: auto;*/ /* scrolling sync */
+    /*white-space: pre-wrap;
+    word-wrap: break-word;
+}*/
+
+/* .autocomplete-suggestion is no longer used */
 
 .highlighted {
     color: black; /* Normal text color */

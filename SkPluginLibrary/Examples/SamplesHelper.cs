@@ -13,7 +13,7 @@ public static class SamplesHelper
 		var builder = Kernel.CreateBuilder();
 
 		builder.AddOpenAIChatCompletion(
-			TestConfiguration.OpenAI.Gpt35ModelId, TestConfiguration.OpenAI.ApiKey);
+			TestConfiguration.OpenAI.Gpt4MiniModelId, TestConfiguration.OpenAI.ApiKey);
 		
 		return builder.Build();
 	}

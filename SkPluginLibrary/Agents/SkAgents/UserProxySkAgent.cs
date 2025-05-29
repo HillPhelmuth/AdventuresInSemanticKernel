@@ -1,23 +1,15 @@
 using Microsoft.SemanticKernel.ChatCompletion;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.SemanticKernel.Agents;
-using Microsoft.SemanticKernel.Agents.Chat;
-using Microsoft.Graph;
-using Microsoft.SemanticKernel.Agents.History;
-using SemanticKernelAgentOrchestration.Models.Events;
 using SkPluginLibrary.Agents.Models.Events;
 
 
 namespace SkPluginLibrary.Agents.SkAgents;
 
-public class UserProxySkAgent : ChatHistoryKernelAgent
+public class UserProxySkAgent : ChatHistoryAgent
 {
     public event EventHandler<SkAgentInputRequestArgs>? AgentInputRequest;
+    [Obsolete("Use InvokeAsync with AgentThread instead.")]
     public override async IAsyncEnumerable<ChatMessageContent> InvokeAsync(ChatHistory history, KernelArguments? arguments = null, Kernel? kernel = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = new())
     {
@@ -25,6 +17,7 @@ public class UserProxySkAgent : ChatHistoryKernelAgent
         yield return new ChatMessageContent(AuthorRole.User, content){AuthorName = Name};
     }
 
+    [Obsolete("Use InvokeStreamingAsync with AgentThread instead.")]
     public override async IAsyncEnumerable<StreamingChatMessageContent> InvokeStreamingAsync(ChatHistory history, KernelArguments? arguments = null, Kernel? kernel = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = new())
     {
@@ -52,8 +45,23 @@ public class UserProxySkAgent : ChatHistoryKernelAgent
         Tcs = new TaskCompletionSource<string?>();
     }
     public TaskCompletionSource<string?> Tcs { get; set; } = new();
+
+    public override async IAsyncEnumerable<AgentResponseItem<ChatMessageContent>> InvokeAsync(ICollection<ChatMessageContent> messages, AgentThread? thread = null, AgentInvokeOptions? options = null,
+        [EnumeratorCancellation] CancellationToken cancellationToken = new())
+    {
+        var content = await GetHumanInputAsync();
+        yield return new AgentResponseItem<ChatMessageContent>(new ChatMessageContent(AuthorRole.User, content) { AuthorName = Name }, thread ?? new ChatHistoryAgentThread(new ChatHistory(messages)));
+    }
+
+    public override async IAsyncEnumerable<AgentResponseItem<StreamingChatMessageContent>> InvokeStreamingAsync(ICollection<ChatMessageContent> messages, AgentThread? thread = null,
+        AgentInvokeOptions? options = null, [EnumeratorCancellation] CancellationToken cancellationToken = new())
+    {
+        var content = await GetHumanInputAsync();
+        yield return new AgentResponseItem<StreamingChatMessageContent>(new StreamingChatMessageContent(AuthorRole.User, content) { AuthorName = Name }, thread ?? new ChatHistoryAgentThread(new ChatHistory(messages)));
+    }
+
     protected override Task<AgentChannel> RestoreChannelAsync(string channelState, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        return this.CreateChannelAsync(cancellationToken);
     }
 }

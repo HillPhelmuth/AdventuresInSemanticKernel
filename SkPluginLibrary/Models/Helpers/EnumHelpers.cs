@@ -71,5 +71,17 @@
             }
             return default!;
         }
+        public static AIModel GetAIModelFromModelName(this string modelName)
+        {
+            foreach (var field in typeof(AIModel).GetFields())
+            {
+                if (field.GetCustomAttributes(typeof(ModelNameAttribute), false)
+                        .FirstOrDefault() is ModelNameAttribute attribute && attribute.Model == modelName)
+                {
+                    return (AIModel)field.GetValue(null)!;
+                }
+            }
+            return default!;
+        }
     }
 }

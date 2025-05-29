@@ -18,9 +18,9 @@ public static class RepoFiles
 
 
     }
-    public static string PathToYamlPlugins => Path.Combine(AppBasePath, "YamlPlugins");
-    public static string PluginDirectoryPath => Path.Combine(AppBasePath, "SemanticPlugins");
-    public static string ApiPluginDirectoryPath => Path.Combine(AppBasePath, "ApiPlugins");
+    public static string PathToYamlPlugins => Path.Combine(AppBasePath, "Plugins", "YamlPlugins");
+    public static string PluginDirectoryPath => Path.Combine(AppBasePath, "Plugins", "SemanticPlugins");
+    public static string ApiPluginDirectoryPath => Path.Combine(AppBasePath, "Plugins", "ApiPlugins");
     public static string CodeTextDirectoryPath => Path.Combine(AppBasePath, "Data", "CodeFiles");
-    
+
 }

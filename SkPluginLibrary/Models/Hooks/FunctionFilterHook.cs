@@ -21,6 +21,18 @@
             OnFunctionInvoked(context);
         }
     }
+
+    public class AutoInvokeFilter : IAutoFunctionInvocationFilter
+    {
+        public event EventHandler<AutoFunctionInvocationContext>? FunctionInvoking;
+        public event EventHandler<AutoFunctionInvocationContext>? FunctionInvoked;
+        public async Task OnAutoFunctionInvocationAsync(AutoFunctionInvocationContext context, Func<AutoFunctionInvocationContext, Task> next)
+        {
+            FunctionInvoking?.Invoke(this, context);
+            await next(context);
+            FunctionInvoked?.Invoke(this, context);
+        }
+    }
     public class PromptFilterHook : IPromptRenderFilter
     {
         public event EventHandler<PromptRenderContext>? PromptRendered;

@@ -16,14 +16,26 @@ namespace SkPluginLibrary.Services
             _loggerFactory = loggerFactory;
             _logger = _loggerFactory.CreateLogger<CrawlService>();
         }
-
-        public async Task<string> CrawlAsync(string url, bool fullParse = false)
+        public async Task<List<string>> CrawlAndExtractUrls(string url)
         {
             _logger.LogInformation($"Crawling url {url}");
             var doc = await _htmlWeb.LoadFromWebAsync(url);
+            var markdownUrls = doc.DocumentNode?.Descendants("a").Select(x => $"[{x.InnerText}]({x.GetAttributeValue("href", string.Empty)})").ToList() ?? [];
+            _logger.LogInformation($"Found {markdownUrls.Count} urls");
+            return markdownUrls;
+        }
+        public async Task<string> CrawlAsync(string url)
+        {
+            _logger.LogInformation($"Crawling url {url}");
+            var doc = await _htmlWeb.LoadFromWebAsync(url);
+            return ConvertHtmlToMarkdown(url, doc);
+        }
+
+        private string ConvertHtmlToMarkdown(string url, HtmlDocument doc)
+        {
             var config = new Config
             {
-                UnknownTags = Config.UnknownTagsOption.Bypass,
+                UnknownTags = Config.UnknownTagsOption.PassThrough,
                 GithubFlavored = true,
                 RemoveComments = true,
                 SmartHrefHandling = true
@@ -31,20 +43,8 @@ namespace SkPluginLibrary.Services
 
             var converter = new Converter(config);
             var htmlBuilder = new StringBuilder();
-            if (!fullParse)
-            {
-                foreach (var child in doc.DocumentNode?.DescendantsAndSelf().Where(x => x.Name?.ToLower() == "p" || IsValidHeader(x.Name?.ToLower()) || x.Name == "table") ?? new List<HtmlNode>())
-                {
-                    htmlBuilder.Append(child.OuterHtml);
-                }
-            }
-            else
-            {
-                foreach (var child in doc.DocumentNode?.DescendantsAndSelf().Where(x => x.Name?.ToLower() != "script" && x.Name?.ToLower() != "style") ?? new List<HtmlNode>())
-                {
-                    htmlBuilder.Append(child.OuterHtml);
-                }
-            }
+            htmlBuilder.AppendLine(doc.DocumentNode.OuterHtml);
+            
             var tidyHtml = Cleaner.PreTidy(htmlBuilder.ToString(), true);
 
             var mkdwnText = converter.Convert(tidyHtml);

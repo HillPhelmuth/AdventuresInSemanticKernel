@@ -14,6 +14,7 @@ using Microsoft.Extensions.Http.Resilience;
 using Microsoft.SemanticKernel.TextToImage;
 using Polly;
 using System.Text.Json.Serialization;
+using SkPluginLibrary.Plugins.NativePlugins;
 
 namespace SkPluginLibrary;
 

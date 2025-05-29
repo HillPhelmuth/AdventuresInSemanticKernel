@@ -1,10 +1,21 @@
 ﻿using Microsoft.SemanticKernel.Memory;
 using Microsoft.SemanticKernel.Text;
-using SkPluginLibrary.Services;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Azure.Cosmos;
+using Microsoft.Extensions.VectorData;
+using Microsoft.SemanticKernel.Connectors.AzureCosmosDBNoSQL;
+using Microsoft.SemanticKernel.Connectors.InMemory;
 using Microsoft.SemanticKernel.Connectors.Sqlite;
+using Microsoft.SemanticKernel.Data;
 using UglyToad.PdfPig;
+using DistanceFunction = SkPluginLibrary.Services.DistanceFunction;
+using Microsoft.SemanticKernel.Embeddings;
+using System.Linq.Expressions;
+using OpenAI;
+using Microsoft.Extensions.AI;
+
+
 
 namespace SkPluginLibrary;
 
@@ -15,7 +26,8 @@ public partial class CoreKernelService
     private (string titleResultValue, string summaryValue) _valueTuple;
     private ISemanticTextMemory? _playgroundTextMemory;
     private ISemanticTextMemory? _dbScanMemory;
-
+    private VectorStoreCollection<string, VectorStoreContextItem>? _recordCollection;
+    private VectorStoreTextSearch<VectorStoreContextItem>? _vectorStoreTextSearch;
     private async Task<string> SaveToNewKernelMemory(ISemanticTextMemory? memory, string id, string item, string collection)
     {
         return await memory.SaveInformationAsync(collection, item, id);
@@ -27,7 +39,98 @@ public partial class CoreKernelService
             await _playgroundStore.DeleteCollectionAsync(collection);
     }
 
-    public async IAsyncEnumerable<ContextItem> SaveBatchToMemory(string collection, List<ContextItem> items,
+    public async IAsyncEnumerable<VectorSearchResult<VectorStoreContextItem>> GetVectorSearchResults(string query,
+        string collection, int topN = 3,
+        double minThreshold = 0.0, StringFilter filter = StringFilter.None, string filterText = "")
+    {
+        // Construct an InMemory vector store.
+        var vectorStore =  new InMemoryVectorStore();
+        var collectionName = collection;
+
+        // Get and create collection if it doesn't exist.
+        _recordCollection ??= vectorStore.GetCollection<string, VectorStoreContextItem>(collectionName);
+        await _recordCollection.EnsureCollectionExistsAsync().ConfigureAwait(false);
+
+        Expression<Func<VectorStoreContextItem, bool>> expression = x => true; // Default to no filtering
+
+        // Create filter expression based on the specified filter type
+        if (filter != StringFilter.None && !string.IsNullOrEmpty(filterText))
+        {
+            expression = filter switch
+            {
+                StringFilter.Contains => x => x.Content != null && x.Content.Contains(filterText, StringComparison.OrdinalIgnoreCase),
+                StringFilter.NotContains => x => x.Content == null || !x.Content.Contains(filterText, StringComparison.OrdinalIgnoreCase),
+                StringFilter.StartsWith => x => x.Content != null && x.Content.StartsWith(filterText),
+                StringFilter.EndsWith => x => x.Content != null && x.Content.EndsWith(filterText),
+                StringFilter.Equals => x => x.Content != null && x.Content.Equals(filterText, StringComparison.OrdinalIgnoreCase),
+                _ => x => true // Default case (including None)
+            };
+        }
+
+        var vectorSerachResults = await _recordCollection.SearchAsync(
+            (await _textEmbeddingGeneration.GenerateAsync(query)).Vector,topN,
+            new VectorSearchOptions<VectorStoreContextItem>()
+            {
+                Filter = expression,
+                
+            }).ToListAsync();
+
+        Console.WriteLine("\n--- Text Search Results ---\n");
+        foreach (var result in vectorSerachResults)
+        {
+            Console.WriteLine($"Id:  {result.Record.id}");
+            Console.WriteLine($"Prompt: {result.Record.Content}");
+            Console.WriteLine($"Tag:  {result.Record.Tag}");
+            yield return result;
+        }
+    }
+
+    //private IVectorStore? _vectorStore;
+    private Database? _database;
+
+    private readonly IEmbeddingGenerator<string, Embedding<float>> _textEmbeddingGeneration = new OpenAIClient(TestConfiguration.OpenAI.ApiKey)
+        .GetEmbeddingClient(TestConfiguration.OpenAI.EmbeddingModelId)
+        .AsIEmbeddingGenerator();
+
+    public async IAsyncEnumerable<VectorStoreContextItem> CreateVectorStoreTextSearch(string collection,
+        List<VectorStoreContextItem> items, bool delete = false, bool useCosmos = false)
+    {
+        _database ??= await _cosmosClient.CreateDatabaseIfNotExistsAsync("sk-vectorsearch");
+        var avectorStore = new AzureCosmosDBNoSQLVectorStore(_database);
+        // Construct an InMemory vector store.
+        var vectorStore = new InMemoryVectorStore();
+        var collectionName = collection;
+        // Get and create collection if it doesn't exist.
+        var hasCollection = false;
+        await foreach (var item in vectorStore.ListCollectionNamesAsync())
+        {
+            if (item == collectionName)
+            {
+                hasCollection = true;
+                break;
+            }
+        }
+        _recordCollection ??= vectorStore.GetCollection<string, VectorStoreContextItem>(collectionName);
+        if (delete && hasCollection)
+        {
+            await _recordCollection.EnsureCollectionDeletedAsync();
+        }
+        await _recordCollection.EnsureCollectionExistsAsync().ConfigureAwait(false);
+        
+        var embeddingTasks = items.Select(entry => Task.Run(async () =>
+        {
+            entry.Embedding = (await _textEmbeddingGeneration.GenerateAsync(entry.Content!)).Vector;
+        }));
+        await Task.WhenAll(embeddingTasks);
+        foreach (var item in items)
+        {
+            await _recordCollection.UpsertAsync(item);
+            yield return item;
+        }
+    }
+
+    public async IAsyncEnumerable<VectorStoreContextItem> SaveBatchToMemory(string collection,
+        List<VectorStoreContextItem> items,
         MemoryStoreType storeType = MemoryStoreType.InMemory, bool delete = false,
         string model = "text-embedding-3-small")
     {
@@ -41,13 +144,13 @@ public partial class CoreKernelService
         }
 
 
-        foreach (var item in items.Where(x => !string.IsNullOrEmpty(x.Prompt)))
+        foreach (var item in items.Where(x => !string.IsNullOrEmpty(x.Content)))
         {
-            var generatedMemoryId = await SaveToNewKernelMemory(_playgroundTextMemory, item.Id, item.Prompt ?? "", collection);
-            yield return new ContextItem(item.Id) { MemoryId = generatedMemoryId, Prompt = item.Prompt };
+            var generatedMemoryId = await SaveToNewKernelMemory(_playgroundTextMemory, item.id, item.Content ?? "", collection);
+            yield return new VectorStoreContextItem() { MemoryId = generatedMemoryId, Content = item.Content };
         }
     }
-
+    
     public async Task<List<MemoryQueryResult>> SearchKernelMemory(string query, string collection, int topN = 3,
           double minThreshold = 0.0)
     {
@@ -84,7 +187,7 @@ public partial class CoreKernelService
         Console.WriteLine($"\n{items.Count} items found\n");
 
         var itemList = items;
-        var deduped = itemList.GroupBy(x => x.Metadata.Description).Select(grp => grp.First()).ToList();
+        var deduped = itemList.GroupBy(x => x.Metadata.Text).Select(grp => grp.First()).ToList();
         var dedupeCount = deduped.Count;
         var itemCount = itemList.Count;
         _loggerFactory.LogInformation("Deduped Items from Vector store: {dedupeCount} from total: {itemCount}",
@@ -131,7 +234,7 @@ public partial class CoreKernelService
             {
                 var lines = TextChunker.SplitMarkDownLines(documents, 200, StringHelpers.GetTokens);
                 var paragraphs =
-                    TextChunker.SplitMarkdownParagraphs(lines, 4000, 300, group.Key.ToString(), StringHelpers.GetTokens);
+                    TextChunker.SplitMarkdownParagraphs(lines, 15000, 300, group.Key.ToString(), StringHelpers.GetTokens);
                 var summarySoFar = "";
                 
                 foreach (var doc in paragraphs)
@@ -220,4 +323,14 @@ public partial class CoreKernelService
     }
     
     #endregion
+}
+
+public enum StringFilter
+{
+    None,
+    Contains,
+    NotContains,
+    StartsWith,
+    EndsWith,
+    Equals
 }

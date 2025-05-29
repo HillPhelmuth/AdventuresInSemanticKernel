@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.Agents.Chat;
@@ -12,6 +13,7 @@ using SkPluginLibrary.Agents.Extensions;
 using SkPluginLibrary.Agents.Models.Events;
 using Microsoft.SemanticKernel;
 using SkPluginLibrary.Agents.Models;
+using SkPluginLibrary.Models.Hooks;
 
 
 namespace SkPluginLibrary.Agents.SkAgents;
@@ -124,7 +126,9 @@ public class ChatCompletionGroup
         // Define the agents
         terminationAgents ??= _activeAgents.Any(x => x is UserProxySkAgent) ? new[] { _activeAgents.First(x => x is UserProxySkAgent) } : _activeAgents;
         // Create a chat for agent interaction.
-        
+        var filter = new AutoInvokeFilter();
+        filter.FunctionInvoked += HandleFunctionInvoked;
+        filter.FunctionInvoking += HandleFunctionInvoking;
         var chat =
             _agentGroupChat;
 
@@ -133,17 +137,65 @@ public class ChatCompletionGroup
         chat.AddChatMessage(new ChatMessageContent(AuthorRole.User, input));
 
         var currentAgent = "";
+        var outputNumber = 0;
         await foreach (var content in chat.InvokeStreamingAsync(cancellationToken))
         {
             var isCurrent = content.AuthorName == currentAgent;
-            var output = isCurrent ? content.Content : $"<br/>**{content.Role} - {content.AuthorName ?? "*"}:**\n {content.Content}";
+            if (!isCurrent)
+                outputNumber++;
+            var output = isCurrent ? content.Content : $"<br/>{outputNumber}. **{content.Role} - {content.AuthorName ?? "*"}:**\n {content.Content}";
             currentAgent = content.AuthorName ?? "";
             if (string.IsNullOrEmpty(output)) continue;
+            
             WriteLine(output);
         }
 
         WriteLine($"\n_IS COMPLETE:_ {chat.IsComplete}");
         WriteLine("[DONE]");
+    }
+
+    private void HandleFunctionInvoking(object? sender, AutoFunctionInvocationContext e)
+    {
+        WriteLine(InvokingExpando(JsonSerializer.Serialize(e.Arguments), e.Function.Name));
+    }
+
+    private void HandleFunctionInvoked(object? sender, AutoFunctionInvocationContext e)
+    {
+        WriteLine(ResultsExpando(e.Result.ToString(), e.Function.Name));
+    }
+    private static string InvokingExpando(string result, string name)
+    {
+        var resultsExpando = $"""
+
+                              <details>
+                                <summary>{name} Called</summary>
+                                
+                                <h5>Arguments</h5>
+                                <p>
+                                {result}
+                                </p>
+                              
+                                <br/>
+                              </details>
+                              """;
+        return resultsExpando;
+    }
+    private static string ResultsExpando(string result, string name)
+    {
+        var resultsExpando = $"""
+
+                              <details>
+                                <summary>{name} Function Results</summary>
+                                
+                                <h5>Results</h5>
+                                <p>
+                                {result}
+                                </p>
+                              
+                                <br/>
+                              </details>
+                              """;
+        return resultsExpando;
     }
     protected Kernel CreateKernelWithChatCompletion()
     {

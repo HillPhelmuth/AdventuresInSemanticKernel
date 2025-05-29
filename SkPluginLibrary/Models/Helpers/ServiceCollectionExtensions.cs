@@ -21,7 +21,7 @@ namespace SkPluginLibrary.Models.Helpers
             services.AddScoped<CrawlService>();
             services.AddScoped<BingWebSearchService>();
             services.AddSingleton<ScriptService>();
-            services.AddScoped<CompilerService>();
+            services.AddSingleton<CompilerService>();
             services.AddScoped<HdbscanService>();
             services.AddTransient<AdventureStoryAgents>();
             services.AddTransient<AssistantAgentService>();

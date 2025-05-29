@@ -1,6 +1,7 @@
 ﻿using Azure.AI.OpenAI;
 using Markdig;
 using Microsoft.AspNetCore.Components;
+using Microsoft.SemanticKernel.ChatCompletion;
 using OpenAI.Chat;
 using SkPluginLibrary.Abstractions;
 using SkPluginLibrary.Models.Helpers;
@@ -16,6 +17,7 @@ namespace BlazorWithSematicKernel.Pages
         private ITokenization LogProbService { get; set; } = default!;
         
         private List<ChatTokenLogProbabilityDetails> _tokens = [];
+        private List<TokenString> _tokenStrings = [];
         private string _output = string.Empty;
         private string _query = string.Empty;
         private bool _isBusy;
@@ -29,17 +31,25 @@ namespace BlazorWithSematicKernel.Pages
             public float Tempurature { get; set; } = 1.0f;
             public float TopP { get; set; } = 1.0f;
         }
-        private List<string> _models = [AIModel.Gpt4OMini.GetOpenAIModelName(), AIModel.Gpt4OCurrent.GetOpenAIModelName(), AIModel.Gpt35Turbo.GetOpenAIModelName(), AIModel.Gpt4OChatGptLatest.GetOpenAIModelName()];
+        private List<string> _models = [AIModel.Gpt41Mini.GetOpenAIModelName(), AIModel.Gpt4OCurrent.GetOpenAIModelName(), AIModel.Gpt4OLatest.GetOpenAIModelName(),AIModel.Gpt35Turbo.GetOpenAIModelName(), AIModel.Gpt4OChatGptLatest.GetOpenAIModelName()];
         private LogProbInputForm _logProbInputForm = new();
         private async void SendQuery(LogProbInputForm logProbInputForm)
         {
             _isBusy = true;
             StateHasChanged();
             await Task.Delay(1);
-            ChatCompletion? choice = await LogProbService.GetLogProbs(logProbInputForm.UserInput!,logProbInputForm.Tempurature,logProbInputForm.TopP, logProbInputForm.SystemPrompt, logProbInputForm.Model);
-            
-            _output = choice?.ToString() ?? "";
-            _tokens = choice?.ContentTokenLogProbabilities.ToList() ?? [];
+            //ChatCompletion? choice = await LogProbService.GetLogProbs(logProbInputForm.UserInput!,logProbInputForm.Tempurature,logProbInputForm.TopP, logProbInputForm.SystemPrompt, logProbInputForm.Model);
+            var history = new ChatHistory();
+            history.AddUserMessage(logProbInputForm.UserInput!);
+            List<TokenString> updatedTokens = [];
+            await foreach (var token in LogProbService.GetStreamingLogProbs(history, logProbInputForm.Model.GetAIModelFromModelName(), 50, logProbInputForm.Tempurature, logProbInputForm.TopP))
+            {
+                updatedTokens.Add(token);
+                _tokenStrings = updatedTokens;
+                StateHasChanged();
+            }
+            _output = string.Join("", _tokenStrings.Select(x => x.StringValue));
+            //_tokens = choice?.ContentTokenLogProbabilities.ToList() ?? [];
             _isBusy = false;
             StateHasChanged();
         }

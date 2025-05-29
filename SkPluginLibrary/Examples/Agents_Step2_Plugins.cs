@@ -3,6 +3,7 @@
 using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.ChatCompletion;
 using static SkPluginLibrary.Examples.SamplesHelper;
+#pragma warning disable SKEXP0110
 
 namespace SkPluginLibrary.Examples;
 

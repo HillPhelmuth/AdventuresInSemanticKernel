@@ -30,7 +30,7 @@ public partial class AutoSequentialChatPage
     private bool _isUserInputRequested;
     private ChatView? _chatView;
     private Kernel? _kernel;
-    private AutoSequentialChat? _groupChat;
+    private DynamicAgentChatService? _groupChat;
     private ChatContext _chatContext = new();
     private CreateAgentForm? _create;
     private ChatAgent? _requestingAgent;
@@ -70,7 +70,9 @@ public partial class AutoSequentialChatPage
         File.WriteAllText("AutoSeqAgents.json", JsonSerializer.Serialize(_agentProxies, JsonSerializerOptions));
 #endif
         Console.WriteLine("AutoSequentialChat Started");
-        _groupChat = new AutoSequentialChat(selectAgentForm.Agents, _chatContext, CoreKernelService.CreateKernel(AIModel.Gpt4OCurrent));
+
+        _groupChat = new DynamicAgentChatService(selectAgentForm.Agents, _chatContext, CoreKernelService.CreateKernel(AIModel.Gpt4OCurrent));
+
         _step = 1;
         StateHasChanged();
         _step = 2;
@@ -86,13 +88,14 @@ public partial class AutoSequentialChatPage
             var model = agent.GptModel switch
             {
                 "Gpt4" => AIModel.Gpt4OCurrent,
+                "Gpt35" => AIModel.Gpt41Mini,
                 "Gpt35" => AIModel.Gpt4OMini,
                 "gemini-1.0-pro" => AIModel.Gemini10,
                 "gemini-1.5-pro-latest" => AIModel.Gemini15,
                 _ => AIModel.Gpt4Turbo
             };
             Kernel kernel;
-            if (model is not (AIModel.Gpt4OMini or AIModel.Gpt4Turbo or AIModel.Gpt4OCurrent))
+            if (model is not (AIModel.Gpt41Mini or AIModel.Gpt4Turbo or AIModel.Gpt4OCurrent))
             {
                 kernel = CoreKernelService.CreateKernelGoogle();
             }

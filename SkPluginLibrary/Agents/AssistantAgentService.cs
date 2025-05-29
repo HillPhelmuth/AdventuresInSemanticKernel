@@ -121,7 +121,7 @@ public class AssistantAgentService : IAsyncDisposable
     private static async Task<IAgent> GenerateAgent(string name, string description, string? instructions = null, List<KernelPlugin>? plugins = null)
     {
         var agentBuilder = new AgentBuilder()
-            .WithOpenAIChatCompletion(TestConfiguration.OpenAI.Gpt35ModelId, TestConfiguration.OpenAI.ApiKey)
+            .WithOpenAIChatCompletion(TestConfiguration.OpenAI.Gpt4MiniModelId, TestConfiguration.OpenAI.ApiKey)
             .WithName(name)
             .WithDescription(description)
             .WithInstructions(instructions ?? "");

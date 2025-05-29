@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using Microsoft.SemanticKernel;
+using System.Text.Json;
 
 namespace SkPluginLibrary.Models.Helpers
 {
@@ -55,7 +56,28 @@ namespace SkPluginLibrary.Models.Helpers
             var type = obj.GetType();
             return type.GetInterfaces().Any(iface => iface.IsGenericType && iface.GetGenericTypeDefinition() == typeof(IAsyncEnumerable<>));
         }
-       
+
+        public static KernelPlugin CreatePluginFromPromptDirectoryYaml(string pluginName)
+        {
+            var files = Directory.GetFiles(Path.Combine(RepoFiles.PathToYamlPlugins, pluginName), "*.yaml");
+            var kFunctions = new List<KernelFunction>();
+            foreach (var file in files)
+            {
+                var yamlText = File.ReadAllText(file);
+                try
+                {
+                    var func = KernelFunctionYaml.FromPromptYaml(yamlText);
+                    kFunctions.Add(func);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"ERROR DESERIALIZING YAML\n\nFunction: {Path.GetFileName(file)}\n\n{ex}");
+                }
+            }
+            //var functions = Directory.GetFiles(Path.Combine(RepoFiles.PathToYamlPlugins, pluginName), "*.yaml").Select(functionYml => kernel.CreateFunctionFromPromptYaml(File.ReadAllText(functionYml))).ToList();
+            var plugin = KernelPluginFactory.CreateFromFunctions(pluginName, kFunctions);
+            return plugin;
+        }
         public static KernelPlugin ImportPluginFromPromptDirectoryYaml(this Kernel kernel, string pluginName)
         {
             var files = Directory.GetFiles(Path.Combine(RepoFiles.PathToYamlPlugins, pluginName), "*.yaml");

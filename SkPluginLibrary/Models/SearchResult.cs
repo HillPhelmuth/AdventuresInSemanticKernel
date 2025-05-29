@@ -12,15 +12,14 @@ namespace SkPluginLibrary.Models
 
         [JsonPropertyName("webPages")]
         public WebPages? WebPages { get; set; }
-        public List<BingSearchResult> BingSearchResults => WebPages?.PageInfo?.Select(x => new BingSearchResult(x.Url, x.Snippet, x.DisplayUrl, x.Name) { WebSearchUrl = WebPages?.WebSearchUrl }).ToList() ?? new List<BingSearchResult>();
+        public List<BingSearchResult> BingSearchResults => WebPages?.PageInfo?.Select(x => new BingSearchResult(x.Url, x.Snippet, x.Name) { WebSearchUrl = WebPages?.WebSearchUrl, DateLastCrawled = x.DateLastCrawled}).ToList() ?? [];
     }
     public class BingSearchResult
     {
-        public BingSearchResult(string url, string snippet, string displayUrl, string name)
+        public BingSearchResult(string url, string snippet, string name)
         {
             Url = url;
             Snippet = snippet;
-            DisplayUrl = displayUrl;
             Name = name;
         }
 
@@ -29,9 +28,11 @@ namespace SkPluginLibrary.Models
         public string DisplayUrl { get; set; }
         public string Name { get; set; }
         public string? WebSearchUrl { get; set; }
+        public DateTimeOffset DateLastCrawled { get; set; }
+        public List<BingSearchResult>? DeepLinks { get; set; }
         public override string ToString()
         {
-            return $"Name: {Name}\n Url: {Url}\n Snippet: {Snippet}";
+            return $"Name: {Name}\n Url: {Url}\n Snippet: {Snippet}\n Date last crawled: {DateLastCrawled:yyyy-MM-dd}\n----------------------------\nDeep Links:\n----------------------------\n{string.Join("\n", DeepLinks?.Select(x => x.ToString()) ?? [])}";
         }
     }
     public class QueryContext

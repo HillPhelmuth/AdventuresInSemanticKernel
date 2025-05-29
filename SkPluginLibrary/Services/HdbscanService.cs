@@ -45,34 +45,54 @@ public class HdbscanService(ILoggerFactory loggerFactory)
         return ClusterAsync(memories, minPoints, minCluster);
 
     }
-    public List<MemoryResult> ClusterAsync(IEnumerable<MemoryQueryResult> memories, int minPoints = 3, int minCluster = 3, DistanceFunction distanceFunction = DistanceFunction.CosineSimilarity)
+    public List<MemoryResult> ClusterAsync(IEnumerable<MemoryQueryResult> memories, int minPoints = 8, int minCluster = 5, DistanceFunction distanceFunction = DistanceFunction.CosineSimilarity)
     {
         var memCount = memories.Count();
         _logger.LogInformation("Starting Hdbscan of {memCount} items.\nMinPoints: {minPoints}\nMinClusterSize: {minCluster}", memCount, minPoints, minCluster);
         var sw = new Stopwatch();
         sw.Start();
         var data = memories.Select(x => x.Embedding.Value.ToArray().Select(y => (double)y).ToArray()).ToArray();
-
+        //var runResult = HdbscanRunner.Run(data, minPoints, minCluster, GetDistanceFunction(distanceFunction), 4);
         var result = HdbscanRunner.Run(new HdbscanParameters<double[]>
         {
             DataSet = data,
-            MinPoints = minPoints,
+            MinPoints = minPoints, // What does this mean?
             MinClusterSize = minCluster,
             DistanceFunction = GetDistanceFunction(distanceFunction),
             MaxDegreeOfParallelism = 4
-
         });
+
         sw.Stop();
         var scantime = sw.Elapsed.TotalSeconds;
         _logger.LogInformation("Completed Hdbscan in {scantime}s", scantime);
 
         var labels = result.Labels;
         var results = new List<MemoryResult>();
+        var distanceCalculator = GetDistanceFunction(distanceFunction);
+
         for (var i = 0; i < memories.Count(); i++)
         {
             if (labels[i] == -1) continue;
             var memoryRecordMetadata = memories.ElementAt(i).Metadata;
-            results.Add(new MemoryResult(memoryRecordMetadata.Description, memoryRecordMetadata.Text, labels[i]) { MetadataId = memoryRecordMetadata.Id});
+            var embedding = data[i];
+            var node = new MemoryResult(memoryRecordMetadata.Description, memoryRecordMetadata.Text, labels[i])
+            {
+                MetadataId = memoryRecordMetadata.Id,
+                Embedding = embedding
+            };
+
+            // Calculate relationships with other nodes in the same cluster
+            for (var j = 0; j < memories.Count(); j++)
+            {
+                if (i == j || labels[j] == -1 || labels[i] != labels[j]) continue;
+                var similarity = 1 - distanceCalculator.ComputeDistance(i,j,embedding,data[j]);
+                if (similarity > 0.7) // Only store significant relationships
+                {
+                    node.Relations[memories.ElementAt(j).Metadata.Id] = similarity;
+                }
+            }
+
+            results.Add(node);
         }
 
         return results;

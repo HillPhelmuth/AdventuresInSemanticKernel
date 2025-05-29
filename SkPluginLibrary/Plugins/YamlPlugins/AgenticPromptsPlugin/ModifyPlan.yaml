@@ -1,0 +1,133 @@
+name: ModifyPlan
+description: Modify or extend an existing plan to better accomplish the provided task, based on user feedback or identified insufficiencies.
+execution_settings:
+  default:
+    temperature: 0.5
+    top_p: 1.0
+input_variables:
+- name: task
+  description: Task or objective to be accomplished.
+  default: ''
+- name: availableTools
+  description: Tools available for the task.
+  default: ''
+- name: context
+  description: Context required to fully understand the task.
+  default: ''
+- name: constraints
+  description: Constraints for the task.
+  default: ''
+- name: currentPlan
+  description: The current plan to be modified.
+  default: ''
+- name: requestedModifications
+  description: The required or desired modifications to the plan.
+  default: ''
+template: |
+  Modify the existing plan to better address the user's task, context, and constraints. Carefully review the **Current Plan** and the **Requested Modifications**. Revise, extend, or restructure the plan as needed to ensure it is actionable, complete, and meets the user's requirements. Each step must include a clear objective, actions, and a verifiable expected output. Output should be in JSON format, with each step clearly defined.
+
+  # Steps
+
+  1. **Analyze the Current Plan:**
+     - Review the current plan and identify areas that are insufficient, incomplete, or require modification.
+     - Consider the requested modifications and any new requirements.
+
+  2. **Gather Additional Information (if needed):**
+     - Identify any missing context, tools, or constraints that should be incorporated.
+     - Specify methods for collecting or verifying this information.
+
+  3. **Revise or Extend the Plan:**
+     - Update, add, or remove steps as necessary to address the task and requested modifications.
+     - Ensure each step logically follows from the previous one and is actionable.
+
+  4. **Set Verifiable Output Expectations:**
+     - For each step, describe what successful completion should look like.
+     - Include criteria or metrics that define success.
+
+  5. **Compile the Modified Plan:**
+     - Present a clear, concise, and numbered list of steps leading to task completion.
+     - Ensure the plan is easy to understand and execute.
+
+  # Output Format
+
+  A structured list, with each item consisting of:
+  - **Step Number**: Sequential identifier (e.g., Step 1, Step 2).
+  - **Objective**: The goal of the step.
+  - **Action**: The task to be performed.
+  - **Output Expectation**: Criterion for success.
+
+  # Example
+
+  **Input:**
+  - Current Plan: Steps 1-3 for baking a cake, but missing decoration and serving.
+  - Requested Modifications: Add steps for decorating and serving the cake.
+
+  **Output:**
+  1. **Objective:** Gather Ingredients
+     - **Actions:** Collect all necessary ingredients listed in the recipe.
+     - **Output Expectation:** All ingredients measured and ready.
+
+  2. **Objective:** Preheat Oven
+     - **Actions:** Set oven to 350°F (175°C).
+     - **Output Expectation:** Oven reaches desired temperature.
+
+  3. **Objective:** Mix Ingredients
+     - **Actions:** Combine dry and wet ingredients as instructed.
+     - **Output Expectation:** Batter is smooth and properly mixed.
+
+  4. **Objective:** Bake Cake
+     - **Actions:** Pour batter into the baking pan and place in oven.
+     - **Output Expectation:** Bake for the specified time until cooked through.
+
+  5. **Objective:** Decorate Cake
+     - **Actions:** Apply frosting and decorations as desired.
+     - **Output Expectation:** Cake is decorated and visually appealing.
+
+  6. **Objective:** Serve Cake
+     - **Actions:** Slice and serve the cake.
+     - **Output Expectation:** Cake is served to guests.
+
+  # Notes
+
+  - Ensure each step includes an actionable task with a verifiable output.
+  - Revise the plan as needed based on any additional user requirements, context, or constraints.
+
+  # Inputs
+
+  ## Task
+
+  {{ $task }}
+
+  ## Available Tools
+
+  {{ $availableTools }}
+
+  ## Context
+
+  {{ $context }}
+
+  ## Constraints
+
+  {{ $constraints }}
+
+  ## Current Plan
+
+  {{ $currentPlan }}
+
+  ## Requested Modifications
+
+  {{ $requestedModifications }}
+
+  # JSON Output Format
+  ```
+  {
+   "Steps": [
+    {
+    "Identifier": "",
+    "Objective": "",
+    "Actions": "",
+    "ExpectedOutput": ""
+    }, 
+   ]
+  }
+  ```

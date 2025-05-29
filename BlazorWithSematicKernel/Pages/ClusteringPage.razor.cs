@@ -16,6 +16,8 @@ namespace BlazorWithSematicKernel.Pages
         private IMemoryConnectors CoreMemoryKernelService { get; set; } = default!;
         [Inject]
         private NotificationService NotificationService { get; set; } = default!;
+        [Inject]
+        private DialogService DialogService { get; set; } = default!;
         private List<MemoryResult> _memoryResults = new();
         private string _outputText = "";
         private string _busyText = "Clustering...";
@@ -106,7 +108,9 @@ namespace BlazorWithSematicKernel.Pages
         private void ShowText(MemoryResult result)
         {
             _outputText =
-                $"Cluster: {result.ClusterTitle}\nArticle: {result.Title}\n------------------------------------\n{result.Text}\n------------------------------------\n{result.ClusterSummary}";
+                $"Cluster: {result.ClusterTitle}\nArticle: {result.Title}\n------------------------------------\n{result.Text}\n------------------------------------\n";
+            DialogService.Open<ShowSkPrompt>("Cluster Article Information", new() { ["Title"] = result.Title, ["Prompt"] = result.Text});
+
             StateHasChanged();
         }
 

@@ -85,6 +85,7 @@ public partial class AgentBuilder
         public string Description { get; set; } = "";
         public string Instructions { get; set; } = "";
         public IEnumerable<PluginData> Plugins { get; set; } = [];
+        public IEnumerable<KernelFunction> ExcludedFunctions { get; set; } = [];
         public bool IsPrimary { get; set; }
         public string? Model { get; set; } = "Gpt4";
         public bool IsUserProxy { get; set; }
@@ -127,6 +128,7 @@ public partial class AgentBuilder
             Instructions = agentForm.Instructions,
             Name = agentForm.Name,
             Plugins = agentForm.Plugins.Select(x => x.KernelPlugin).ToList(),
+            ExcludedFunctions = agentForm.ExcludedFunctions.ToList(),
             IsPrimary = agentForm.IsPrimary,
             IsUserProxy = agentForm.IsUserProxy,
             GptModel = agentForm.Model,
