@@ -9,7 +9,7 @@
             <RadzenColumn Size="9"><RadzenText TextStyle="TextStyle.DisplayH6" TextAlign="TextAlign.Center" Text="@PageTitle" /></RadzenColumn>
             <RadzenColumn Size="1">
                 <RadzenButton Click="ShowChat" Text="Chat With SK Docs" Size="ButtonSize.ExtraSmall" Icon="chat"></RadzenButton>
-                <RadzenButton Click="ShowCode" Size="ButtonSize.ExtraSmall" Icon="code"></RadzenButton>
+                @* <RadzenButton Click="ShowCode" Size="ButtonSize.ExtraSmall" Icon="code"></RadzenButton> *@
             </RadzenColumn>
             <RadzenColumn Size="1">
                 <RadzenLink Style="width:32px; height:32px; margin-left:auto; margin-right:auto; display:block" Path="https://github.com/HillPhelmuth/AdventuresInSemanticKernel" Target="_blank">
@@ -31,7 +31,7 @@
                 <RadzenPanelMenuItem Text="Wikipedia Agent" MouseEnter="@((args) => ShowTooltip(args, "Chat with the web using <em>Wikipedia</em>"))" Icon="html" Path="wikiChat"></RadzenPanelMenuItem>
                 <RadzenPanelMenuItem Text="C# REPL Agent" MouseEnter="@((args) => ShowTooltip(args, "Use natural language prompts to generate, compile and execute c# code"))" Icon="code" Path="repl"></RadzenPanelMenuItem>
                 @* <RadzenPanelMenuItem Text="Dnd Story Agent" MouseEnter="@((args) => ShowTooltip(args, "Example an Agent that uses the FunctionCalling Stepwise Planner. It has access to the D&D5e Api plugin and multiple semantic plugins.<br/> It uses these tools to create and execute a plan to generate a short story."))" Icon="casino" Path="dnd"></RadzenPanelMenuItem> *@
-                <RadzenPanelMenuItem Text="Interactive Adventure Agent" MouseEnter="@((args) => ShowTooltip(args, "Example of using OpenAI Assistants as characters in an interactive Sci-fi adventure story"))" Path="agentRunner" Icon="support_agent"></RadzenPanelMenuItem>
+               @*  <RadzenPanelMenuItem Text="Interactive Adventure Agent" MouseEnter="@((args) => ShowTooltip(args, "Example of using OpenAI Assistants as characters in an interactive Sci-fi adventure story"))" Path="agentRunner" Icon="support_agent"></RadzenPanelMenuItem> *@
                 <RadzenPanelMenuItem Text="Agent Group Chat" MouseEnter="@((args) => ShowTooltip(args, "Create a multi-agent group-chat (custom agent orchestration)"))" Path="groupChat" Icon="groups"></RadzenPanelMenuItem>
                 <RadzenPanelMenuItem Text="Dynamic Agent Chat" MouseEnter="@((args) => ShowTooltip(args, "Create a multi-agent dynamic chat (custom agent orchestration)"))" Path="autoSequentialChatPage" Icon="groups_2"></RadzenPanelMenuItem>
 

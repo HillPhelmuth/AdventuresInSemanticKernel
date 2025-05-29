@@ -11,7 +11,6 @@ using BlazorWithSematicKernel;
 using Microsoft.Azure.Cosmos;
 using System.Text.Json;
 using Microsoft.Build.Locator;
-using Microsoft.CodeAnalysis.MSBuild;
 
 var builder = WebApplication.CreateBuilder(args);
 IConfiguration configuration = builder.Configuration;
@@ -67,7 +66,7 @@ services.AddCascadingAuthenticationState();
 var cosmosClient = new CosmosClient(configuration["Cosmos:ConnectionString"], new CosmosClientOptions() { UseSystemTextJsonSerializerWithOptions = JsonSerializerOptions.Default  });
 services.AddSingleton(cosmosClient);
 var app = builder.Build();
-//MSBuildLocator.RegisterDefaults();
+
 
 
 // Configure the HTTP request pipeline.

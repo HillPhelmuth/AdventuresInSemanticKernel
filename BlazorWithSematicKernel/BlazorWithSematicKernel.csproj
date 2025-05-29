@@ -28,6 +28,7 @@
 	  <Compile Remove="Pages\AgentBuilderPage.razor.cs" />
 	  <Compile Remove="Pages\Error.cshtml.cs" />
 	  <Compile Remove="Pages\PromptEngineerAgent.razor.cs" />
+	  <Compile Remove="Pages\SciFiAgentRunner.razor.cs" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -37,6 +38,7 @@
 	  <Content Remove="Pages\AgentBuilderPage.razor" />
 	  <Content Remove="Pages\Error.cshtml" />
 	  <Content Remove="Pages\PromptEngineerAgent.razor" />
+	  <Content Remove="Pages\SciFiAgentRunner.razor" />
 	</ItemGroup>
 
 	
