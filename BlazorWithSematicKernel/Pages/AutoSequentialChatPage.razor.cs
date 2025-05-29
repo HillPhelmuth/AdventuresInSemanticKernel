@@ -89,7 +89,7 @@ public partial class AutoSequentialChatPage
             {
                 "Gpt4" => AIModel.Gpt4OCurrent,
                 "Gpt35" => AIModel.Gpt41Mini,
-                "Gpt35" => AIModel.Gpt4OMini,
+               
                 "gemini-1.0-pro" => AIModel.Gemini10,
                 "gemini-1.5-pro-latest" => AIModel.Gemini15,
                 _ => AIModel.Gpt4Turbo
@@ -120,7 +120,7 @@ public partial class AutoSequentialChatPage
 
     protected override Task OnInitializedAsync()
     {
-        var aiModel = AIModel.Gpt4OCurrent;
+        var aiModel = AIModel.Gpt41;
         _kernel = CoreKernelService.CreateKernel(aiModel);
         _agentsAsPlugins = FileHelper.ExtractFromAssembly<List<AgentProxy>>("agentsExample.json");
         return base.OnInitializedAsync();
@@ -163,25 +163,30 @@ public partial class AutoSequentialChatPage
     private string? _summary;
     private async void HandleUserInput(UserInputRequest userInputRequest)
     {
-
-        _isBusy = true;
-        StateHasChanged();
-        await Task.Delay(1);
-        var input = userInputRequest.ChatInput!;
-        _chatView!.ChatState.AddUserMessage(input);
-
-        var history = _chatView!.ChatState.ChatHistory;
-        await foreach (var message in _groupChat!.ExecuteChat(input, _cancellationTokenSource.Token))
+        try
         {
-            if (message == "[DONE]")
-            {
-                _isBusy = false;
-                StateHasChanged();
-                break;
-            }
-            _chatView.ChatState.UpsertAssistantMessage(message);
-        }
+            _isBusy = true;
+            StateHasChanged();
+            await Task.Delay(1);
+            var input = userInputRequest.ChatInput!;
+            _chatView!.ChatState.AddUserMessage(input);
 
+            var history = _chatView!.ChatState.ChatHistory;
+            await foreach (var message in _groupChat!.ExecuteChat(input, _cancellationTokenSource.Token))
+            {
+                if (message == "[DONE]")
+                {
+                    _isBusy = false;
+                    StateHasChanged();
+                    break;
+                }
+                _chatView.ChatState.UpsertAssistantMessage(message);
+            }
+        }
+        catch (Exception e)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error!", $"{e}");
+        }
     }
     //private void HandleInteractiveAgentResponse(object? sender, AgentResponseArgs args)
     //{
