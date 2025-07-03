@@ -45,6 +45,7 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly CosmosClient _cosmosClient;
     private static string _appInsightConnectionString;
+    private readonly ILogger<CoreKernelService> _logger;
     public class CollectionName
     {
         public const string ClusterCollection = "clusterCollection";
@@ -66,7 +67,7 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
         _httpClientFactory = httpClientFactory;
         _cosmosClient = cosmosClient;
         _askUserService = modalService;
-
+        _logger = loggerFactory.CreateLogger<CoreKernelService>();
         _memoryStore = new VolatileMemoryStore();
         CreateKernel();
         _semanticTextMemory = new MemoryBuilder()

@@ -19,6 +19,7 @@ using Microsoft.SemanticKernel.Plugins.Core.CodeInterpreter;
 using Azure.Core;
 using Azure.Identity;
 using Google.Apis.Auth.OAuth2;
+using Microsoft.Extensions.Logging;
 using SkPluginLibrary.Plugins.NativePlugins;
 using KernelPluginExtensions = SkPluginLibrary.Models.Helpers.KernelPluginExtensions;
 
@@ -81,48 +82,62 @@ public partial class CoreKernelService
         _customNativePlugins ??= [];
         //var result = new Dictionary<string, object>();
         var kernel = CreateKernel();
-        var agenticPlanningPlugin = new AgenticPlanningPlugin(_loggerFactory);
-        _customNativePlugins.TryAdd(nameof(AgenticPlanningPlugin), agenticPlanningPlugin);
-        var novelWriterPlugin = new NovelWriterPlugin();
-        _customNativePlugins.TryAdd(nameof(NovelWriterPlugin), novelWriterPlugin);
-        var csharpPlugin = new ReplCsharpPlugin(kernel);
-        _customNativePlugins.TryAdd(nameof(ReplCsharpPlugin), csharpPlugin);
-        var csharpExecutePlugin = new CodeExecutorPlugin();
-        _customNativePlugins.TryAdd(nameof(CodeExecutorPlugin), csharpExecutePlugin);
-        //var webToMarkdownPlugin = new WebToMarkdownPlugin();
-        //_customNativePlugins.TryAdd(nameof(WebToMarkdownPlugin), webToMarkdownPlugin);
-        var webCrawlPlugin = new WebCrawlPlugin(_bingSearchService);
-        _customNativePlugins.TryAdd(nameof(WebCrawlPlugin), webCrawlPlugin);
-        var webReseachPlugin = new WebResearchPlugin(_bingSearchService, _configuration, _loggerFactory);
-        _customNativePlugins.TryAdd(nameof(WebResearchPlugin), webReseachPlugin);
-        var arxivPlugin = new ArxivPlugin(ConsoleLogger.LoggerFactory);
-        _customNativePlugins.TryAdd(nameof(ArxivPlugin), arxivPlugin);
-        var arxivResearchPlugin = new ArxivResearchPlugin(_configuration, _loggerFactory);
-        _customNativePlugins.TryAdd(nameof(ArxivResearchPlugin), arxivResearchPlugin);
-        var dndPlugin = new DndPlugin();
-        _customNativePlugins.TryAdd(nameof(DndPlugin), dndPlugin);
-        var jsonPlugin = new HandleJsonPlugin();
-        _customNativePlugins.TryAdd(nameof(HandleJsonPlugin), jsonPlugin);
-        var promptExpertPlugin = new PromptExpertPlugin(_configuration);
-        _customNativePlugins.TryAdd(nameof(PromptExpertPlugin), promptExpertPlugin);
-        var wikiPlugin = new WikiChatPlugin();
-        _customNativePlugins.TryAdd(nameof(WikiChatPlugin), wikiPlugin);
-        var youtubePlugin = new YouTubePlugin(_configuration["YouTubeSearch:ApiKey"]!);
-        _customNativePlugins.TryAdd(nameof(YouTubePlugin), youtubePlugin);
-        var youtubeResearchPlugin = new YouTubeResearchPlugin(_configuration, _loggerFactory);
-        _customNativePlugins.TryAdd(nameof(YouTubeResearchPlugin), youtubeResearchPlugin);
-        var askUserPlugin = new AskUserPlugin(_askUserService);
-        _customNativePlugins.TryAdd(nameof(AskUserPlugin), askUserPlugin);
-        var blazorChatPlugin = new BlazorMemoryPlugin();
-        _customNativePlugins.TryAdd(nameof(BlazorMemoryPlugin), blazorChatPlugin);
-        var chatWithSkPlugin = new KernelChatPlugin();
-        _customNativePlugins.TryAdd(nameof(KernelChatPlugin), chatWithSkPlugin);
-        var langchainChatPlugin = new LangchainChatPlugin();
-        _customNativePlugins.TryAdd(nameof(LangchainChatPlugin), langchainChatPlugin);
-        var weatherPlugin = new WeatherPlugin();
-        _customNativePlugins.TryAdd(nameof(WeatherPlugin), weatherPlugin);
-        
-        
+        try
+        {
+            var agenticPlanningPlugin = new AgenticPlanningPlugin(_loggerFactory);
+            _customNativePlugins.TryAdd(nameof(AgenticPlanningPlugin), agenticPlanningPlugin);
+            var novelWriterPlugin = new NovelWriterPlugin();
+            _customNativePlugins.TryAdd(nameof(NovelWriterPlugin), novelWriterPlugin);
+            try
+            {
+                var csharpPlugin = new ReplCsharpPlugin(kernel);
+                _customNativePlugins.TryAdd(nameof(ReplCsharpPlugin), csharpPlugin);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading C# repl plugin");
+            }
+
+            var csharpExecutePlugin = new CodeExecutorPlugin();
+            _customNativePlugins.TryAdd(nameof(CodeExecutorPlugin), csharpExecutePlugin);
+            //var webToMarkdownPlugin = new WebToMarkdownPlugin();
+            //_customNativePlugins.TryAdd(nameof(WebToMarkdownPlugin), webToMarkdownPlugin);
+            var webCrawlPlugin = new WebCrawlPlugin(_bingSearchService);
+            _customNativePlugins.TryAdd(nameof(WebCrawlPlugin), webCrawlPlugin);
+            var webReseachPlugin = new WebResearchPlugin(_bingSearchService, _configuration, _loggerFactory);
+            _customNativePlugins.TryAdd(nameof(WebResearchPlugin), webReseachPlugin);
+            var arxivPlugin = new ArxivPlugin(ConsoleLogger.LoggerFactory);
+            _customNativePlugins.TryAdd(nameof(ArxivPlugin), arxivPlugin);
+            var arxivResearchPlugin = new ArxivResearchPlugin(_configuration, _loggerFactory);
+            _customNativePlugins.TryAdd(nameof(ArxivResearchPlugin), arxivResearchPlugin);
+            var dndPlugin = new DndPlugin();
+            _customNativePlugins.TryAdd(nameof(DndPlugin), dndPlugin);
+            var jsonPlugin = new HandleJsonPlugin();
+            _customNativePlugins.TryAdd(nameof(HandleJsonPlugin), jsonPlugin);
+            var promptExpertPlugin = new PromptExpertPlugin(_configuration);
+            _customNativePlugins.TryAdd(nameof(PromptExpertPlugin), promptExpertPlugin);
+            var wikiPlugin = new WikiChatPlugin();
+            _customNativePlugins.TryAdd(nameof(WikiChatPlugin), wikiPlugin);
+            var youtubePlugin = new YouTubePlugin(_configuration["YouTubeSearch:ApiKey"]!);
+            _customNativePlugins.TryAdd(nameof(YouTubePlugin), youtubePlugin);
+            var youtubeResearchPlugin = new YouTubeResearchPlugin(_configuration, _loggerFactory);
+            _customNativePlugins.TryAdd(nameof(YouTubeResearchPlugin), youtubeResearchPlugin);
+            var askUserPlugin = new AskUserPlugin(_askUserService);
+            _customNativePlugins.TryAdd(nameof(AskUserPlugin), askUserPlugin);
+            var blazorChatPlugin = new BlazorMemoryPlugin();
+            _customNativePlugins.TryAdd(nameof(BlazorMemoryPlugin), blazorChatPlugin);
+            var chatWithSkPlugin = new KernelChatPlugin();
+            _customNativePlugins.TryAdd(nameof(KernelChatPlugin), chatWithSkPlugin);
+            var langchainChatPlugin = new LangchainChatPlugin();
+            _customNativePlugins.TryAdd(nameof(LangchainChatPlugin), langchainChatPlugin);
+            var weatherPlugin = new WeatherPlugin();
+            _customNativePlugins.TryAdd(nameof(WeatherPlugin), weatherPlugin);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading custom native plugins");
+        }
+
         return _customNativePlugins;
        
     }

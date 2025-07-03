@@ -82,10 +82,11 @@ public partial class CoreKernelService
 		var webPlugin = new WebCrawlPlugin(_bingSearchService);
 		var webPluginInstance = kernel.ImportPluginFromObject(webPlugin, "WebSearchPlugin");
 		var sysPromptTemplate =
-			"""
+            """
             Answer the user's query using the web search results below. 
             Always search the web before responding. 
             Always include CITATIONS in your response.
+            Include a numbered annotation in square brackets after each factual statement (e.g., [1](wwww.example.com)).
             """;
 		var functionHook = new FunctionFilterHook();
 		kernel.FunctionInvocationFilters.Add(functionHook);
