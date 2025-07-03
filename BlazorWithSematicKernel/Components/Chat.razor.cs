@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Components;
-using Microsoft.Graph;
 using SkPluginLibrary.Abstractions;
 
 namespace BlazorWithSematicKernel.Components

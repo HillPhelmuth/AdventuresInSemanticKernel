@@ -71,7 +71,6 @@
 		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Document" Version="1.54.0-alpha" />
 		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Grpc" Version="1.54.0-alpha" />
 		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Memory" Version="1.54.0-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.MsGraph" Version="1.54.0-alpha" />
 		<PackageReference Include="Microsoft.SemanticKernel.Plugins.OpenApi" Version="1.54.0" />
 		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Web" Version="1.54.0-alpha" />
 		<PackageReference Include="OpenMeteo.dotnet" Version="2.0.0" />

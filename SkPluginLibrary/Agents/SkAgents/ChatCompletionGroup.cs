@@ -7,7 +7,6 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.Agents.Chat;
-using Microsoft.Graph;
 using SemanticKernelAgentOrchestration.Models;
 using SkPluginLibrary.Agents.Extensions;
 using SkPluginLibrary.Agents.Models.Events;
