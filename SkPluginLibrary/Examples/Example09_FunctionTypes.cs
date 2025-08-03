@@ -16,7 +16,7 @@ namespace SkPluginLibrary.Examples
             var plugin = kernel.ImportPluginFromType<LocalExamplePlugin>("test");
 
             string folder = RepoFiles.SamplePluginsPath();
-            kernel.ImportPluginFromPromptDirectory(Path.Combine(folder, "SummarizePlugin"));
+            kernel.ImportPluginFromPromptDirectoryYaml(Path.Combine(folder, "SummarizePlugin"));
 
             // Using Kernel.InvokeAsync
             await kernel.InvokeAsync(plugin["type01"]);

@@ -2,19 +2,15 @@
 {
     <br/>
 }
-<span style="cursor: pointer" @ref="_ref" @onclick="@(() => OnClick.InvokeAsync(TokenString))" @onmouseenter="@(() => ShowTooltip(_ref, TokenString))">
+<span style="cursor: pointer" @ref="_ref" @onclick="@(() => OnClick.InvokeAsync(TokenString))" @onmouseenter="@(() => ShowTooltipWithHtml(_ref, TokenString))">
     @((MarkupString)_textAsHtml)
 </span>
 
 @code {
-    void ShowTooltipWithHtml(ElementReference elementReference, List<TokenString> alternateTokens, TooltipOptions? options = null) => TooltipService.Open(elementReference, ds =>
-
-        @<ol>
-    @foreach (var item in alternateTokens){
-    <li>
-        <h6>@item.StringValue</h6>
-        <p>@item.NormalizedLogProbability.ToString("P2")</p>
-    </li>
-    }
-</ol>, options);
+    void ShowTooltipWithHtml(ElementReference elementReference, TokenString alternateTokens, TooltipOptions? options = null) => TooltipService.Open(elementReference, ds =>
+     
+            @<div>
+    Probability: @alternateTokens.NormalizedLogProbability.ToString("P3")<br /><em style="font-size:90%">click for details</em>
+            </div>
+   , options);
 }

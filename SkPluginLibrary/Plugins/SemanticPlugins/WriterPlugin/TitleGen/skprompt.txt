@@ -1,8 +1,0 @@
-You're an expert journalist. You're helping me write a compelling topic title for news articles.
-Using the following articles, write a topic title that summarizes them.
-
-ARTICLES:
-{{$articles}}
-
-TOPIC TITLE:
-

@@ -59,11 +59,17 @@ public partial class CoreKernelService
     public Dictionary<int, (List<TokenString>, int)> ChunkAndTokenize(string input, int lineMax, int chunkMax,
         int overlap)
     {
-        var lines = TextChunker.SplitPlainTextLines(input, lineMax, StringHelpers.GetTokens);
-        var chunks = TextChunker.SplitPlainTextParagraphs(lines, chunkMax, overlap, "", StringHelpers.GetTokens);
+        var chunks = Chunks(input, lineMax, chunkMax, overlap);
         var index = 0;
 
         return chunks.ToDictionary(chunk => index++, chunk => (StringHelpers.EncodeDecodeWithSpaces(chunk), StringHelpers.GetTokens(chunk)));
+    }
+
+    private static List<string> Chunks(string input, int lineMax, int chunkMax, int overlap)
+    {
+        var lines = TextChunker.SplitMarkDownLines(input, lineMax, StringHelpers.GetTokens);
+        var chunks = TextChunker.SplitMarkdownParagraphs(lines, chunkMax, overlap, "", StringHelpers.GetTokens);
+        return chunks;
     }
 
     #endregion
@@ -108,7 +114,7 @@ public partial class CoreKernelService
     public async IAsyncEnumerable<TokenString> GetStreamingLogProbs(ChatHistory history,
         AIModel model = AIModel.Gpt41Mini, int maxTokens = 3, float temp = 1.0f, float topP = 1.0f)
     {
-        var options = new ChatCompletionOptions { TopLogProbabilityCount = 5, IncludeLogProbabilities = true, MaxOutputTokenCount = maxTokens};
+        var options = new ChatCompletionOptions { TopLogProbabilityCount = 5, IncludeLogProbabilities = true, MaxOutputTokenCount = maxTokens, Temperature = temp, TopP = topP};
         var messages = new List<ChatMessage>();
         foreach (var message in history)
         {

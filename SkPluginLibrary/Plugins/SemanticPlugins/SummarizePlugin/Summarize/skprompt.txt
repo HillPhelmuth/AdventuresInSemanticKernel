@@ -1,9 +1,0 @@
-## SUMMARIZATION RULES
-
-  1. Summarize for clarity first.
-  2. Preserve as much of the original meaning as possible.
-  3. Use plain language to summarize complex ideas.
-  4. Use markdown formatting to make your summary easy to read.
-  
-  Summarize this:
-  {{$input}}

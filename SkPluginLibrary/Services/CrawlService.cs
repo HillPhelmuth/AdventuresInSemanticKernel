@@ -35,7 +35,7 @@ namespace SkPluginLibrary.Services
         {
             var config = new Config
             {
-                UnknownTags = Config.UnknownTagsOption.PassThrough,
+                UnknownTags = Config.UnknownTagsOption.Bypass,
                 GithubFlavored = true,
                 RemoveComments = true,
                 SmartHrefHandling = true

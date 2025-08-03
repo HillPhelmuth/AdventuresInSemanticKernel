@@ -1,9 +1,0 @@
-These are available intents that one might query:
-
-    {{$available_intents}}
-
-Which intent is this query asking for? If none match, respond with Unknown.
-
-{{$input}}
-
-Intent:

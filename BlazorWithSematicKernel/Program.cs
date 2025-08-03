@@ -8,7 +8,7 @@ using SkPluginLibrary.Services;
 using SkPluginLibrary.Models.Helpers;
 using SkPluginComponents.Models;
 using BlazorWithSematicKernel;
-using Microsoft.Azure.Cosmos;
+
 using System.Text.Json;
 using Microsoft.Build.Locator;
 
@@ -63,8 +63,7 @@ services.AddLogging(config =>
 
 services.AddCascadingAuthenticationState();
 //services.AddSingleton<ActivityLogging>();
-var cosmosClient = new CosmosClient(configuration["Cosmos:ConnectionString"], new CosmosClientOptions() { UseSystemTextJsonSerializerWithOptions = JsonSerializerOptions.Default  });
-services.AddSingleton(cosmosClient);
+
 var app = builder.Build();
 
 

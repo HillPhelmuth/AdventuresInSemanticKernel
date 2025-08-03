@@ -62,7 +62,7 @@ public static class Example65_HandlebarsPlanner
 
             foreach (var pluginDirectoryName in pluginDirectoryNames)
             {
-                kernel.ImportPluginFromPromptDirectory(Path.Combine(folder, pluginDirectoryName));
+                kernel.ImportPluginFromPromptDirectoryYaml(Path.Combine(folder, pluginDirectoryName));
             }
         }
 

@@ -31,17 +31,17 @@ public class YouTubeSearch
         if (string.IsNullOrEmpty(keyWords))
             throw new ArgumentNullException(nameof(keyWords));
 
-        
+
         try
         {
             var searchListRequest = _youtubeService.Search.List("snippet");
 
-           searchListRequest.Type = "video";
+            searchListRequest.Type = "video";
 
             searchListRequest.MaxResults = count;
 
             searchListRequest.Q = keyWords;
-            
+
             SearchListResponse? searchListResponse = await searchListRequest.ExecuteAsync();
             var results = searchListResponse.Items.Select(searchResult => new YouTubeSearchResult(searchResult.Id.VideoId, searchResult.Snippet.Description)).ToList();
             return results;
@@ -121,6 +121,6 @@ internal class GenericTypeConverter<T> : TypeConverter
     public override object? ConvertTo(ITypeDescriptorContext? context, CultureInfo? culture, object? value, Type destinationType)
     {
         Console.WriteLine($"Converting {typeof(T)} to {value}");
-        return JsonSerializer.Serialize(value, new JsonSerializerOptions{WriteIndented =true});
+        return JsonSerializer.Serialize(value, new JsonSerializerOptions { WriteIndented = true });
     }
-}   
+}

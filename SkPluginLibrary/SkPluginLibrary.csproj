@@ -25,67 +25,65 @@
 
 	<ItemGroup>
 		<PackageReference Include="Azure.AI.FormRecognizer" Version="4.1.0" />
-		<PackageReference Include="Azure.Storage.Blobs" Version="12.24.0" />
-		<PackageReference Include="Azure.Storage.Files.Shares" Version="12.22.0" />
-		<PackageReference Include="Azure.Storage.Queues" Version="12.22.0" />
+		<PackageReference Include="Azure.Storage.Blobs" Version="12.25.0" />
+		<PackageReference Include="Azure.Storage.Files.Shares" Version="12.23.0" />
+		<PackageReference Include="Azure.Storage.Queues" Version="12.23.0" />
 		<PackageReference Include="AI.Dev.OpenAI.GPT" Version="1.0.2" />
 		<PackageReference Include="Docker.DotNet" Version="3.125.15" />
 		<PackageReference Include="Google.Apis.CustomSearchAPI.v1" Version="1.68.0.3520" />
-		<PackageReference Include="Google.Apis.YouTube.v3" Version="1.69.0.3764" />
+		<PackageReference Include="Google.Apis.YouTube.v3" Version="1.70.0.3847" />
 		<PackageReference Include="HdbscanSharp" Version="2.0.0" />
-		<PackageReference Include="Html2Markdown" Version="7.0.3.11" />
+		<PackageReference Include="Html2Markdown" Version="7.0.5.14" />
 		<PackageReference Include="Microsoft.ApplicationInsights" Version="2.23.0" />
 		<PackageReference Include="Microsoft.Bing.Search.WebSearch" Version="1.0.0" />
 		<PackageReference Include="Microsoft.Build.Locator" Version="1.9.1" />
-		<PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="9.5.0-preview.1.25265.7" />
 		<PackageReference Include="Microsoft.Extensions.Logging.ApplicationInsights" Version="2.23.0" />
 		<PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.23.0" />
 		<PackageReference Include="Microsoft.DeepDev.TokenizerLib" Version="1.3.3" />
-		<PackageReference Include="Microsoft.Extensions.Azure" Version="1.11.0" />
-		<PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="9.0.5" />
-		<PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="9.5.0" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.5" />
-		<PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.11.0" />
+		<PackageReference Include="Microsoft.Extensions.Azure" Version="1.12.0" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="9.0.7" />
+		<PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="9.7.0" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.7" />
+		<PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.13.0" />
 		<PackageReference Include="Microsoft.ML" Version="4.0.2" />
 		<PackageReference Include="Microsoft.ML.Tokenizers" Version="1.0.2" />
-		<PackageReference Include="Microsoft.SemanticKernel" Version="1.54.0" />
-		<PackageReference Include="Microsoft.SemanticKernel.Agents.Core" Version="1.54.0" />
-		<PackageReference Include="Microsoft.SemanticKernel.Agents.OpenAI" Version="1.54.0-preview" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.AzureAISearch" Version="1.54.0-preview" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.AzureCosmosDBNoSQL" Version="1.51.0-preview" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Chroma" Version="1.54.0-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Google" Version="1.54.0-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.HuggingFace" Version="1.54.0-preview" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.InMemory" Version="1.54.0-preview" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.MistralAI" Version="1.54.0-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Ollama" Version="1.54.0-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Pinecone" Version="1.54.0-preview" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Qdrant" Version="1.54.0-preview" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Redis" Version="1.54.0-preview" />
+		<PackageReference Include="Microsoft.SemanticKernel" Version="1.61.0" />
+		<PackageReference Include="Microsoft.SemanticKernel.Agents.Core" Version="1.61.0" />
+		<PackageReference Include="Microsoft.SemanticKernel.Agents.OpenAI" Version="1.61.0-preview" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.AzureAISearch" Version="1.61.0-preview" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Chroma" Version="1.61.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Google" Version="1.61.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.HuggingFace" Version="1.61.0-preview" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.InMemory" Version="1.61.0-preview" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.MistralAI" Version="1.61.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Ollama" Version="1.61.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Pinecone" Version="1.61.0-preview" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Qdrant" Version="1.61.0-preview" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Redis" Version="1.61.0-preview" />
 		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Sqlite" Version="1.51.0-preview" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Weaviate" Version="1.54.0-preview" />
+		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Weaviate" Version="1.61.0-preview" />
 		<PackageReference Include="Microsoft.SemanticKernel.Experimental.Agents" Version="1.18.1-alpha" />
 		<PackageReference Include="Microsoft.SemanticKernel.Planners.Handlebars" Version="1.47.0-preview" />
 		<PackageReference Include="Microsoft.SemanticKernel.Planners.OpenAI" Version="1.47.0-preview" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Core" Version="1.54.0-preview" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Document" Version="1.54.0-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Grpc" Version="1.54.0-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Memory" Version="1.54.0-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.OpenApi" Version="1.54.0" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Web" Version="1.54.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Core" Version="1.61.0-preview" />
+		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Document" Version="1.61.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Grpc" Version="1.61.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Memory" Version="1.61.0-alpha" />
+		<PackageReference Include="Microsoft.SemanticKernel.Plugins.OpenApi" Version="1.61.0" />
+		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Web" Version="1.61.0-alpha" />
 		<PackageReference Include="OpenMeteo.dotnet" Version="2.0.0" />
-		<PackageReference Include="PdfPig" Version="0.1.10" />
+		<PackageReference Include="PdfPig" Version="0.1.11" />
+		<PackageReference Include="PDFtoImage" Version="5.1.1" />
 		<PackageReference Include="ReverseMarkdown" Version="4.7.0" />
 		<PackageReference Include="SharpToken" Version="2.0.3" />
-		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.11.0" />
-		<PackageReference Include="System.Linq.Async" Version="6.0.1" />
-		<PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.5" />
-		<PackageReference Include="Microsoft.Extensions.Http" Version="9.0.5" />
+		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.13.0" />
+		<PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.7" />
+		<PackageReference Include="Microsoft.Extensions.Http" Version="9.0.7" />
 		<PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.14.0" />
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="4.14.0" />
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.14.0" />
-		<PackageReference Include="HtmlAgilityPack" Version="1.12.1" />
+		<PackageReference Include="HtmlAgilityPack" Version="1.12.2" />
 		<PackageReference Include="Tiktoken" Version="2.2.0" />
 
 		
@@ -94,9 +92,9 @@
 		<None Include="Plugins\ApiPlugins\**\openapi.json">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
-		<None Update="Plugins\SemanticPlugins\**\skprompt.txt">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
+		<Compile Remove="Plugins\SemanticPlugins\**" />
+		<EmbeddedResource Remove="Plugins\SemanticPlugins\**" />
+		<None Remove="Plugins\SemanticPlugins\**" />
 		<None Update="Plugins\YamlPlugins\**\*.yaml">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
@@ -130,10 +128,6 @@
 		<Compile Remove="Models\NoThrowCancellationDelegatingHandler.cs" />
 		<Compile Remove="Plugins\FineTuneEvalPlugin.cs" />
 		<Compile Remove="Services\CompilerService.Console.cs" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<Content Include="Plugins\SemanticPlugins\**\config.json" />
 	</ItemGroup>
 
 	

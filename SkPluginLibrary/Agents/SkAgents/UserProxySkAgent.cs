@@ -6,24 +6,10 @@ using SkPluginLibrary.Agents.Models.Events;
 
 namespace SkPluginLibrary.Agents.SkAgents;
 
-public class UserProxySkAgent : ChatHistoryAgent
+public class UserProxySkAgent : Agent
 {
     public event EventHandler<SkAgentInputRequestArgs>? AgentInputRequest;
-    [Obsolete("Use InvokeAsync with AgentThread instead.")]
-    public override async IAsyncEnumerable<ChatMessageContent> InvokeAsync(ChatHistory history, KernelArguments? arguments = null, Kernel? kernel = null,
-        [EnumeratorCancellation] CancellationToken cancellationToken = new())
-    {
-        var content = await GetHumanInputAsync();
-        yield return new ChatMessageContent(AuthorRole.User, content){AuthorName = Name};
-    }
-
-    [Obsolete("Use InvokeStreamingAsync with AgentThread instead.")]
-    public override async IAsyncEnumerable<StreamingChatMessageContent> InvokeStreamingAsync(ChatHistory history, KernelArguments? arguments = null, Kernel? kernel = null,
-        [EnumeratorCancellation] CancellationToken cancellationToken = new())
-    {
-        var content = await GetHumanInputAsync();
-        yield return new StreamingChatMessageContent(AuthorRole.User, content) { AuthorName = Name };
-    }
+    
     public async Task<string?> GetHumanInputAsync()
     {
         // Trigger the event to request input
@@ -58,6 +44,16 @@ public class UserProxySkAgent : ChatHistoryAgent
     {
         var content = await GetHumanInputAsync();
         yield return new AgentResponseItem<StreamingChatMessageContent>(new StreamingChatMessageContent(AuthorRole.User, content) { AuthorName = Name }, thread ?? new ChatHistoryAgentThread(new ChatHistory(messages)));
+    }
+
+    protected override IEnumerable<string> GetChannelKeys()
+    {
+        throw new NotImplementedException();
+    }
+
+    protected override Task<AgentChannel> CreateChannelAsync(CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
     }
 
     protected override Task<AgentChannel> RestoreChannelAsync(string channelState, CancellationToken cancellationToken)

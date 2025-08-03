@@ -62,8 +62,8 @@ after this event Caroline became his wife.""";
             .Build();
 
         string folder = RepoFiles.SamplePluginsPath();
-        var summarizePlugin = kernel.ImportPluginFromPromptDirectory(Path.Combine(folder, "SummarizePlugin"));
-        var groundingPlugin = kernel.ImportPluginFromPromptDirectory(Path.Combine(folder, "GroundingPlugin"));
+        var summarizePlugin = kernel.ImportPluginFromPromptDirectoryYaml(Path.Combine(folder, "SummarizePlugin"));
+        var groundingPlugin = kernel.ImportPluginFromPromptDirectoryYaml(Path.Combine(folder, "GroundingPlugin"));
 
         var create_summary = summarizePlugin["Summarize"];
         var entityExtraction = groundingPlugin["ExtractEntities"];
@@ -131,8 +131,8 @@ Text:\n{GroundingText};
             .Build();
 
         string folder = RepoFiles.SamplePluginsPath();
-        kernel.ImportPluginFromPromptDirectory(Path.Combine(folder, "SummarizePlugin"));
-        kernel.ImportPluginFromPromptDirectory(Path.Combine(folder, "GroundingPlugin"));
+        kernel.ImportPluginFromPromptDirectoryYaml(Path.Combine(folder, "SummarizePlugin"));
+        kernel.ImportPluginFromPromptDirectoryYaml(Path.Combine(folder, "GroundingPlugin"));
 
         kernel.ImportPluginFromType<TextPlugin>();
 

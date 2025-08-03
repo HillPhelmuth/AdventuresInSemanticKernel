@@ -44,6 +44,14 @@
                         <RadzenNumeric @bind-Value=@_logProbInputForm.TopP Max="1.0m" Min="0" Name="TopP" Step="0.01" TValue="float"></RadzenNumeric>
                     </ChildContent>
                 </RadzenFormField>
+                <RadzenFormField Text="Max Tokens">
+                    <Start>
+                        <RadzenIcon Icon="fit_width"></RadzenIcon>
+                    </Start>
+                    <ChildContent>
+                        <RadzenNumeric @bind-Value="@_logProbInputForm.MaxTokens" Min="1" Max="5000" Name="MaxTokens" Step="1"></RadzenNumeric>
+                    </ChildContent>
+                </RadzenFormField>
                 <br />
                 <RadzenButton ButtonType="ButtonType.Submit" Text="Send" IsBusy=_isBusy BusyText="Sending..."></RadzenButton>
             </RadzenTemplateForm>

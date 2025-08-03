@@ -4,17 +4,14 @@ public static class Agents_Step10_AssistantTool_CodeInterpreter
     public static async Task UseCodeInterpreterToolWithAssistantAgentAsync()
     {
         // Define the agent
-        OpenAIAssistantAgent agent =
-            await OpenAIAssistantAgent.CreateAsync(
-                clientProvider: OpenAIClientProvider.ForOpenAI(new ApiKeyCredential(TestConfiguration.OpenAI.ApiKey)),
-                definition: new(TestConfiguration.OpenAI.Gpt4MiniModelId)
-                {
-                    EnableCodeInterpreter = true,
-                },
-                kernel: new Kernel());
+        var client = OpenAIAssistantAgent.CreateOpenAIClient(new ApiKeyCredential(TestConfiguration.OpenAI.ApiKey));
+        var assistantClient = client.GetAssistantClient();
+        var assistant = await assistantClient.CreateAssistantAsync(TestConfiguration.OpenAI.Gpt4MiniModelId,
+            new AssistantCreationOptions() { Tools = { ToolDefinition.CreateCodeInterpreter() } });
+        var agent = new OpenAIAssistantAgent(assistant, assistantClient);
 
         // Create a thread for the agent conversation.
-        string threadId = await agent.CreateThreadAsync(new OpenAIThreadCreationOptions {  });
+        var thread = new OpenAIAssistantAgentThread(assistantClient);
 
         // Respond to user input
         try
@@ -23,18 +20,18 @@ public static class Agents_Step10_AssistantTool_CodeInterpreter
         }
         finally
         {
-            await agent.DeleteThreadAsync(threadId);
-            await agent.DeleteAsync();
+            await thread.DeleteAsync();
+            await assistantClient.DeleteAssistantAsync(agent.Id);
         }
 
         // Local function to invoke agent and display the conversation messages.
         async Task InvokeAgentAsync(string input)
         {
             ChatMessageContent message = new(AuthorRole.User, input);
-            await agent.AddChatMessageAsync(threadId, message);
+            //await agent.AddChatMessageAsync(threadId, message);
             WriteAgentChatMessage(message);
 
-            await foreach (ChatMessageContent response in agent.InvokeAsync(threadId))
+            await foreach (ChatMessageContent response in agent.InvokeAsync(message, thread))
             {
                 WriteAgentChatMessage(response);
             }

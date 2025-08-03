@@ -24,23 +24,19 @@ public static class Agents_Step11_AssistantTool_FileSearch
     public static async Task UseFileSearchToolWithAssistantAgentAsync()
     {
         // Define the agent
-        OpenAIClientProvider provider = OpenAIClientProvider.ForOpenAI(new ApiKeyCredential(TestConfiguration.OpenAI.ApiKey));
-        OpenAIAssistantAgent agent =
-            await OpenAIAssistantAgent.CreateAsync(
-                clientProvider: OpenAIClientProvider.ForOpenAI(new ApiKeyCredential(TestConfiguration.OpenAI.ApiKey)),
-                definition: new OpenAIAssistantDefinition(TestConfiguration.OpenAI.Gpt4MiniModelId)
-                {
-                    EnableFileSearch = true,
-                },
-                kernel: new Kernel());
-
+        
+        var client = OpenAIAssistantAgent.CreateOpenAIClient(new ApiKeyCredential(TestConfiguration.OpenAI.ApiKey));
+        var assistantClient = client.GetAssistantClient();
+        var assistant = await assistantClient.CreateAssistantAsync(TestConfiguration.OpenAI.Gpt4MiniModelId,
+            new AssistantCreationOptions() { Tools = { ToolDefinition.CreateFileSearch() } });
+        var agent = new OpenAIAssistantAgent(assistant, assistantClient);
         // Upload file - Using a table of fictional employees.
-        OpenAIFileClient fileClient = provider.Client.GetOpenAIFileClient();
+        OpenAIFileClient fileClient = client.GetOpenAIFileClient();
         await using Stream stream = EmbeddedResource.ReadStream("employees.pdf")!;
         OpenAIFile fileInfo = await fileClient.UploadFileAsync(stream, "employees.pdf", FileUploadPurpose.Assistants);
 
         // Create a vector-store
-        VectorStoreClient vectorStoreClient = provider.Client.GetVectorStoreClient();
+        VectorStoreClient vectorStoreClient = client.GetVectorStoreClient();
         CreateVectorStoreOperation result =
             await vectorStoreClient.CreateVectorStoreAsync(waitUntilCompleted: false,
                 new VectorStoreCreationOptions()
@@ -49,12 +45,7 @@ public static class Agents_Step11_AssistantTool_FileSearch
                 });
 
         // Create a thread associated with a vector-store for the agent conversation.
-        string threadId =
-            await agent.CreateThreadAsync(
-                new OpenAIThreadCreationOptions
-                {
-                    VectorStoreId = result.VectorStoreId,
-                });
+        var thread = new OpenAIAssistantAgentThread(assistantClient, vectorStoreId: result.VectorStoreId);
 
         // Respond to user input
         try
@@ -65,20 +56,22 @@ public static class Agents_Step11_AssistantTool_FileSearch
         }
         finally
         {
-            await agent.DeleteThreadAsync(threadId);
-            await agent.DeleteAsync();
+            await thread.DeleteAsync();
+            await assistantClient.DeleteAssistantAsync(agent.Id);
             await vectorStoreClient.DeleteVectorStoreAsync(result.VectorStoreId);
             await fileClient.DeleteFileAsync(fileInfo.Id);
         }
+
+        return;
 
         // Local function to invoke agent and display the conversation messages.
         async Task InvokeAgentAsync(string input)
         {
             ChatMessageContent message = new(AuthorRole.User, input);
-            await agent.AddChatMessageAsync(threadId, message);
+            //await agent.AddChatMessageAsync(threadId, message);
             WriteAgentChatMessage(message);
 
-            await foreach (ChatMessageContent response in agent.InvokeAsync(threadId))
+            await foreach (ChatMessageContent response in agent.InvokeAsync(message, thread))
             {
                 WriteAgentChatMessage(response);
             }

@@ -16,7 +16,6 @@ namespace SkPluginLibrary.Models.Helpers
             services.AddScoped<ISemanticKernelSamples, CoreKernelService>();
             services.AddScoped<ITokenization, CoreKernelService>();
             services.AddScoped<ICustomNativePlugins, CoreKernelService>();
-            services.AddScoped<ICustomCombinations, CoreKernelService>();
             services.AddScoped<IChatWithSk, CoreKernelService>();
             services.AddScoped<CrawlService>();
             services.AddScoped<BingWebSearchService>();

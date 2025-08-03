@@ -26,6 +26,7 @@
 	  <Compile Remove="Components\AgentComponents\AgentRunner.razor.cs" />
 	  <Compile Remove="Components\AgentComponents\GroupTransitionType.cs" />
 	  <Compile Remove="Pages\AgentBuilderPage.razor.cs" />
+	  <Compile Remove="Pages\DndStoryPlannerExample.razor.cs" />
 	  <Compile Remove="Pages\Error.cshtml.cs" />
 	  <Compile Remove="Pages\PromptEngineerAgent.razor.cs" />
 	  <Compile Remove="Pages\SciFiAgentRunner.razor.cs" />
@@ -36,6 +37,7 @@
 	  <Content Remove="Components\AgentComponents\AgentOrganizer.razor" />
 	  <Content Remove="Components\AgentComponents\AgentRunner.razor" />
 	  <Content Remove="Pages\AgentBuilderPage.razor" />
+	  <Content Remove="Pages\DndStoryPlannerExample.razor" />
 	  <Content Remove="Pages\Error.cshtml" />
 	  <Content Remove="Pages\PromptEngineerAgent.razor" />
 	  <Content Remove="Pages\SciFiAgentRunner.razor" />
@@ -43,17 +45,14 @@
 
 	
 	<ItemGroup>
-		<PackageReference Include="Auth0.AspNetCore.Authentication" Version="1.4.1" />
-		<PackageReference Include="Azure.Storage.Blobs" Version="12.24.0" />
-		<PackageReference Include="Azure.Storage.Files.Shares" Version="12.22.0" />
-		<PackageReference Include="Azure.Storage.Queues" Version="12.22.0" />
-		<PackageReference Include="Blazor-ApexCharts" Version="5.1.0" />
-		<PackageReference Include="Markdig" Version="0.40.0" />
+		<PackageReference Include="Auth0.AspNetCore.Authentication" Version="1.5.0" />
+		<PackageReference Include="Azure.Storage.Blobs" Version="12.25.0" />
+		<PackageReference Include="Azure.Storage.Files.Shares" Version="12.23.0" />
+		<PackageReference Include="Azure.Storage.Queues" Version="12.23.0" />
+		<PackageReference Include="Blazor-ApexCharts" Version="6.0.1" />
 		<PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.23.0" />
-		<PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="9.0.3" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="9.0.7" />
 		<PackageReference Include="Microsoft.Extensions.Logging.ApplicationInsights" Version="2.23.0" />
-		<PackageReference Include="Radzen.Blazor" Version="6.3.2" />
-		<PackageReference Include="System.Linq.Async" Version="6.0.1" />
 				
 	</ItemGroup>
 

@@ -1,4 +1,0 @@
-You are a monster story generator. Use the name of the monster to generate a 100 word story description.
-
-[monster]
-{{$input}}

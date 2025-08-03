@@ -1,37 +1,36 @@
-﻿using System.Net;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel.Connectors.Qdrant;
-using Microsoft.SemanticKernel.Memory;
-using SkPluginLibrary.Abstractions;
-using SkPluginLibrary.Services;
-using SkPluginComponents.Models;
-using SkPluginComponents;
-using Microsoft.SemanticKernel.Planning;
-using Microsoft.SemanticKernel.Plugins.OpenApi;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Http.Resilience;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.VectorData;
 using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.Redis;
+using Microsoft.SemanticKernel.Connectors.Pinecone;
 using Microsoft.SemanticKernel.Connectors.Sqlite;
-using Microsoft.SemanticKernel.Connectors.Weaviate;
-using SkPluginLibrary.Plugins;
+using Microsoft.SemanticKernel.Memory;
+using Microsoft.SemanticKernel.Planning;
+using Microsoft.SemanticKernel.Plugins.Memory;
+using Microsoft.SemanticKernel.Plugins.OpenApi;
+using Microsoft.SemanticKernel.Text;
+using Pinecone;
+using Polly;
+using SkPluginComponents;
+using SkPluginComponents.Models;
+using SkPluginLibrary.Abstractions;
+using SkPluginLibrary.Models.Hooks;
+using SkPluginLibrary.Plugins.NativePlugins;
+using SkPluginLibrary.Services;
+using System.Net;
 using System.Runtime.CompilerServices;
 using System.Text;
-using Microsoft.SemanticKernel.Plugins.Memory;
-using Microsoft.Extensions.Http.Resilience;
-using Polly;
-using SkPluginLibrary.Models.Hooks;
+using System.Text.Json;
 using UglyToad.PdfPig;
-using Microsoft.SemanticKernel.Text;
-using NRedisStack.Search;
-using SkPluginLibrary.Plugins.NativePlugins;
-using Microsoft.Extensions.VectorData;
-using DocumentFormat.OpenXml.Drawing.Charts;
-using Microsoft.Azure.Cosmos;
+using PDFtoImage;
+using SkiaSharp;
+
 
 namespace SkPluginLibrary;
 
-public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSamples, IMemoryConnectors, ITokenization, ICustomNativePlugins, ICustomCombinations, IChatWithSk
+public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSamples, IMemoryConnectors, ITokenization, ICustomNativePlugins, IChatWithSk
 {
     private static IConfiguration? _configuration;
     private readonly IMemoryStore _memoryStore;
@@ -43,7 +42,6 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
     private readonly BingWebSearchService _bingSearchService;
     private readonly ISemanticTextMemory _semanticTextMemory;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly CosmosClient _cosmosClient;
     private static string _appInsightConnectionString;
     private readonly ILogger<CoreKernelService> _logger;
     public class CollectionName
@@ -56,7 +54,9 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
         public const string LangchainDocsCollection = "langchainDocsCollection";
         public const string PromptEngineerCollection = "promptEngineerCollection";
     }
-    public CoreKernelService(IConfiguration configuration, ScriptService scriptService, CompilerService compilerService, HdbscanService hdbscanService, ILoggerFactory loggerFactory, BingWebSearchService bingSearchService, AskUserService modalService, IHttpClientFactory httpClientFactory, CosmosClient cosmosClient)
+    public CoreKernelService(IConfiguration configuration, ScriptService scriptService, CompilerService compilerService,
+        HdbscanService hdbscanService, ILoggerFactory loggerFactory, BingWebSearchService bingSearchService,
+        AskUserService modalService, IHttpClientFactory httpClientFactory)
     {
         _configuration = configuration;
         _scriptService = scriptService;
@@ -65,7 +65,6 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
         _loggerFactory = loggerFactory;
         _bingSearchService = bingSearchService;
         _httpClientFactory = httpClientFactory;
-        _cosmosClient = cosmosClient;
         _askUserService = modalService;
         _logger = loggerFactory.CreateLogger<CoreKernelService>();
         _memoryStore = new VolatileMemoryStore();
@@ -205,7 +204,30 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
         kernel.Plugins.Add(textMemory);
         return kernel;
     }
+    internal static PineconeVectorStore GetPineconeVectorStore()
+    {
+        var pineconeApiKey = TestConfiguration.Pinecone!.ApiKey;
+        var pineconeEnvironment = TestConfiguration.Pinecone.Environment;
+        if (string.IsNullOrEmpty(pineconeApiKey) || string.IsNullOrEmpty(pineconeEnvironment))
+        {
+            throw new ArgumentException("Pinecone API Key and Environment must be set in the configuration.");
+        }
+        var client = new PineconeClient(pineconeApiKey);
+        return new PineconeVectorStore(client,new PineconeVectorStoreOptions(){EmbeddingGenerator = _textEmbeddingGeneration});
+    }
 
+    internal static async Task<ReadOnlyMemory<float>> GenerateEmbeddingsAsync(string text)
+    {
+        var result = await _textEmbeddingGeneration.GenerateAsync([text]);
+        return result[0].Vector;
+    }
+    internal static async Task<PineconeCollection<string, VectorStoreContextItem>> ChatWithSKVectorCollection()
+    {
+        var vectorStore = GetPineconeVectorStore();
+        var collection = vectorStore.GetCollection<string, VectorStoreContextItem>(TestConfiguration.Pinecone.Environment);
+        await collection.EnsureCollectionExistsAsync();
+        return collection;
+    }
     internal static async Task<ISemanticTextMemory> ChatWithSkKernelMemory(bool drop = false)
     {
         var sqliteMemoryStore = await SqliteMemoryStore.ConnectAsync(TestConfiguration.Sqlite!.ChatContentConnectionString!);
@@ -226,84 +248,141 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
             .Build();
     }
     private VectorStoreCollection<string, VectorStoreContextItem>? _sqliteCollection;
-    //public static async Task SaveNewSKPdf()
-    //{
-    //    var pdfPath = @"C:\Users\adamh\Downloads\semantic-kernel_latest_0516.pdf";
-    //    var fileData = await File.ReadAllBytesAsync(pdfPath);
-    //    var sb = new StringBuilder();
-    //    using var document = PdfDocument.Open(fileData, new ParsingOptions { UseLenientParsing = true });
-    //    var kernel = CreateKernel(AIModel.Gpt41Mini);
-    //    var chatService = kernel.GetRequiredService<IChatCompletionService>();
+    private async Task<IEnumerable<string>> SearchPinecone(string text, int limit = 10, CancellationToken cancellationToken = default)
+    {
+        var collection = await ChatWithSKVectorCollection();
+        var vectorSearchResults = await collection.SearchAsync(text, limit, cancellationToken: cancellationToken).ToListAsync(cancellationToken: cancellationToken);
+        foreach (var result in vectorSearchResults)
+        {
+            Console.WriteLine($"Found: {result.Record.MemoryId} with score: {result.Score}");
+        }
+        var search = vectorSearchResults.Select(x => x.Record.Content);
+        return search;
+    }
+    public static async Task SaveNewSKPdf()
+    {
+        var pdfPath = @"C:\Users\adamh\Downloads\semantic-kernel_Microsoft Learn_0802.pdf";
+        var fileData = await File.ReadAllBytesAsync(pdfPath);
+        //var fileDataBase64 = Convert.ToBase64String(fileData);
+        var pdfImages = Conversion.ToImages(fileData);
+        var count = pdfImages.Count();
+        Console.WriteLine($"Pdf page images: {count}");
+        List<byte[]> rawImageData = [];
+        foreach (var bitmap in pdfImages)
+        {
+            using var image = SKImage.FromBitmap(bitmap);
+            using var data = image.Encode(SKEncodedImageFormat.Jpeg, 100);
+            var raw = data.ToArray();
+            rawImageData.Add(raw);
+        }
+        var rawCount = rawImageData.Count;
+        if (rawCount != count)
+        {
+            Console.WriteLine($"WARNING: raw data count does not equal initial image count: {rawCount} vs {count}");
+            await Task.Delay(TimeSpan.FromSeconds(30));
+        }
+        var textExtractSp = """
+                            Convert the contents of PDF page images into well-formatted, semantic Markdown.
+                            Extract all relevant text, headings, lists, tables, code blocks, and formatting as accurately as possible from the images.
+                            If math, diagrams, or non-text elements are present, describe them in plain text while clearly indicating it is an image description.
+                            """;
+        var sb = new StringBuilder();
+        using var document = PdfDocument.Open(fileData, new ParsingOptions { UseLenientParsing = true });
+        var kernel = CreateKernel(AIModel.Gpt41);
+        var chatService = kernel.GetRequiredService<IChatCompletionService>();
+        foreach (var imageData in rawImageData)
+        {
+            var history = new ChatHistory(textExtractSp)
+            {
+                new ChatMessageContent(AuthorRole.User,
+                [
+                    new ImageContent(imageData, "image/jpeg"),
+                    new TextContent("Extract content from this pdf page image")
+                ])
+            };
+            var content = await chatService.GetChatMessageContentAsync(history, new OpenAIPromptExecutionSettings { Temperature = 0.5});
 
-    //    foreach (var page in document.GetPages())
-    //    {
-    //        var pageText = page.Text;
-    //        var images = page.GetImages();
-    //        var imageBuilder = new StringBuilder();
-    //        imageBuilder.AppendLine("## Page Image Descriptions");
-    //        var imageIndex = 0;
-    //        foreach (var image in images ?? [])
-    //        {
-    //            var history = new ChatHistory("Provide a detailed description and summary of provided images");
-    //            //var imageBytes = image.RawBytes.ToArray();
-    //            if (!image.TryGetPng(out var imageBytes))
-    //            {
-    //                Console.WriteLine("Could not get PNG image bytes");
-    //                continue;
-    //            }
+            Console.WriteLine($"{content.Content}");
+            sb.AppendLine(content.Content ?? "");
+        }
+        
+        //foreach (var page in document.GetPages())
+        //{
+        //    var pageText = page.Text;
+        //    var images = page.GetImages();
+        //    var imageBuilder = new StringBuilder();
+        //    imageBuilder.AppendLine("## Page Image Descriptions");
+        //    var imageIndex = 0;
+        //    foreach (var image in images ?? [])
+        //    {
+        //        var history = new ChatHistory("Provide a detailed description and summary of provided images");
+        //        //var imageBytes = image.RawBytes.ToArray();
+        //        if (!image.TryGetPng(out var imageBytes))
+        //        {
+        //            Console.WriteLine("Could not get PNG image bytes");
+        //            continue;
+        //        }
 
-    //            history.Add(new ChatMessageContent(AuthorRole.User,
-    //            [
-    //                new ImageContent(new ReadOnlyMemory<byte>(imageBytes), "image/png"),
-    //                new TextContent("describe and summarize image")
-    //            ]));
-    //            var content = await chatService.GetChatMessageContentAsync(history, new OpenAIPromptExecutionSettings { MaxTokens = 512 });
-    //            Console.WriteLine($"{content.Content}");
-    //            var text = content.Content;
-    //            text = $"Image {++imageIndex}\n{text}";
-    //            imageBuilder.AppendLine(text);
-    //        }
+        //        history.Add(new ChatMessageContent(AuthorRole.User,
+        //        [
+        //            new ImageContent(new ReadOnlyMemory<byte>(imageBytes), "image/png"),
+        //            new TextContent("describe and summarize image")
+        //        ]));
+        //        var content = await chatService.GetChatMessageContentAsync(history, new OpenAIPromptExecutionSettings { MaxTokens = 512 });
+        //        Console.WriteLine($"{content.Content}");
+        //        var text = content.Content;
+        //        text = $"Image {++imageIndex}\n{text}";
+        //        imageBuilder.AppendLine(text);
+        //    }
 
-    //        pageText += $"\n{imageBuilder}";
+        //    pageText += $"\n{imageBuilder}";
 
-    //        sb.Append(pageText);
-    //    }
-    //    var textString = sb.ToString();
-    //    await File.WriteAllTextAsync("TempSKContent.txt", textString);
-    //    var lines = TextChunker.SplitPlainTextLines(textString, 128, StringHelpers.GetTokens);
-    //    var paragraphs = TextChunker.SplitPlainTextParagraphs(lines, 1024, 200, "semantic-kernel Documentation", StringHelpers.GetTokens);
-    //    var memory = await ChatWithSkKernelMemory(true);
-    //    var index = 0;
-    //    var ids = new List<string>();
-    //    foreach (var paragraph in paragraphs)
-    //    {
-    //        var id = await memory.SaveInformationAsync(CollectionName.SkDocsCollection, paragraph, $"SKDocs_P_{index++}", "semantic-kernel Documentation");
-    //        ids.Add(id);
-    //    }
-    //    Console.WriteLine($"Saved {ids.Count} Items to {CollectionName.SkDocsCollection}");
-    //}
+        //    sb.Append(pageText);
+        //}
+        var textString = sb.ToString();
+        await File.WriteAllTextAsync("TempSKContent0802_fromImages.txt", textString);
+        var lines = TextChunker.SplitPlainTextLines(textString, 200, StringHelpers.GetTokens);
+        var paragraphs = TextChunker.SplitPlainTextParagraphs(lines, 1024, 200, tokenCounter: StringHelpers.GetTokens);
+        //var memory = await ChatWithSkKernelMemory(true);
+        var collection = await ChatWithSKVectorCollection();
+        var index = 0;
+        var ids = new List<string>();
+        foreach (var paragraph in paragraphs)
+        {
+            await collection.UpsertAsync(new VectorStoreContextItem()
+            {
+                Content = paragraph,
+                Embedding = await GenerateEmbeddingsAsync(paragraph),
+                MemoryId = $"SKDocs_P_{index++}"
+
+            });
+            //var id = await memory.SaveInformationAsync(CollectionName.SkDocsCollection, paragraph, $"SKDocs_P_{index++}", "semantic-kernel Documentation");
+            //ids.Add(id);
+        }
+        Console.WriteLine($"Saved {ids.Count} Items to {CollectionName.SkDocsCollection}");
+    }
     private const string ChatWithSkSystemPromptTemplate =
         """
         You are a Semantic Kernel Expert and a helpful and friendly Instructor. Use the [Semantic Kernel CONTEXT] below to answer the user's questions.
 
         # Semantic Kernel CONTEXT
         
-        {{TextMemoryPlugin.Recall input=$input collection=$collection relevance=$relevance limit=$limit}}
+        {{$context}}
 
         """;
+
     private Kernel? _skChatKernel;
     public async IAsyncEnumerable<string> ExecuteChatWithSkStream(string query, ChatHistory? chatHistory = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         _skChatKernel ??= await ChatWithSkKernal();
-
+        var searchResults = (await SearchPinecone(query, 5, cancellationToken: cancellationToken)).Where(x => !string.IsNullOrEmpty(x));
+        var index = 1;
+        var searchContent = $"1. {string.Join($"\n{++index}. ", searchResults)}";
         var context = new KernelArguments
         {
-            ["input"] = query,
-            ["limit"] = 10,
-            ["relevance"] = 0.40,
-            ["collection"] = CollectionName.SkDocsCollection
+            ["context"] = searchContent
         };
-
+        _logger.LogInformation("Context retrieved:\n\n{context}", searchContent);
         var promptTemplateFactory = new KernelPromptTemplateFactory();
         var engine = promptTemplateFactory.Create(new PromptTemplateConfig(ChatWithSkSystemPromptTemplate));
         var systemPrompt = await engine.RenderAsync(_skChatKernel, context, cancellationToken);

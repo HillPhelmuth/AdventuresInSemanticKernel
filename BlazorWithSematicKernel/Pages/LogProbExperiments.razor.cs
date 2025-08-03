@@ -30,8 +30,9 @@ namespace BlazorWithSematicKernel.Pages
             public string? Model { get; set; } = "gpt-3.5-turbo";
             public float Tempurature { get; set; } = 1.0f;
             public float TopP { get; set; } = 1.0f;
+            public int MaxTokens { get; set; } = 50;
         }
-        private List<string> _models = [AIModel.Gpt41Mini.GetOpenAIModelName(), AIModel.Gpt4OCurrent.GetOpenAIModelName(), AIModel.Gpt4OLatest.GetOpenAIModelName(),AIModel.Gpt35Turbo.GetOpenAIModelName(), AIModel.Gpt4OChatGptLatest.GetOpenAIModelName()];
+        private List<string> _models = [AIModel.Gpt41Nano.GetOpenAIModelName(), AIModel.Gpt41Mini.GetOpenAIModelName(), AIModel.Gpt4OCurrent.GetOpenAIModelName(), AIModel.Gpt4OLatest.GetOpenAIModelName(),AIModel.Gpt35Turbo.GetOpenAIModelName(), AIModel.Gpt4OChatGptLatest.GetOpenAIModelName()];
         private LogProbInputForm _logProbInputForm = new();
         private async void SendQuery(LogProbInputForm logProbInputForm)
         {
@@ -39,10 +40,10 @@ namespace BlazorWithSematicKernel.Pages
             StateHasChanged();
             await Task.Delay(1);
             //ChatCompletion? choice = await LogProbService.GetLogProbs(logProbInputForm.UserInput!,logProbInputForm.Tempurature,logProbInputForm.TopP, logProbInputForm.SystemPrompt, logProbInputForm.Model);
-            var history = new ChatHistory();
+            var history = new ChatHistory(logProbInputForm.SystemPrompt);
             history.AddUserMessage(logProbInputForm.UserInput!);
             List<TokenString> updatedTokens = [];
-            await foreach (var token in LogProbService.GetStreamingLogProbs(history, logProbInputForm.Model.GetAIModelFromModelName(), 50, logProbInputForm.Tempurature, logProbInputForm.TopP))
+            await foreach (var token in LogProbService.GetStreamingLogProbs(history, logProbInputForm.Model.GetAIModelFromModelName(), logProbInputForm.MaxTokens, logProbInputForm.Tempurature, logProbInputForm.TopP))
             {
                 updatedTokens.Add(token);
                 _tokenStrings = updatedTokens;

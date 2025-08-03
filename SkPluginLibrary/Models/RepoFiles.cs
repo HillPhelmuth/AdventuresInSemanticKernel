@@ -14,7 +14,7 @@ public static class RepoFiles
     /// <returns>The full path to samples/skills</returns>
     public static string SamplePluginsPath()
     {
-        return PluginDirectoryPath;
+        return PathToYamlPlugins;
 
 
     }

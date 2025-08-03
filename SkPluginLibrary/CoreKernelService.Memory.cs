@@ -2,9 +2,8 @@
 using Microsoft.SemanticKernel.Text;
 using System.Text;
 using System.Text.Json;
-using Microsoft.Azure.Cosmos;
+
 using Microsoft.Extensions.VectorData;
-using Microsoft.SemanticKernel.Connectors.AzureCosmosDBNoSQL;
 using Microsoft.SemanticKernel.Connectors.InMemory;
 using Microsoft.SemanticKernel.Connectors.Sqlite;
 using Microsoft.SemanticKernel.Data;
@@ -86,17 +85,13 @@ public partial class CoreKernelService
     }
 
     //private IVectorStore? _vectorStore;
-    private Database? _database;
 
-    private readonly IEmbeddingGenerator<string, Embedding<float>> _textEmbeddingGeneration = new OpenAIClient(TestConfiguration.OpenAI.ApiKey)
-        .GetEmbeddingClient(TestConfiguration.OpenAI.EmbeddingModelId)
+    private static readonly IEmbeddingGenerator<string, Embedding<float>> _textEmbeddingGeneration = new OpenAIClient(TestConfiguration.OpenAI.ApiKey).GetEmbeddingClient(TestConfiguration.OpenAI.EmbeddingModelId)
         .AsIEmbeddingGenerator();
 
     public async IAsyncEnumerable<VectorStoreContextItem> CreateVectorStoreTextSearch(string collection,
         List<VectorStoreContextItem> items, bool delete = false, bool useCosmos = false)
     {
-        _database ??= await _cosmosClient.CreateDatabaseIfNotExistsAsync("sk-vectorsearch");
-        var avectorStore = new AzureCosmosDBNoSQLVectorStore(_database);
         // Construct an InMemory vector store.
         var vectorStore = new InMemoryVectorStore();
         var collectionName = collection;

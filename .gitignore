@@ -393,3 +393,6 @@ FodyWeavers.xsd
 /BlazorWithSematicKernel/Pages/AgentGroupChatPage.razor.cs
 /BlazorWithSematicKernel/AutoSeqAgents.json
 /SkPluginLibrary/SampleTranscript.xml
+/BlazorWithSematicKernel/TempSKContent.txt
+/BlazorWithSematicKernel/TempSKContent0802.txt
+/BlazorWithSematicKernel/TempSKContent0802_fromImages.txt

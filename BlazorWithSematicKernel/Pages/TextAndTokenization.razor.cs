@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using Markdig;
+using Microsoft.AspNetCore.Components;
 using Microsoft.SemanticKernel.Memory;
 using SkPluginLibrary.Abstractions;
 
@@ -63,6 +64,28 @@ namespace BlazorWithSematicKernel.Pages
             _tokenizedChunks = _tokenizedChunksDict.Select(x => new TokenizedChunk(x.Key, x.Value.Item1, x.Value.Item2)).ToList();
             StateHasChanged();
         }
+
+        private const string Code =
+        """
+        **Chunking and Tokenization Example**
+        ```csharp
+        // Example of how to use the TextChunker to split text into lines and paragraphs
+        
+        // Define the maximum number of tokens per line
+        var lines = TextChunker.SplitPlainTextLines(input, 200, StringHelpers.GetTokens);
+        // Split the text into paragraphs with a maximum of 1024 tokens per paragraph and an overlap of 200 tokens
+        var chunks = TextChunker.SplitPlainTextParagraphs(lines, 1024, 200, "", StringHelpers.GetTokens);
+        ```
+        **Token Counter Example (using [Tiktoken](https://www.nuget.org/packages/Tiktoken/2.2.0#show-readme-container) package)**
+        ```csharp
+        private static Encoder? _tokenizer;
+        public static int GetTokens(string text)
+        {
+            _tokenizer ??= ModelToEncoder.For("gpt-4o");
+            return _tokenizer.CountTokens(text);
+        }
+        ```
+        """;
         private string _searchBusyString = "Saving Chuncks...";
         private async void HandleTabIndexChanged(int index)
         {
@@ -99,6 +122,15 @@ namespace BlazorWithSematicKernel.Pages
             _memoryQueryResults = results;
             _isBusy = false;
             StateHasChanged();
+        }
+        private readonly MarkdownPipeline _markdownPipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
+        private string AsHtml(string? text)
+        {
+            if (text == null) return "";
+            var pipeline = _markdownPipeline;
+            var result = Markdown.ToHtml(text, pipeline);
+            return result;
+
         }
     }
 }

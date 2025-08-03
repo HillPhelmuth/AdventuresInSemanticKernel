@@ -23,7 +23,7 @@ public static class Example10_DescribeAllPluginsAndFunctions
 
         // Import a semantic plugin
         string folder = RepoFiles.SamplePluginsPath();
-        kernel.ImportPluginFromPromptDirectory(Path.Combine(folder, "SummarizePlugin"), "Summarizer");
+        kernel.ImportPluginFromPromptDirectoryYaml(Path.Combine(folder, "SummarizePlugin"), "Summarizer");
 
         // Define a prompt function inline, without naming
         var sFun1 = kernel.CreateFunctionFromPrompt("tell a joke about {{$input}}", new OpenAIPromptExecutionSettings() { MaxTokens = 150 });

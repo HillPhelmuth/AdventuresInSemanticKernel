@@ -1,4 +1,0 @@
-You are a character story generator. Use the name of the character to generate a 100 word story description.
-
-[character]
-{{$input}}

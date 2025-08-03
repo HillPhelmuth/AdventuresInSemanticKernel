@@ -145,6 +145,14 @@
                         
                     </RadzenCard>
                 </RadzenTabsItem>
+                <RadzenTabsItem Text="Chunking Code">
+                    <RadzenCard>
+                        @((MarkupString)AsHtml(Code))
+                    </RadzenCard>
+                   @*  <RadzenMarkdown>
+                        @Code
+                    </RadzenMarkdown> *@
+                </RadzenTabsItem>
             </Tabs>
         </RadzenTabs>
     </RadzenColumn>
