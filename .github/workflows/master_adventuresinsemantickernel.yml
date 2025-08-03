@@ -21,7 +21,7 @@ jobs:
       - name: Set up .NET Core
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 'v9.0'
+          dotnet-version: '9.x'
 
       - name: Build with dotnet
         run: dotnet build --configuration Release
@@ -38,14 +38,23 @@ jobs:
   deploy:
     runs-on: windows-latest
     needs: build
-    
-    
+    permissions:
+      id-token: write #This is required for requesting the JWT
+      contents: read #This is required for actions/checkout
+
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: .net-app
       
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_C816714D459541088D64538432089047 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_7E66BF6BF5884363999E7351F6BE8D8A }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_B99FA6FD36334CB19B1EE7D7255B5EC7 }}
+
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
@@ -53,4 +62,4 @@ jobs:
           app-name: 'AdventuresInSemanticKernel'
           slot-name: 'Production'
           package: .
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_58FC0F22AC1E4C94B9CFA8898B1CAC0A }}
+          
