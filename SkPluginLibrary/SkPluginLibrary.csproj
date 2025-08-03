@@ -24,11 +24,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Azure.AI.FormRecognizer" Version="4.1.0" />
+		
 		<PackageReference Include="Azure.Storage.Blobs" Version="12.25.0" />
-		<PackageReference Include="Azure.Storage.Files.Shares" Version="12.23.0" />
-		<PackageReference Include="Azure.Storage.Queues" Version="12.23.0" />
-		<PackageReference Include="AI.Dev.OpenAI.GPT" Version="1.0.2" />
+		
 		<PackageReference Include="Docker.DotNet" Version="3.125.15" />
 		<PackageReference Include="Google.Apis.CustomSearchAPI.v1" Version="1.68.0.3520" />
 		<PackageReference Include="Google.Apis.YouTube.v3" Version="1.70.0.3847" />

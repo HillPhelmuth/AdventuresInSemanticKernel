@@ -43,6 +43,11 @@
 	  <Content Remove="Pages\SciFiAgentRunner.razor" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <None Remove="Data\ChatContentDb.db" />
+	  <None Remove="Data\CodeContentDb.db" />
+	</ItemGroup>
+
 	
 	<ItemGroup>
 		<PackageReference Include="Auth0.AspNetCore.Authentication" Version="1.5.0" />
@@ -65,12 +70,6 @@
 	<ItemGroup>
 		<None Update="Data\CodeFiles\**">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\ChatContentDb.db">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\CodeContentDb.db">
-		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 		
 		<None Update="Data\SemanticKernelDb.db">
