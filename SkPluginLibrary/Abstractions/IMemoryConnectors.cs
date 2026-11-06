@@ -1,5 +1,5 @@
-﻿using Microsoft.Extensions.VectorData;
-using Microsoft.SemanticKernel.Memory;
+using Microsoft.Extensions.VectorData;
+using SkPluginLibrary.Services;
 using DistanceFunction = SkPluginLibrary.Services.DistanceFunction;
 
 namespace SkPluginLibrary.Abstractions;
@@ -14,14 +14,11 @@ public interface IMemoryConnectors
     Task<List<MemoryResult>> GetItemClustersFromCollection(int numberOfItems = 100, string searchTerm = "*", int minpoints = 3, int minCluster = 3, DistanceFunction distanceFunction = DistanceFunction.CosineSimilarity, string? collection = null);
     Task ChunkAndSaveFileCluster(byte[] file, string filename, FileType fileType = FileType.Pdf,
         string? collectionName = null);
-
     Task<List<MemoryResult>> ItemClustersFromCollection(int minpoints, int minCluster,
         DistanceFunction distanceFunction,
-        IEnumerable<MemoryQueryResult> itemList, Kernel kernel);
-
+        IEnumerable<MemoryQueryResult> itemList);
     IAsyncEnumerable<VectorStoreContextItem> CreateVectorStoreTextSearch(string collection,
         List<VectorStoreContextItem> items, bool delete = false, bool useCosmos = false);
-
     IAsyncEnumerable<VectorSearchResult<VectorStoreContextItem>> GetVectorSearchResults(string query,
         string collection, int topN = 3,
         double minThreshold = 0.0, StringFilter filter = StringFilter.None, string filterText = "");

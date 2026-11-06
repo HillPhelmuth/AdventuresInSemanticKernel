@@ -40,18 +40,21 @@ public static class ChatClientFactory
     }
 
     /// <summary>Creates a chat client for a model, with automatic function (tool) invocation enabled.</summary>
-    public static IChatClient Create(AIModel model = AIModel.Gpt41Mini, ILoggerFactory? loggerFactory = null)
+    public static IChatClient Create(AIModel model = AIModel.Gpt41Mini, ILoggerFactory? loggerFactory = null, int? maxIterations = null)
     {
         var (provider, modelName) = Resolve(model);
-        return Create(modelName, provider, loggerFactory);
+        return Create(modelName, provider, loggerFactory, maxIterations);
     }
 
-    public static IChatClient Create(string modelName, string provider = OpenAIProvider, ILoggerFactory? loggerFactory = null)
+    public static IChatClient Create(string modelName, string provider = OpenAIProvider, ILoggerFactory? loggerFactory = null, int? maxIterations = null)
     {
         var client = CreateOpenAIClient(provider).GetChatClient(modelName).AsIChatClient();
         var builder = client.AsBuilder();
         if (loggerFactory is not null) builder.UseLogging(loggerFactory);
-        return builder.UseFunctionInvocation(loggerFactory).Build();
+        return builder.UseFunctionInvocation(loggerFactory, c =>
+        {
+            if (maxIterations is { } max) c.MaximumIterationsPerRequest = max;
+        }).Build();
     }
 
     /// <summary>Creates an embedding generator (always OpenAI; OpenRouter does not serve embeddings).</summary>

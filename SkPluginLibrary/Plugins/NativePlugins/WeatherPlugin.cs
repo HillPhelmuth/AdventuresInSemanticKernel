@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using OpenMeteo;
 
 namespace SkPluginLibrary.Plugins.NativePlugins;
@@ -7,7 +7,7 @@ public class WeatherPlugin
 {
     private OpenMeteoClient _client = new();
 
-    [KernelFunction, Description("Gets the current weather for a location.")]
+    [Description("Gets the current weather for a location.")]
     public async Task<string> GetWeather(
         [Description(
             "Pass US Zipcode, UK Postcode, Canada Postalcode, IP address, Latitude/Longitude (decimal degree) or city name to get current weather for that location")]

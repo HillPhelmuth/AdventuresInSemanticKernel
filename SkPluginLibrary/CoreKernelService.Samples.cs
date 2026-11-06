@@ -1,10 +1,10 @@
-﻿using System.Reflection;
+using System.Reflection;
 
 namespace SkPluginLibrary;
 
 public partial class CoreKernelService
 {
-    #region Samples from SK Repo
+    #region Agent Framework samples (SkPluginLibrary.Examples)
 
     public void HandleStringWritten(object? sender, string e)
     {

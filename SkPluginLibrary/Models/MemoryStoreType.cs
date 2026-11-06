@@ -1,4 +1,4 @@
-﻿namespace SkPluginLibrary.Models
+namespace SkPluginLibrary.Models
 {
     public enum MemoryStoreType
     {
@@ -6,13 +6,6 @@
         [Description("In Memory Vector store")]
         InMemory,
         [Description("SqlLite as VectorDb")]
-        SqlLite,
-        [Description("Redis as VectorDb")]
-        Redis,
-        [Description("Qdrant VectorDb")]
-        Qdrant,
-        [Description("Weaviate VectorDb")]
-        Weaviate
-
+        SqlLite
     }
 }

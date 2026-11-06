@@ -1,5 +1,5 @@
-﻿using Microsoft.SemanticKernel.Connectors.Google;
-using Microsoft.SemanticKernel.Connectors.MistralAI;
+using Microsoft.Extensions.AI;
+using SkPluginLibrary.Services;
 
 namespace SkPluginLibrary.Plugins.NativePlugins;
 
@@ -94,78 +94,52 @@ Since novel itself will be written by a different writer, you must include all p
 - **Key Events**: {List and briefly describe the key events of the chapter}
 - **Chapter Conclusion**: {Sum up the chapter's impact on the overall narrative and set up the next chapter}
 """;
-	[KernelFunction, Description("Write a chapter of a novel based on the provided outline, previous chapter, and summary of the full novel so far")]
+	private const string FictionWriterSystemPrompt = "You are a creative and exciting fiction writer. You write intelligent and engrossing novels that expertly combine character development and growth, interpersonal and international intrigue, and thrilling action. You write 1 chapter at a time and eac chapter is **90 paragraphs**.";
+
+	private Dictionary<string, object?> ChapterArgs(string outline, string storyDescription, string previousChapter, string summary) => new()
+	{
+		["chapter_outline"] = outline,
+		["description"] = storyDescription,
+		["previous_chapter"] = previousChapter,
+		["summary"] = summary
+	};
+
+	[Description("Write a chapter of a novel based on the provided outline, previous chapter, and summary of the full novel so far")]
 	public IAsyncEnumerable<string> WriteChapterStreaming([Description("Chapter Outline")] string outline, [Description("Story description and characters")] string storyDescription, [Description("Precise text of the previous chapter")] string previousChapter, [Description("Combined summary of each chapter so far")] string summary)
 	{
-		var settings = GetPromptExecutionSettingsFromModel(_aIModel);
-		var args = new KernelArguments(settings)
-		{
-			["chapter_outline"] = outline,
-			["description"] = storyDescription,
-			["previous_chapter"] = previousChapter,
-			["summary"] = summary
-		};
-		var kernel = CoreKernelService.CreateKernel(_aIModel);
-		return kernel.InvokePromptStreamingAsync<string>(ChapterWriterPrompt, args);
-		
+		var client = ChatClientFactory.Create(_aIModel);
+		return PromptRunner.StreamAsync(client, ChapterWriterPrompt, ChapterArgs(outline, storyDescription, previousChapter, summary),
+			new ChatOptions { MaxOutputTokens = 4096 }, FictionWriterSystemPrompt);
 	}
-	[KernelFunction, Description("Write a chapter of a novel based on the provided outline, previous chapter, and summary of the full novel so far")]
-	public async Task<string> WriteChapter(Kernel kernelIn,[Description("Chapter Outline")] string outline, [Description("Story description and characters")] string storyDescription, [Description("Precise text of the previous chapter")] string previousChapter, [Description("Combined summary of each chapter so far")] string summary)
+
+	[Description("Write a chapter of a novel based on the provided outline, previous chapter, and summary of the full novel so far")]
+	public async Task<string> WriteChapter([Description("Chapter Outline")] string outline, [Description("Story description and characters")] string storyDescription, [Description("Precise text of the previous chapter")] string previousChapter, [Description("Combined summary of each chapter so far")] string summary)
 	{
-		var settings = GetPromptExecutionSettingsFromModel(_aIModel);
-		var args = new KernelArguments(settings)
-		{
-			["chapter_outline"] = outline,
-			["description"] = storyDescription,
-			["previous_chapter"] = previousChapter,
-			["summary"] = summary
-		};
-		var kernel = kernelIn.Clone();
-		//return await kernel.InvokePromptAsync<string>(ChapterWriterPrompt, args);
-		var response = await kernel.InvokePromptAsync<string>(ChapterWriterPrompt, args);
-		return response;
+		var client = ChatClientFactory.Create(_aIModel);
+		return await PromptRunner.RunAsync(client, ChapterWriterPrompt, ChapterArgs(outline, storyDescription, previousChapter, summary),
+			new ChatOptions { MaxOutputTokens = 4096 }, FictionWriterSystemPrompt);
 	}
-	private PromptExecutionSettings GetPromptExecutionSettingsFromModel(AIModel model)
-	{
-		var providor = model.GetModelProvidors().FirstOrDefault();
-		return providor switch
-		{
-			"GoogleAI" => new GeminiPromptExecutionSettings {MaxTokens = 4096},
-			"MistralAI" => new MistralAIPromptExecutionSettings {MaxTokens = 4096},
-			"OpenAI" or "AzureOpenAI" => new OpenAIPromptExecutionSettings {MaxTokens = 4096, ChatSystemPrompt = "You are a creative and exciting fiction writer. You write intelligent and engrossing novels that expertly combine character development and growth, interpersonal and international intrigue, and thrilling action. You write 1 chapter at a time and eac chapter is **90 paragraphs**." },
-			_ => new OpenAIPromptExecutionSettings {MaxTokens = 4096}
-		};
-	}
-	[KernelFunction, Description("Summarize all the character details and plot events in the novel chapter")]
+
+	[Description("Summarize all the character details and plot events in the novel chapter")]
 	public async Task<string> SummarizeChapter([Description("Chapter text to summarize")] string chapterText)
 	{
-		var settings = new OpenAIPromptExecutionSettings { MaxTokens = 1028 };
-		var args = new KernelArguments(settings)
-		{
-			["novel_chapter"] = chapterText
-		};
-		var kernel = CoreKernelService.CreateKernel();
-		var response = await kernel.InvokePromptAsync<string>("Summarize all the character details and plot events in the novel chapter. Summarize chapter by chapter:```\n {{$novel_chapter}} \n ```", args);
-		return response;
+		var client = ChatClientFactory.Create(AIModel.Gpt41Mini);
+		return await PromptRunner.RunAsync(client, "Summarize all the character details and plot events in the novel chapter. Summarize chapter by chapter:```\n {{$novel_chapter}} \n ```",
+			new Dictionary<string, object?> { ["novel_chapter"] = chapterText }, new ChatOptions { MaxOutputTokens = 1028 });
 	}
-	[KernelFunction, Description("Create an outline for a novel")]
+
+	[Description("Create an outline for a novel")]
 	public async Task<string> CreateNovelOutline([Description("The central topic or theme of the story")] string theme, [Description("A list of character details that must be included in the outline")] string characterDetails = "", [Description("Plot events that must occurr in the outline")] string plotEvents = "", [Description("The title of the novel")] string novelTitle = "", [Description("Number of chapters to include")] int chapters = 15)
 	{
-		
-		var settings = new OpenAIPromptExecutionSettings { MaxTokens = 4096, Temperature = 0.85 };
-        if (_aIModel == AIModel.O1SeriesMini)
-            settings.Temperature = null;
-		var args = new KernelArguments(settings)
+		var options = new ChatOptions { MaxOutputTokens = 4096, Temperature = _aIModel == AIModel.O1SeriesMini ? null : 0.85f };
+		var client = ChatClientFactory.Create(_aIModel);
+		return await PromptRunner.RunAsync(client, OutlineWriterPrompt, new Dictionary<string, object?>
 		{
 			["theme"] = theme,
 			["characterDetails"] = characterDetails,
 			["plotEvents"] = plotEvents,
 			["novelTitle"] = novelTitle,
 			["chapterCount"] = chapters
-		};
-		var kernel = CoreKernelService.CreateKernel(_aIModel);
-		var response = await kernel.InvokePromptAsync<string>(OutlineWriterPrompt, args);
-		return response;
+		}, options);
 	}
-	
 }

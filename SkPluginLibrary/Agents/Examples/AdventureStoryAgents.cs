@@ -1,229 +1,137 @@
-﻿using System.Runtime.CompilerServices;
+using System.Runtime.CompilerServices;
 using System.Text;
-using Azure.AI.OpenAI;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Experimental.Agents;
+using ChatComponents;
+using Microsoft.Agents.AI;
+using Microsoft.Extensions.AI;
 using SemanticKernelAgentOrchestration.Models;
 using SkPluginComponents;
 using SkPluginComponents.Models;
-using SkPluginLibrary.Agents.Extensions;
-using SkPluginLibrary.Models.Hooks;
 using SkPluginLibrary.Services;
 
 namespace SkPluginLibrary.Agents.Examples;
 
+/// <summary>
+/// Interactive space adventure. A "Story Master" agent narrates; the three crew members are
+/// themselves agents, exposed to the Story Master as tools (agent-as-tool pattern).
+/// </summary>
 public class AdventureStoryAgents(AskUserService askUserService) : IAsyncDisposable
 {
-    private static readonly List<IAgent> Agents = [];
     public event Action<AgentChatMessage>? ChatMessage;
     public event Action<ChatHistory>? ChatHistoryUpdate;
     private readonly AskUserPlugin _askUserPlugin = new(askUserService);
-    private IAgent? _astra;
-    private IAgent? _zanar;
-    private IAgent? _elara;
-    private ChatHistory _chatHistory = [];
+    private AIAgent? _astra;
+    private AIAgent? _zanar;
+    private AIAgent? _elara;
+    private readonly ChatHistory _chatHistory = [];
     private string _currentRespondent = "Story Master";
-    
+
+    private static AIAgent Crew(string name, string description, string instructions, float temperature = 1.0f) =>
+        CoreKernelService.CreateAgent(CoreKernelService.CreateChatClient(AIModel.Gpt41Mini), instructions, null, name,
+            new ChatOptions { Temperature = temperature }, null, description);
+
+    private static AIFunction CrewTool(AIAgent agent, string toolName, string description) =>
+        AIFunctionFactory.Create(async ([System.ComponentModel.Description("What to say or ask the character")] string input, CancellationToken ct) =>
+        {
+            var response = await agent.RunAsync(input, cancellationToken: ct);
+            return response.Text;
+        }, toolName, description);
 
     public async IAsyncEnumerable<string> ExecuteChatSequence(string input, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        _astra ??= await GenerateCommanderAstra();
-        _zanar ??= await GenerateZanar();
-        _elara ??= await GenerateElara();
-        var kernelBuilder = Kernel.CreateBuilder();
-        kernelBuilder.Services.AddLogging(builder => builder.AddConsole());
-        var kernel = kernelBuilder.AddOpenAIChatCompletion(TestConfiguration.OpenAI.Gpt4ModelId, TestConfiguration.OpenAI.ApiKey).Build();
-        //kernel.Plugins.Add(GenerateAgentsAsPluginFunctions());
-        kernel.Plugins.Add(_astra.AsPlugin());
-        kernel.Plugins.Add(_zanar.AsPlugin());
-        kernel.Plugins.Add(_elara.AsPlugin());
-        var functionHook = new FunctionFilterHook();
-        kernel.FunctionInvocationFilters.Add(functionHook);
-        functionHook.FunctionInvoking += HandleFunctionInvoking;
-        functionHook.FunctionInvoked += HandleFunctionInvoked;
-        OpenAIPromptExecutionSettings settings = new() { ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions, ChatSystemPrompt = AdventureSystemPrompt, Temperature = 1.0 };
-        var chat = kernel.GetRequiredService<IChatCompletionService>();
-        _chatHistory.AddUserMessage(input);
-        var sentRespondant = false;
-        var sb = new StringBuilder();
-        await foreach (var streamingChatMessageContent in chat.GetStreamingChatMessageContentsAsync(_chatHistory, settings, kernel, cancellationToken))
+        _astra ??= GenerateCommanderAstra();
+        _zanar ??= GenerateZanar();
+        _elara ??= GenerateElara();
+        var tools = new List<AITool>
         {
-            var update = (OpenAIStreamingChatMessageContent) streamingChatMessageContent;
-            var toolCall = update.ToolCallUpdates[0];
-            if (toolCall?.FunctionName is not null)
-            {
-                _currentRespondent = toolCall.FunctionName.Replace("_Ask","");
-            }
-            
-            if (!sentRespondant)
+            CrewTool(_astra, "CommanderAstra_Ask", _astra.Description ?? "Commander Astra"),
+            CrewTool(_zanar, "EngineerZanar_Ask", _zanar.Description ?? "Engineer Zanar"),
+            CrewTool(_elara, "MysticElara_Ask", _elara.Description ?? "Mystic Elara")
+        };
+        var middleware = new AgentFunctionMiddleware();
+        middleware.FunctionInvoking += (_, e) =>
+        {
+            _currentRespondent = e.Function.Name.Replace("_Ask", "");
+            Console.WriteLine($"Function {e.Function.Name} Invoking");
+        };
+        middleware.FunctionInvoked += (_, e) =>
+            Console.WriteLine($"\n---------Function {e.Function.Name} Invoked-----------\nResults:\n{e.Result}\n----------------------------");
+        var storyMaster = CoreKernelService.CreateAgent(CoreKernelService.CreateChatClient(AIModel.Gpt41), AdventureSystemPrompt, tools, "Story Master",
+            new ChatOptions { Temperature = 1.0f }, [middleware]);
+
+        _chatHistory.AddUserMessage(input);
+        var sentRespondent = false;
+        var sb = new StringBuilder();
+        await foreach (var update in storyMaster.RunStreamingAsync(_chatHistory, cancellationToken: cancellationToken))
+        {
+            if (!sentRespondent)
             {
                 sb.AppendLine($"{_currentRespondent}: ");
                 yield return $"<em>{_currentRespondent}</em>:<br/> ";
-                sentRespondant = true;
+                sentRespondent = true;
             }
-            
-            if (update.Content is not null)
+            if (!string.IsNullOrEmpty(update.Text))
             {
-                sb.Append(update.Content);
-                yield return update.Content;
+                sb.Append(update.Text);
+                yield return update.Text;
             }
-            
         }
         _chatHistory.AddAssistantMessage(sb.ToString());
         ChatHistoryUpdate?.Invoke(_chatHistory);
+    }
 
-    }
-    private void HandleFunctionInvoked(object? sender, FunctionInvocationContext invokedArgs)
-    {
-        var function = invokedArgs.Function;
-        Console.WriteLine($"\n---------Function {function.Name} Invoked-----------\nResults:\n{invokedArgs.Result}\n----------------------------");
-    }
-    private void HandleFunctionInvoking(object? sender, FunctionInvocationContext invokingEventArgs)
-    {
-        var function = invokingEventArgs.Function;
-        Console.WriteLine($"Function Arguments: {invokingEventArgs.Arguments.AsJson()}");
-        //_currentRespondent = function.Name;
-        Console.WriteLine($"Function {function.Name} Invoking");
-    }
-    public async Task RestartAsync()
+    public Task RestartAsync()
     {
         _chatHistory.Clear();
-        await RemoveAgents();
+        _astra = _zanar = _elara = null;
+        return Task.CompletedTask;
     }
+
+    /// <summary>
+    /// Runs the crew in a turn-based loop. The commander decides who speaks next by naming them in brackets;
+    /// the user is consulted through the ask-user tool.
+    /// </summary>
     public async Task<string> ExecuteRun(string input = "Introduce the crew and tell me about our first adventure", CancellationToken cancellationToken = default)
     {
-        try
+        var commander = GenerateCommanderAstra();
+        var zanar = GenerateZanar();
+        var elara = GenerateElara();
+        var thread = new List<ChatMessage> { new(ChatRole.User, input) };
+        var askUser = _askUserPlugin.GetTools().OfType<AIFunction>().First(x => x.Name.StartsWith("AskUser", StringComparison.OrdinalIgnoreCase));
+        while (true)
         {
-            var commander = await GenerateCommanderAstra();
-            var zanar = await GenerateZanar();
-            var elara = await GenerateElara();
-            var thread = await commander.NewThreadAsync(cancellationToken);
-            var askuserPlugin = KernelPluginFactory.CreateFromObject(_askUserPlugin);
-            var askUser = askuserPlugin["AskUser"];
-            var kernel = Kernel.CreateBuilder().Build();
-            await thread.AddUserMessageAsync(input,cancellationToken: cancellationToken);
-            while (true)
+            var commanderResponse = await commander.RunAsync(thread, cancellationToken: cancellationToken);
+            thread.AddRange(commanderResponse.Messages);
+            var text = commanderResponse.Text;
+            ChatMessage?.Invoke(new AgentChatMessage(commander.Name!, text, "assistant", Guid.NewGuid().ToString()));
+            if (text.Contains("[Engineer Zanar]") || text.Contains("[Mystic Elara]"))
             {
-                
-                var chatMessages = await thread.InvokeAsync(commander, cancellationToken: cancellationToken).ToListAsync(cancellationToken);
-                Console.WriteLine($"Commander Astra has {chatMessages.Count} messages");
-                var message = chatMessages.First();
-                ChatMessage?.Invoke(AgentChatMessage.FromChatMessage(message, commander.Name!));
-                if (message.Content.Contains("[Engineer Zanar]"))
-                {
-                    chatMessages = await thread.InvokeAsync(zanar, cancellationToken: cancellationToken).ToListAsync(cancellationToken);
-                    SendChatMessages(chatMessages, zanar.Name);
-                }
-                else if (message.Content.Contains("[Mystic Elara]"))
-                {
-                    chatMessages = await thread.InvokeAsync(elara, cancellationToken: cancellationToken).ToListAsync(cancellationToken);
-                    SendChatMessages(chatMessages, elara.Name);
-                }
-                else if (message.Content.Contains("[New Recruit]"))
-                {
-                    var userResponse = await askUser.InvokeAsync(kernel, new KernelArguments { ["question"] = message.Content }, cancellationToken);
-                    if (userResponse.Result().Contains("user refused to answer")) { break; }
-                    var userMessage = await thread.AddUserMessageAsync(userResponse.Result(), cancellationToken: cancellationToken);
-                    var name = "You";
-                    SendChatMessage(userMessage, name);
-                }
-                else
-                {
-                    var userResponse = await askUser.InvokeAsync(kernel, new KernelArguments {["question"] = message.Content }, cancellationToken);
-                    if (userResponse.Result().Contains("user refused to answer")) { break; }
-                    var userMessage = await thread.AddUserMessageAsync(userResponse.Result(), cancellationToken: cancellationToken);
-                    ChatMessage?.Invoke(AgentChatMessage.FromChatMessage(userMessage, "You"));
-                }
+                var next = text.Contains("[Engineer Zanar]") ? zanar : elara;
+                var response = await next.RunAsync(thread, cancellationToken: cancellationToken);
+                thread.AddRange(response.Messages);
+                ChatMessage?.Invoke(new AgentChatMessage(next.Name!, response.Text, "assistant", Guid.NewGuid().ToString()));
+                continue;
             }
-            return "Conversation complete";
+            var userResponse = (await askUser.InvokeAsync(new AIFunctionArguments { ["question"] = text }, cancellationToken))?.ToString() ?? "";
+            if (userResponse.Contains("user refused to answer")) break;
+            thread.Add(new ChatMessage(ChatRole.User, userResponse));
+            ChatMessage?.Invoke(new AgentChatMessage("You", userResponse, "user", Guid.NewGuid().ToString()));
         }
-        finally
-        {
-            // ReSharper disable once MethodSupportsCancellation
-            static async void DeleteAgent(IAgent agent) => await agent.DeleteAsync();
+        return "Conversation complete";
+    }
 
-            Agents.ForEach(DeleteAgent);
-            
-        }
-    }
-    private void SendChatMessages(IEnumerable<IChatMessage> messages, string name)
-    {
-        foreach (var message in messages)
+    public static Task<List<AgentProxy>> GetAgents() =>
+        Task.FromResult(new List<AgentProxy>
         {
-            SendChatMessage(message, name);
-        }
-    }
-    private void SendChatMessage(IChatMessage message, string name)
-    {
-        ChatMessage?.Invoke(AgentChatMessage.FromChatMessage(message, name));
-    }
-    public static async Task<List<AgentProxy>> GetAgents()
-    {
-        var result = new List<AgentProxy>();
-        var astra = await GenerateCommanderAstra();
-        var zanar = await GenerateZanar();
-        var elara = await GenerateElara();
-        result.Add(astra.AgentProxy());
-        result.Add(zanar.AgentProxy());
-        result.Add(elara.AgentProxy());
-        await RemoveAgents();
-        return result;
-    }
-    private static async Task<IAgent> GenerateCommanderAstra()
-    {
-        return Track(await new AgentBuilder()
-            .WithOpenAIChatCompletion(TestConfiguration.OpenAI.Gpt4MiniModelId, TestConfiguration.OpenAI.ApiKey)
-            .WithInstructions(AstraInstructions)
-            .WithDescription("Gruff but crafty leader of the crew.")
-            .WithName("Commander Astra")
-            .BuildAsync());
-    }
-    private static async Task<IAgent> GenerateZanar()
-    {
-        return Track(await new AgentBuilder()
-            .WithOpenAIChatCompletion(TestConfiguration.OpenAI.Gpt4MiniModelId, TestConfiguration.OpenAI.ApiKey)
-            .WithName("Engineer Zanar")
-            .WithDescription("A brilliant but quirky engineer character who specializes in technology and gadgetry. Provides information on fictional technologies, solves technical puzzles, or creates imaginative solutions to challenges faced by the team")
-            .WithInstructions(ZanarInstructions)
-            .BuildAsync());
-    }
-    private static async Task<IAgent> GenerateElara()
-    {
-        return Track(
-            await new AgentBuilder()
-                .WithOpenAIChatCompletion(TestConfiguration.OpenAI.Gpt4MiniModelId, TestConfiguration.OpenAI.ApiKey)
-                .WithName("Mystic Elara")
-                .WithDescription("A character with deep knowledge of the universe's mystical and magical aspects. Offers insights into alien cultures, ancient lore, and cosmic mysteries, adding a layer of fantasy and intrigue to the narrative.")
-                .WithInstructions(ElaraInstructions)
-                .BuildAsync());
-    }
-    private KernelPlugin GenerateAgentsAsPluginFunctions()
-    {
-        var astraFunction = KernelFunctionFactory.CreateFromPrompt("Respond to input as Astra: {{$input}}", new OpenAIPromptExecutionSettings { Temperature = 0.9, ChatSystemPrompt = AstraInstructions}, "CommanderAstra", "Gruff but crafty leader of the crew.", loggerFactory: ConsoleLogger.LoggerFactory);
-        var zanarFunction = KernelFunctionFactory.CreateFromPrompt("Respond to input as Zanar: {{$input}}", new OpenAIPromptExecutionSettings { Temperature = 0.7, ChatSystemPrompt = ZanarInstructions }, "EngineerZanar", "A brilliant but quirky engineer character who specializes in technology and gadgetry. Provides information on fictional technologies, solves technical puzzles, or creates imaginative solutions to challenges faced by the team",loggerFactory: ConsoleLogger.LoggerFactory);
-        var elaraFunction = KernelFunctionFactory.CreateFromPrompt("Respond to input as Elara: {{$input}}", new OpenAIPromptExecutionSettings { Temperature = 1.1, ChatSystemPrompt = ElaraInstructions }, "MysticElara", "A character with deep knowledge of the universe's mystical and magical aspects. Offers insights into alien cultures, ancient lore, and cosmic mysteries, adding a layer of fantasy and intrigue to the narrative.", loggerFactory:ConsoleLogger.LoggerFactory);
-        var kernelPlugin = KernelPluginFactory.CreateFromFunctions("Crew", new[] { astraFunction, zanarFunction, elaraFunction });
-        return kernelPlugin;
-    }
-    private static IAgent Track(IAgent agent)
-    {
-        Agents.Add(agent);
+            new() { Name = "Commander Astra", Description = "Gruff but crafty leader of the crew.", Instructions = AstraInstructions },
+            new() { Name = "Engineer Zanar", Description = "A brilliant but quirky engineer character who specializes in technology and gadgetry. Provides information on fictional technologies, solves technical puzzles, or creates imaginative solutions to challenges faced by the team", Instructions = ZanarInstructions },
+            new() { Name = "Mystic Elara", Description = "A character with deep knowledge of the universe's mystical and magical aspects. Offers insights into alien cultures, ancient lore, and cosmic mysteries, adding a layer of fantasy and intrigue to the narrative.", Instructions = ElaraInstructions }
+        });
 
-        return agent;
-    }
-    private static async Task RemoveAgents()
-    {
-        foreach (var agent in Agents)
-        {
-            await agent.DeleteAsync();
-        }
-    }
-    public async ValueTask DisposeAsync()
-    {
-        await RemoveAgents();
-    }
+    private static AIAgent GenerateCommanderAstra() => Crew("Commander Astra", "Gruff but crafty leader of the crew.", AstraInstructions, 0.9f);
+    private static AIAgent GenerateZanar() => Crew("Engineer Zanar", "A brilliant but quirky engineer who specializes in technology and gadgetry.", ZanarInstructions, 0.7f);
+    private static AIAgent GenerateElara() => Crew("Mystic Elara", "Deep knowledge of the universe's mystical and magical aspects.", ElaraInstructions, 1.1f);
+
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
     #region Instruction strings
 
@@ -331,8 +239,8 @@ public class AgentChatMessage(string name, string content, string role, string i
     public string Content { get; set; } = content;
     public string Role { get; set; } = role;
     public string Id { get; set; } = id;
-    public static AgentChatMessage FromChatMessage(IChatMessage message, string name)
+    public static AgentChatMessage FromChatMessage(ChatMessage message, string name)
     {
-        return new AgentChatMessage(name, message.Content, message.Role, message.Id);
+        return new AgentChatMessage(name, message.Text, message.Role.Value, message.MessageId ?? Guid.NewGuid().ToString());
     }
 }

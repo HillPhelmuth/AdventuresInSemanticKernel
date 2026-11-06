@@ -1,80 +1,69 @@
-﻿using Microsoft.SemanticKernel.ChatCompletion;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
-using Microsoft.SemanticKernel.Agents;
-using Microsoft.SemanticKernel.Agents.Chat;
+using Microsoft.Agents.AI;
+using Microsoft.Agents.AI.Workflows;
+using Microsoft.Extensions.AI;
 using SemanticKernelAgentOrchestration.Models;
-using SkPluginLibrary.Agents.Extensions;
-using SkPluginLibrary.Agents.Models.Events;
-using Microsoft.SemanticKernel;
 using SkPluginLibrary.Agents.Models;
-using SkPluginLibrary.Models.Hooks;
-
+using SkPluginLibrary.Agents.Models.Events;
+using SkPluginLibrary.Services;
 
 namespace SkPluginLibrary.Agents.SkAgents;
 
+/// <summary>
+/// A multi-agent group chat built on Agent Framework's group-chat workflow. Who speaks next is decided by a
+/// custom <see cref="GroupChatManager"/> (hub-and-spoke, sequential, or chosen by an LLM prompt), and an
+/// optional <see cref="UserProxySkAgent"/> puts a human in the conversation.
+/// </summary>
 public class ChatCompletionGroup
 {
     public event EventHandler<SkAgentInputRequestArgs>? AgentInputRequest;
 
+    private readonly List<AIAgent> _activeAgents = [];
+    private readonly int _maxIterations;
+    private readonly string _stop;
+    private readonly GroupTransitionType _transitionType;
+    private readonly IChatClient _chatClient;
+    public event Action<string>? MessageSent;
+
     public ChatCompletionGroup(List<AgentProxy> agents, GroupTransitionType transitionType, int maxIterations = 10, string stop = "approve")
     {
-        _activeAgents.Clear();
-        var kernel = CoreKernelService.CreateKernel();
-        _activeAgents.AddRange(agents.Where(x => !x.IsUserProxy).Select(y => y.AsChatCompletionAgent(kernel)));
-        var userProxySkAgent = agents.FirstOrDefault(x => x.IsUserProxy);
-        if (userProxySkAgent is not null)
+        _transitionType = transitionType;
+        _maxIterations = maxIterations;
+        _stop = stop;
+        _chatClient = ChatClientFactory.Create();
+        var middleware = new AgentFunctionMiddleware();
+        middleware.FunctionInvoking += (_, e) => WriteLine(InvokingExpando(JsonSerializer.Serialize(e.Arguments), e.Function.Name));
+        middleware.FunctionInvoked += (_, e) => WriteLine(ResultsExpando(KernelPluginExtensions.ResultToString(e.Result), e.Function.Name));
+        _activeAgents.AddRange(agents.Where(x => !x.IsUserProxy).Select(y => CreateAgent(y, middleware)));
+        var userProxy = agents.FirstOrDefault(x => x.IsUserProxy);
+        if (userProxy is not null)
         {
-            var proxySkAgent = new UserProxySkAgent() { Name = userProxySkAgent.Name ?? "User", Description = userProxySkAgent.Description };
-            proxySkAgent.AgentInputRequest += HandleInput;
-            _activeAgents.Add(proxySkAgent);
+            var proxy = new UserProxySkAgent(string.IsNullOrEmpty(userProxy.Name) ? "User" : userProxy.Name, userProxy.Description);
+            proxy.AgentInputRequest += HandleInput;
+            _activeAgents.Add(proxy);
         }
+    }
 
-        var textTerminationStrategy = new TextTerminationStrategy(stop)
-        {
-            Agents = _activeAgents.Any(x => x is UserProxySkAgent) ? [_activeAgents.Find(x => x is UserProxySkAgent)!] : null,
-            AutomaticReset = true,
-            // Limit total number of turns
-            MaximumIterations = maxIterations,
-        };
-        var selectionStrategy = GetSelectionStrategy(transitionType);
-        _agentGroupChat = new AgentGroupChat(_activeAgents.ToArray())
-        {
-            ExecutionSettings =
-                new AgentGroupChatSettings
-                {
-                    TerminationStrategy = textTerminationStrategy,
-                    SelectionStrategy = selectionStrategy
-                }
-        };
-    }
-    private static SelectionStrategy GetSelectionStrategy(GroupTransitionType transitionType)
+    private AIAgent CreateAgent(AgentProxy proxy, AgentFunctionMiddleware middleware)
     {
-        return transitionType switch
-        {
-            GroupTransitionType.HubAndSpoke => new HubAndSpokeStrategy(),
-            GroupTransitionType.PromptBased => new PromptSelectionStrategy(),
-            GroupTransitionType.Sequential => new SequentialSelectionStrategy(),
-            _ => new SequentialSelectionStrategy()
-        };
+        var tools = proxy.Plugins.SelectMany(p => p.Functions
+            .Where(f => !proxy.ExcludedFunctionNames.Contains(f.Name)).Select(p.Prefixed)).ToList();
+        var agent = CoreKernelService.CreateAgent(_chatClient, proxy.Instructions, tools, proxy.Name.Replace(" ", "_"),
+            new ChatOptions { AllowMultipleToolCalls = true }, [middleware]);
+        return agent;
     }
+
     public void HandleInput(object? sender, SkAgentInputRequestArgs e)
     {
         AgentInputRequest?.Invoke(this, e);
     }
+
     public async Task ExecuteCustomAgentGroup(string initialInput, CancellationToken cancellationToken = default)
     {
-        
         await RunAsync(initialInput, cancellationToken: cancellationToken);
     }
 
-    private List<Agent> _activeAgents = [];
-    private AgentGroupChat _agentGroupChat;
-    public event Action<string>? MessageSent;
     private void WriteLine(string output)
     {
         MessageSent?.Invoke(output);
@@ -100,68 +89,50 @@ public class ChatCompletionGroup
     public async Task RunExample(string? input = null)
     {
         input ??= "concept: maps made out of egg cartons.";
-        ChatCompletionAgent agentReviewer =
-            new()
-            {
-                Instructions = ReviewerInstructions,
-                Name = ReviewerName,
-                Kernel = CreateKernelWithChatCompletion(),
-            };
-
-        ChatCompletionAgent agentWriter =
-            new()
-            {
-                Instructions = CopyWriterInstructions,
-                Name = CopyWriterName,
-                Kernel = CreateKernelWithChatCompletion(),
-            };
-        UserProxySkAgent userProxySkAgent = new() { Name = "User" };
-        userProxySkAgent.AgentInputRequest += HandleInput;
-        _activeAgents = [agentWriter, agentReviewer, userProxySkAgent];
-        await RunAsync(input, [agentReviewer, userProxySkAgent]);
+        var reviewer = CoreKernelService.CreateAgent(_chatClient, ReviewerInstructions, name: ReviewerName);
+        var writer = CoreKernelService.CreateAgent(_chatClient, CopyWriterInstructions, name: CopyWriterName);
+        var userProxy = new UserProxySkAgent("User");
+        userProxy.AgentInputRequest += HandleInput;
+        _activeAgents.Clear();
+        _activeAgents.AddRange([writer, reviewer, userProxy]);
+        await RunAsync(input, [reviewer, userProxy]);
     }
-    public async Task RunAsync(string input, IEnumerable<Agent>? terminationAgents = null, CancellationToken cancellationToken = default)
+
+    public async Task RunAsync(string input, IEnumerable<AIAgent>? terminationAgents = null, CancellationToken cancellationToken = default)
     {
-        // Define the agents
-        terminationAgents ??= _activeAgents.Any(x => x is UserProxySkAgent) ? new[] { _activeAgents.First(x => x is UserProxySkAgent) } : _activeAgents;
-        // Create a chat for agent interaction.
-        var filter = new AutoInvokeFilter();
-        filter.FunctionInvoked += HandleFunctionInvoked;
-        filter.FunctionInvoking += HandleFunctionInvoking;
-        var chat =
-            _agentGroupChat;
+        // Participants that are allowed to end the chat by saying the stop word.
+        terminationAgents ??= _activeAgents.Any(x => x is UserProxySkAgent) ? [_activeAgents.First(x => x is UserProxySkAgent)] : _activeAgents;
+        var terminators = terminationAgents.Select(a => a.Name ?? "").ToHashSet();
 
-        // Invoke chat and display messages.
-        
-        chat.AddChatMessage(new ChatMessageContent(AuthorRole.User, input));
+        var workflow = AgentWorkflowBuilder
+            .CreateGroupChatBuilderWith(agents => new SelectionGroupChatManager(agents, _transitionType, _chatClient, _stop, terminators) { MaximumIterationCount = _maxIterations })
+            .AddParticipants(_activeAgents)
+            .Build();
 
+        List<ChatMessage> messages = [new ChatMessage(ChatRole.User, input) { AuthorName = "User" }];
         var currentAgent = "";
         var outputNumber = 0;
-        await foreach (var content in chat.InvokeStreamingAsync(cancellationToken))
+        await using StreamingRun run = await InProcessExecution.RunStreamingAsync(workflow, messages, cancellationToken: cancellationToken);
+        await run.TrySendMessageAsync(new TurnToken(emitEvents: true));
+        await foreach (WorkflowEvent evt in run.WatchStreamAsync(cancellationToken))
         {
-            var isCurrent = content.AuthorName == currentAgent;
+            if (evt is not AgentResponseUpdateEvent update) continue;
+            var author = update.Update.AuthorName ?? update.ExecutorId;
+            var isCurrent = author == currentAgent;
             if (!isCurrent)
                 outputNumber++;
-            var output = isCurrent ? content.Content : $"<br/>{outputNumber}. **{content.Role} - {content.AuthorName ?? "*"}:**\n {content.Content}";
-            currentAgent = content.AuthorName ?? "";
-            if (string.IsNullOrEmpty(output)) continue;
-            
+            var text = update.Update.Text;
+            var output = isCurrent ? text : $"<br/>{outputNumber}. **{update.Update.Role} - {author}:**\n {text}";
+            currentAgent = author;
+            if (string.IsNullOrEmpty(text)) continue;
+
             WriteLine(output);
         }
 
-        WriteLine($"\n_IS COMPLETE:_ {chat.IsComplete}");
+        WriteLine("\n_IS COMPLETE:_ True");
         WriteLine("[DONE]");
     }
 
-    private void HandleFunctionInvoking(object? sender, AutoFunctionInvocationContext e)
-    {
-        WriteLine(InvokingExpando(JsonSerializer.Serialize(e.Arguments), e.Function.Name));
-    }
-
-    private void HandleFunctionInvoked(object? sender, AutoFunctionInvocationContext e)
-    {
-        WriteLine(ResultsExpando(e.Result.ToString(), e.Function.Name));
-    }
     private static string InvokingExpando(string result, string name)
     {
         var resultsExpando = $"""
@@ -196,109 +167,84 @@ public class ChatCompletionGroup
                               """;
         return resultsExpando;
     }
-    protected Kernel CreateKernelWithChatCompletion()
-    {
-        return CoreKernelService.CreateKernel();
-    }
-
 }
-internal sealed class TextTerminationStrategy : TerminationStrategy
-{
-    private readonly string _approve;
 
-    public TextTerminationStrategy(string? approve = null)
+/// <summary>
+/// Decides who speaks next in a group chat and when it ends. Replaces the old selection / termination strategies.
+/// </summary>
+internal sealed class SelectionGroupChatManager(IReadOnlyList<AIAgent> agents, GroupTransitionType transitionType,
+    IChatClient chatClient, string stop, HashSet<string> terminators) : GroupChatManager
+{
+    private int _spokeIndex = 1;
+    private int _sequentialIndex;
+
+    private const string NextAgentPromptTemplate = """
+                                                   You are in a role play game. Carefully read the conversation history and carry on the conversation, always starting with 'From {name}:'.
+                                                   The available roles are:
+                                                   - {speakerList}
+
+                                                   ### Conversation history
+
+                                                   - {conversationHistory}
+
+                                                   Each message MUST start with 'From name:', e.g:
+                                                   From admin:
+                                                   //your message//.
+                                                   """;
+
+    protected override async ValueTask<AIAgent> SelectNextAgentAsync(IReadOnlyList<ChatMessage> history, CancellationToken cancellationToken = default)
     {
-        _approve = approve ?? "approve";
+        switch (transitionType)
+        {
+            case GroupTransitionType.HubAndSpoke:
+            {
+                var admin = agents[0];
+                if (history.Count == 0) return admin;
+                var last = agents.FirstOrDefault(x => x.Name == history[^1].AuthorName);
+                if (last?.Name != admin.Name) return admin;
+                var agent = agents[_spokeIndex];
+                _spokeIndex = _spokeIndex + 1 >= agents.Count ? 1 : _spokeIndex + 1;
+                return agent;
+            }
+            case GroupTransitionType.PromptBased:
+                return await SelectByPromptAsync(history, cancellationToken);
+            default:
+            {
+                var agent = agents[_sequentialIndex % agents.Count];
+                _sequentialIndex++;
+                return agent;
+            }
+        }
     }
 
-    // Terminate when the final message contains the term "approve"
-    protected override Task<bool> ShouldAgentTerminateAsync(Agent agent, IReadOnlyList<ChatMessageContent> history, CancellationToken cancellationToken)
-    {
-        var terminate = history[^1].Content?.Contains(_approve, StringComparison.OrdinalIgnoreCase) ?? false;
-        Console.WriteLine($"TextTerminationStrategy: {agent.Name} - {terminate}");
-        return Task.FromResult(terminate);
-    }
-}
-public class HubAndSpokeStrategy : SelectionStrategy
-{
-    private int _index = 1;
-    protected override Task<Agent> SelectAgentAsync(IReadOnlyList<Agent> agents, IReadOnlyList<ChatMessageContent> history,
-        CancellationToken cancellationToken = default)
+    private async ValueTask<AIAgent> SelectByPromptAsync(IReadOnlyList<ChatMessage> history, CancellationToken cancellationToken)
     {
         var admin = agents[0];
-        if (history.Count == 0) return Task.FromResult(admin);
-
-        var lastAgent = agents.FirstOrDefault(x => x.Name == history[^1].AuthorName);
-        if (lastAgent?.Name != admin.Name) return Task.FromResult(admin);
-        var agent = agents[_index];
-
-        _index = (_index + 1) % agents.Count;
-
-        return Task.FromResult(agent);
-
-    }
-}
-public class PromptSelectionStrategy : SelectionStrategy
-{
-    private const string NextAgentPromptTemplate = """
-	                                               You are in a role play game. Carefully read the conversation history and carry on the conversation, always starting with 'From {name}:'.
-	                                               The available roles are:
-	                                               - {{$speakerList}}
-
-	                                               ### Conversation history
-
-	                                               - {{$conversationHistory}}
-
-	                                               Each message MUST start with 'From name:', e.g:
-	                                               From admin:
-	                                               //your message//.
-	                                               """;
-  
-    protected override async Task<Agent> SelectAgentAsync(IReadOnlyList<Agent> agents, IReadOnlyList<ChatMessageContent> history,
-        CancellationToken cancellationToken = new())
-    {
-        var settings = new OpenAIPromptExecutionSettings
-        {
-
-            Temperature = 0.0,
-            MaxTokens = 128,
-            StopSequences = [":"],
-        };
-        var kernelArgs = UpdateKernelArguments(history, agents, settings);
-        var promptFactory = new KernelPromptTemplateFactory();
-        var templateConfig = new PromptTemplateConfig(NextAgentPromptTemplate);
-        var adminAgent = agents[0] as ChatCompletionAgent;
-        var prompt = await promptFactory.Create(templateConfig).RenderAsync(adminAgent?.Kernel!, kernelArgs, cancellationToken);
-        var chat = adminAgent!.Kernel.GetRequiredService<IChatCompletionService>();
-        var chatHistory = new ChatHistory(prompt);
+        var conversation = string.Join("\n ", history.Select(m => $"From: \n{m.AuthorName}\n### Message\n {m.Text}\n"));
+        var speakers = string.Join("\n ", agents.Select(a => $"**Name:** {a.Name}\n **Description:** {a.Description}\n"));
+        var prompt = NextAgentPromptTemplate.Replace("{speakerList}", speakers).Replace("{conversationHistory}", conversation);
         try
         {
-            var nextAgentName = await chat.GetChatMessageContentAsync(chatHistory, settings, cancellationToken: cancellationToken);
-            var name = nextAgentName!.ToString()[5..];
+            var response = await chatClient.GetResponseAsync(prompt, new ChatOptions { Temperature = 0.0f, MaxOutputTokens = 128, StopSequences = [":"] }, cancellationToken);
+            var name = response.Text.Length > 5 ? response.Text[5..].Trim() : response.Text.Trim();
             Console.WriteLine("AutoSelectNextAgent: " + name);
-            var nextAgent = agents.FirstOrDefault(interactive => interactive.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase)) ?? adminAgent;
-            return nextAgent;
+            return agents.FirstOrDefault(a => string.Equals(a.Name, name, StringComparison.OrdinalIgnoreCase)) ?? admin;
         }
         catch (TaskCanceledException exception)
         {
             Console.WriteLine(exception.Message);
-            return adminAgent;
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e.Message);
-            throw;
+            return admin;
         }
     }
 
-    private static KernelArguments UpdateKernelArguments(IReadOnlyList<ChatMessageContent> history, IReadOnlyList<Agent> agents, OpenAIPromptExecutionSettings settings)
+    protected override async ValueTask<bool> ShouldTerminateAsync(IReadOnlyList<ChatMessage> history, CancellationToken cancellationToken = default)
     {
-        var groupConvoHistory = string.Join("\n ", history?.Select(message => $"From: \n{message?.AuthorName}\n### Message\n {message?.Content}\n") ?? []);
-        var kernelArgs = new KernelArguments(settings)
-        {
-            ["speakerList"] = string.Join("\n ", agents.Select(a => $"**Name:** {a?.Name}\n **Description:** {a?.Description}\n")),
-            ["conversationHistory"] = groupConvoHistory
-        };
-        return kernelArgs;
+        if (await base.ShouldTerminateAsync(history, cancellationToken)) return true;
+        if (history.Count == 0) return false;
+        var last = history[^1];
+        // Like the old text termination strategy: a designated participant saying the stop word ends the chat.
+        var terminate = terminators.Contains(last.AuthorName ?? "") && last.Text.Contains(stop, StringComparison.OrdinalIgnoreCase);
+        Console.WriteLine($"TextTermination: {last.AuthorName} - {terminate}");
+        return terminate;
     }
 }

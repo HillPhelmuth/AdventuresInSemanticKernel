@@ -1,10 +1,6 @@
-﻿using System.Text;
+using System.Text;
 using System.Text.Json.Serialization;
-using DocumentFormat.OpenXml.Office2010.Excel;
 using Microsoft.Extensions.VectorData;
-using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Data;
-
 namespace SkPluginLibrary.Models;
 
 public class ContextItem(string id)
@@ -13,11 +9,9 @@ public class ContextItem(string id)
     {
     }
     [VectorStoreKey]
-    [TextSearchResultName]
     public string Id { get; set; } = id;
     public string? MemoryId { get; set; }
     [VectorStoreData(IsIndexed = true)]
-    [TextSearchResultValue]
     public string? Content { get; set; }
        
 }
@@ -25,11 +19,9 @@ public class ContextItem(string id)
 public class VectorStoreContextItem
 {
     [VectorStoreKey]
-    [TextSearchResultName]
     public string id { get; set; } = Guid.NewGuid().ToString();
     public string? MemoryId { get; set; }
     [VectorStoreData(IsIndexed = true)]
-    [TextSearchResultValue]
     public string? Content { get; set; }
     [VectorStoreData(IsIndexed = true)]
     public string? Tag { get; set; }
@@ -56,7 +48,6 @@ public class ResearchVectorStoreContextItem : VectorStoreContextItem
     [VectorStoreData(IsIndexed = true)]
     public string? Source { get; set; }
     [VectorStoreData]
-    [TextSearchResultLink]
     public string? Link { get; set; }
     public ResearchMetadata Metadata
     {
@@ -81,17 +72,3 @@ public class ResearchVectorStoreContextItem : VectorStoreContextItem
 }
 
 public record ResearchMetadata(string? Link, string? Source, string? Tag);
-public class MyChatHistory : ChatHistory
-{
-    public event Action<ChatMessageContent>? OnChatMessageContent;
-    public new void AddMessage(
-        AuthorRole authorRole,
-        string content,
-        Encoding? encoding = null,
-        IReadOnlyDictionary<string, object?>? metadata = null)
-    {
-        var chatMessageContent = new ChatMessageContent(authorRole, content, encoding: encoding, metadata: metadata);
-        OnChatMessageContent?.Invoke(chatMessageContent);
-        Add(chatMessageContent);
-    }
-}

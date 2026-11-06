@@ -1,24 +1,23 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Microsoft.SemanticKernel.Text;
 using SkPluginLibrary.Services;
-using static SkPluginLibrary.CoreKernelService;
+using Microsoft.Extensions.AI;
+using SemanticKernelAgentOrchestration.Models;
 
 namespace SkPluginLibrary.Plugins.NativePlugins;
 
 public class WikiChatPlugin
 {
-    private Kernel _kernel;
-    private readonly KernelFunction _summarizeWebContent;
+    private readonly AIFunction _summarizeWebContent;
     public WikiChatPlugin()
     {
-        _kernel = CreateKernel();
-        var summarizePlugin = _kernel.ImportPluginFromPromptDirectoryYaml("SummarizePlugin");
-        _summarizeWebContent = summarizePlugin["CreateOutline"];
+        var chatClient = ChatClientFactory.Create(AIModel.Gpt41Mini);
+        var summarizePlugin = KernelPluginExtensions.CreatePluginFromPromptDirectoryYaml("SummarizePlugin", () => chatClient);
+        _summarizeWebContent = summarizePlugin.GetFunction("CreateOutline")!;
     }
-    [KernelFunction, Description("Search Wikipedia, summarize the content of each result and generate citations.")]
+    [Description("Search Wikipedia, summarize the content of each result and generate citations.")]
     [return: Description("A json collection of objects designed to facilitate Wikipedia citations including url, title, and content")]
     public async Task<string> SearchAndCiteWikipedia([Description("Wikipedia search query")] string input, [Description("Number of Wikipedia search results to use")] int resultCount = 2)
     {
@@ -47,9 +46,9 @@ public class WikiChatPlugin
             var tokens = StringHelpers.GetTokens(text);
             var count = tokens / 2048;
             var segments = ChunkIntoSegments(text, Math.Max(count,1), 2048, title, false);
-            var summaryTasks = segments.Select(segment => new KernelArguments { ["input"] = segment, ["query"] = input }).Select(segmentArgs => _kernel.InvokeAsync(_summarizeWebContent, segmentArgs)).ToList();
+            var summaryTasks = segments.Select(segment => new Dictionary<string, object?> { ["input"] = segment, ["query"] = input }).Select(segmentArgs => _summarizeWebContent.InvokeToStringAsync(segmentArgs)).ToList();
 
-            var summaryResults = new ConcurrentBag<FunctionResult>()/* await Task.WhenAll(summaryTasks)*/;
+            var summaryResults = new ConcurrentBag<string>();
 
             await Parallel.ForEachAsync(summaryTasks, new ParallelOptions { MaxDegreeOfParallelism = 2 }, async (task, _) =>
             {
@@ -60,7 +59,7 @@ public class WikiChatPlugin
                 await Task.Delay(500);
 #pragma warning restore CA2016 // Forward the 'CancellationToken' parameter to methods
             });
-            return summaryResults.Select(x => new SearchResultItem(url) { Title = title, Content = x.Result() }).ToList();
+            return summaryResults.Select(x => new SearchResultItem(url) { Title = title, Content = x }).ToList();
         }
         catch (Exception ex)
         {

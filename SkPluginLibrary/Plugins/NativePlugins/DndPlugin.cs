@@ -1,28 +1,24 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.AI;
+using SkPluginLibrary.Services;
 
 namespace SkPluginLibrary.Plugins.NativePlugins;
 
 public class DndPlugin
 {
-    private readonly Kernel _kernel;
-    private readonly KernelFunction? _summarizeMonsterFunction;
+    private readonly IChatClient _chatClient;
 
-
-    public DndPlugin(Kernel kernel)
+    public DndPlugin(IChatClient chatClient)
     {
-            _kernel = kernel;
-            
-        }
+        _chatClient = chatClient;
+    }
 
-    public DndPlugin()
+    public DndPlugin() : this(ChatClientFactory.Create(AIModel.Gpt41Mini))
     {
-            _kernel = CoreKernelService.ChatCompletionKernel();
-           
-        }
-    [KernelFunction("RollDice"),
-     Description(
+    }
+    [Description(
          "Roll dice using [count]D[value]+[bonus] where [count] is number of rolls, and [value] is sides on the die. (examples: 3D6, 2D4, 1D20, etc.)")]
     [return:Description("The result of the total value of the dice plus bonus")]
     public string RollDice([Description("The number of dice to roll")] int diceCount,[Description("The value or faces on each die (e.g. for a 6 sided die, dieValue = 6)")] int dieValue,[Description("the value to add or subtract from each roll total")] int bonus = 0)
@@ -42,60 +38,44 @@ public class DndPlugin
             return total.ToString();
         }
 
-    [KernelFunction("GenerateMonsterDescription"),
-     Description("Generate a random monster from the Dungeons and Dragons 5e Monster Manual")]
-    public async Task<string> GenerateMonsterDescription(string input, KernelArguments arguments)
+    [Description("Generate a random monster from the Dungeons and Dragons 5e Monster Manual")]
+    public async Task<string> GenerateMonsterDescription(string input, string? challengeRating = null)
     {
-            Console.WriteLine("Starting generate monster");
-            var dndApiSkill =
-                await _kernel.ImportPluginFromOpenApiAsync("DndApiPlugin", Path.Combine(RepoFiles.ApiPluginDirectoryPath, "DndApiPlugin", "openapi.json"));
-            var random = new Random();
-            if (!arguments.ContainsName("challenge_rating"))
+        Console.WriteLine("Starting generate monster");
+        var dndApiPlugin = await OpenApiToolFactory.FromFileAsync("DndApiPlugin", Path.Combine(RepoFiles.ApiPluginDirectoryPath, "DndApiPlugin", "openapi.json"));
+        var random = new Random();
+        var arguments = new Dictionary<string, object?>
+        {
+            ["challenge_rating"] = challengeRating ?? JsonSerializer.Serialize(new List<string> { random.Next(3, 12).ToString() }.ToArray())
+        };
+        var monstersResult = await dndApiPlugin.GetFunction("Monsters")!.InvokeToStringAsync(arguments);
+        try
+        {
+            var monsterList = JsonSerializer.Deserialize<MonsterList>(monstersResult) ?? new MonsterList
             {
-                var rating = random.Next(3, 12);
-                arguments["challenge_rating"] = JsonSerializer.Serialize(new List<string> { rating.ToString() }.ToArray());
-            }
-
-            var monstersResult = await _kernel.InvokeAsync(dndApiSkill["Monsters"], arguments);
-            try
-            {
-                var result = monstersResult.GetValue<object>();
-                var monsterList = new MonsterList
-                { Count = 1, Monsters =
-                    [new Monster {Index = "young-black-dragon", Name = "Young Black Dragon"}]
-                };
-                if (result is RestApiOperationResponse restApiResponse)
-                {
-                    var content = restApiResponse.Content.ToString();
-                    monsterList = JsonSerializer.Deserialize<MonsterList>(content);
-                }
-                var index = random.Next(0, monsterList.Monsters.Count);
-                var monsterResult = monsterList.Monsters[index];
-                var summary = await _kernel.InvokeAsync(_summarizeMonsterFunction, new KernelArguments { { "input", monsterResult} });
-                //var summary = await _summarizeMonsterFunction.InvokeAsync(monsterResult.Name, context);
-                return summary.Result();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
-            }
-
-            return Regex.Unescape(monstersResult.Result());
+                Count = 1,
+                Monsters = [new Monster { Index = "young-black-dragon", Name = "Young Black Dragon" }]
+            };
+            var monsterResult = monsterList.Monsters[random.Next(0, monsterList.Monsters.Count)];
+            var summarizer = KernelPluginExtensions.CreatePluginFromPromptDirectoryYaml("DndApiPlugin", () => _chatClient).GetFunction("SummarizeMonster");
+            if (summarizer is not null)
+                return await summarizer.InvokeToStringAsync(new() { ["input"] = JsonSerializer.Serialize(monsterResult) });
         }
-        
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
 
-    [KernelFunction("StorySynopsis"),
-     Description("Generate a brief 1-2 sentance summary of the character details to aid in story creation")]
+        return Regex.Unescape(monstersResult);
+    }
+
+    [Description("Generate a brief 1-2 sentance summary of the character details to aid in story creation")]
     public async Task<string> StorySynopsisAsync([Description("Race, class, alignment and other character details")]string characterDetails)
     {
-            var args = new KernelArguments
-            {
-                ["characterDetails"] = characterDetails
-            };
-            var synopsisFunction = _kernel.CreateFunctionFromPrompt(StorySynopsisPrompt, executionSettings:new OpenAIPromptExecutionSettings {ChatSystemPrompt = "You are a story synopsis generator", Temperature = 1.0, TopP = 1.0, MaxTokens = 256});
-            var result = await _kernel.InvokeAsync(synopsisFunction, args);
-            return result.Result();
-        }
+        return await PromptRunner.RunAsync(_chatClient, StorySynopsisPrompt,
+            new Dictionary<string, object?> { ["characterDetails"] = characterDetails },
+            new ChatOptions { Temperature = 1.0f, TopP = 1.0f, MaxOutputTokens = 256 }, "You are a story synopsis generator");
+    }
 
     private const string StorySynopsisPrompt = """
                                                Generate a 2 sentance story synopsis for the character based on [Character Details].

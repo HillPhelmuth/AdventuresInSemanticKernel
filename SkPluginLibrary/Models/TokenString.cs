@@ -1,7 +1,6 @@
 ﻿using System.Globalization;
 using System.Text;
 using System.Text.Json;
-using DocumentFormat.OpenXml;
 using Microsoft.Extensions.Logging;
 using SkPluginLibrary.Services;
 

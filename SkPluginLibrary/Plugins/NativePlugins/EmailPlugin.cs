@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
+// Copyright (c) Microsoft. All rights reserved.
 
 using Microsoft.Extensions.Logging;
 
@@ -6,7 +6,7 @@ namespace SkPluginLibrary.Plugins.NativePlugins;
 
 public sealed class EmailPlugin
 {
-    [KernelFunction, Description("Given an e-mail and message body, send an email")]
+    [Description("Given an e-mail and message body, send an email")]
     public string SendEmail(
         [Description("The body of the email message to send.")] string input,
         [Description("The email address to send email to.")] string email_address)
@@ -14,7 +14,7 @@ public sealed class EmailPlugin
         return $"Sent email to: {email_address}. Body: {input}";
     }
 
-    [KernelFunction, Description("Given a name, find email address")]
+    [Description("Given a name, find email address")]
     public string GetEmailAddress(
         [Description("The name of the person whose email address needs to be found.")] string input,
         ILogger? logger = null)
@@ -27,7 +27,7 @@ public sealed class EmailPlugin
 }
 public sealed class MenuPlugin
 {
-    [KernelFunction, Description("Provides a list of specials from the menu.")]
+    [Description("Provides a list of specials from the menu.")]
     public string GetSpecials()
     {
         return @"
@@ -37,7 +37,7 @@ Special Drink: Chai Tea
 ";
     }
 
-    [KernelFunction, Description("Provides the price of the requested menu item.")]
+    [Description("Provides the price of the requested menu item.")]
     public string GetItemPrice(
         [Description("The name of the menu item.")]
         string menuItem)
