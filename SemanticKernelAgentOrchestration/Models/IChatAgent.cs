@@ -1,5 +1,5 @@
-﻿using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.ChatCompletion;
+using ChatComponents;
+using Microsoft.Extensions.AI;
 
 namespace SemanticKernelAgentOrchestration.Models;
 
@@ -11,6 +11,6 @@ public interface IChatAgent
     public string Name { get; }
     string Description { get; }
 
-    Task<ChatMessageContent?> RunAgentAsync(ChatHistory chatHistory, PromptExecutionSettings? settings = null,
-	    CancellationToken cancellationToken = default);
+    Task<ChatMessage?> RunAgentAsync(ChatHistory chatHistory, ChatOptions? settings = null,
+        CancellationToken cancellationToken = default);
 }

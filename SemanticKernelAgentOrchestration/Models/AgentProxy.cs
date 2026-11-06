@@ -1,6 +1,6 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Text.Json.Serialization;
-using Microsoft.SemanticKernel;
+using Microsoft.Extensions.AI;
 
 namespace SemanticKernelAgentOrchestration.Models;
 
@@ -21,7 +21,7 @@ public class AgentProxy
     public string? GptModel { get; set; }
 
     [JsonIgnore]
-    public List<KernelPlugin> Plugins
+    public List<ToolPlugin> Plugins
     {
         get => _plugins;
         set
@@ -31,7 +31,7 @@ public class AgentProxy
         }
     }
     public ChatHistoryType ChatHistoryType { get; set; } = ChatHistoryType.All;
-    private List<KernelPlugin> _plugins = [];
+    private List<ToolPlugin> _plugins = [];
     private List<string> _pluginNames = [];
     private List<string> _excludedFunctionNames = [];
 
@@ -41,7 +41,7 @@ public class AgentProxy
         set => _pluginNames = value;
     }
     [JsonIgnore]
-    public List<KernelFunction> ExcludedFunctions { get; set; } = [];
+    public List<AIFunction> ExcludedFunctions { get; set; } = [];
 
     public List<string> ExcludedFunctionNames
     {

@@ -1,4 +1,4 @@
-﻿using Microsoft.SemanticKernel.ChatCompletion;
+using ChatComponents;
 using SemanticKernelAgentOrchestration.Models;
 
 namespace SemanticKernelAgentOrchestration.Group;

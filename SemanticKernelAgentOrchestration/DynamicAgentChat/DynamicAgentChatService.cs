@@ -1,51 +1,44 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
+using ChatComponents;
+using Microsoft.Agents.AI;
+using Microsoft.Extensions.AI;
 using SemanticKernelAgentOrchestration.Models;
 using SemanticKernelAgentOrchestration.Plugins;
-#pragma warning disable SKEXP0010
 
 namespace SemanticKernelAgentOrchestration.DynamicAgentChat;
 
+/// <summary>
+/// A chat that hands the conversation between several Agent Framework agents. Each agent is a
+/// <see cref="ChatClientAgent"/> that gets transition tools it can call to pass control onward.
+/// </summary>
 public class DynamicAgentChatService
 {
     private ChatContext _chatContext;
     private List<ChatAgent> _agents = [];
-    private readonly Kernel _kernel;
-    public DynamicAgentChatService(List<AgentProxy> agents, ChatContext chatContext, Kernel kernel)
+    private readonly IChatClient _chatClient;
+    public DynamicAgentChatService(List<AgentProxy> agents, ChatContext chatContext, IChatClient chatClient)
     {
         _chatContext = chatContext;
         foreach (var agent in agents)
         {
             agent.Name = agent.Name.Replace(" ", "_");
-            var agentKernel = kernel.Clone();
-            agentKernel.Plugins.AddRange(agent.Plugins);
             var transitionPlugin = new TransitionPlugin(_chatContext);
-            agentKernel.ImportPluginFromObject(transitionPlugin, "TranstionPlugin");
-            _agents.Add(new InteractiveAgent(agent, agentKernel));
+            var interactiveAgent = new InteractiveAgent(agent, chatClient);
+            interactiveAgent.AddTools(transitionPlugin.AsToolPlugin().Tools);
+            _agents.Add(interactiveAgent);
         }
-        _kernel = kernel;
+        _chatClient = chatClient;
     }
 
     public async IAsyncEnumerable<string> ExecuteChat(string input, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        
-		_chatContext.ChatMessages.Add(new ChatMessageContent(AuthorRole.User, input));
+        _chatContext.ChatMessages.Add(new ChatMessage(ChatRole.User, input));
         _chatContext.ActiveAgent ??= _agents.First();
         while (true)
         {
             var nextAgent = await SelectNextAgent(_chatContext.ActiveAgent, _chatContext.ChatMessages);
             _chatContext.ActiveAgent = nextAgent;
-            var chatService = nextAgent.Kernel.GetRequiredService<IChatCompletionService>();
-            var settings = new OpenAIPromptExecutionSettings { ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions, Temperature = nextAgent.Temperature };
             var appendToSysPrompt = $"""
                                     If you have completed your Task, please indicate so by invoking 'TransitionToNextAgent' after completing your response.
                                     If the user query requires the attention of another agent, please indicate so by invoking 'IntentTransition'. 
@@ -55,29 +48,18 @@ public class DynamicAgentChatService
                                     {string.Join("\n", _agents.Where(x => x.Name != nextAgent.Name).Select(x => x.ToString()))}
                                     """;
             var systemPromptOverride = nextAgent.SystemPromptOverride(appendToSysPrompt);
-            var promptTemplate = new KernelPromptTemplateFactory();
-            var prompt = promptTemplate.Create(new PromptTemplateConfig(systemPromptOverride));
-            var finalPrompt = await prompt.RenderAsync(nextAgent.Kernel, cancellationToken: cancellationToken);
-            Console.WriteLine(finalPrompt);
-            var chatHistory = new ChatHistory(finalPrompt);
-            var agentMessages = GetAgentMessages(nextAgent);
-            chatHistory.AddRange(agentMessages);
-            ChatMessageContent? finalResponse = null;
+            Console.WriteLine(systemPromptOverride);
+            var aiAgent = nextAgent.BuildAgent(new ChatOptions { Temperature = nextAgent.Temperature }, systemPromptOverride);
+            var messages = GetAgentMessages(nextAgent).Select(m => { var c = m.Clone(); c.AuthorName = ChatAgent.EnsurePattern(c.AuthorName); return c; }).ToList();
+            var text = new System.Text.StringBuilder();
             yield return $"<strong>{nextAgent.Name}:</strong><br/>";
-            await foreach(var response in chatService.GetStreamingChatMessageContentsAsync(chatHistory, settings, nextAgent.Kernel, cancellationToken))
+            await foreach (var update in aiAgent.RunStreamingAsync(messages, cancellationToken: cancellationToken))
             {
-                if (finalResponse is null)
-                {
-                    finalResponse = new ChatMessageContent(AuthorRole.Assistant, response.Content){AuthorName = nextAgent.Name};
-
-                }
-                else
-                {
-                    finalResponse.Content += response.Content;
-                }
-                yield return response.Content!;
+                if (string.IsNullOrEmpty(update.Text)) continue;
+                text.Append(update.Text);
+                yield return update.Text;
             }
-            _chatContext.ChatMessages.Add(finalResponse);
+            _chatContext.ChatMessages.Add(new ChatMessage(ChatRole.Assistant, text.ToString()) { AuthorName = nextAgent.Name });
             if (!ShouldTranstion())
             {
                 yield return "[DONE]";
@@ -86,14 +68,13 @@ public class DynamicAgentChatService
 
             yield return "<hr/>";
         }
-        
     }
-    private List<ChatMessageContent> GetAgentMessages(ChatAgent agent)
+    private List<ChatMessage> GetAgentMessages(ChatAgent agent)
     {
         var agentHistoryType = agent.ChatHistoryType;
         return agentHistoryType switch
         {
-            ChatHistoryType.SelfAndUser => _chatContext.ChatMessages.Where(x => x.Role == AuthorRole.Assistant && x.AuthorName == agent.Name || x.Role == AuthorRole.User).ToList(),
+            ChatHistoryType.SelfAndUser => _chatContext.ChatMessages.Where(x => x.Role == ChatRole.Assistant && x.AuthorName == agent.Name || x.Role == ChatRole.User).ToList(),
             ChatHistoryType.All => _chatContext.ChatMessages.ToList(),
             ChatHistoryType.None => [_chatContext.ChatMessages.Last()],
             _ => throw new ArgumentOutOfRangeException()
@@ -101,7 +82,7 @@ public class DynamicAgentChatService
     }
     private bool ShouldTranstion()
     {
-        if (_chatContext.ChatMessages.TakeLast(2).All(x => x.Role == AuthorRole.Assistant))
+        if (_chatContext.ChatMessages.TakeLast(2).All(x => x.Role == ChatRole.Assistant))
         {
             Console.WriteLine("Last two messages are from agents");
             return false;
@@ -110,12 +91,12 @@ public class DynamicAgentChatService
         return _chatContext.IsTranstionNext || _chatContext.IsIntentTranstion;
     }
 
-    public async Task<ChatAgent> SelectNextAgent(ChatAgent currentAgent, List<ChatMessageContent> messages)
+    public async Task<ChatAgent> SelectNextAgent(ChatAgent currentAgent, List<ChatMessage> messages)
     {
         if (_chatContext.IsTranstionNext)
         {
-            // If the chat context indicates that the next agent should be transitioned to, return the next agent in the list, otherwise return the first agent in the list
-            var nextAgentIndex = _agents.IndexOf(_agents.Find(x => x.Name == currentAgent.Name)) + 1;
+            // Move to the next agent in the list, wrapping around to the first.
+            var nextAgentIndex = _agents.IndexOf(_agents.Find(x => x.Name == currentAgent.Name)!) + 1;
             if (nextAgentIndex >= _agents.Count)
             {
                 nextAgentIndex = 0;
@@ -125,17 +106,15 @@ public class DynamicAgentChatService
         }
         if (_chatContext.IsIntentTranstion)
         {
-            var settings = new OpenAIPromptExecutionSettings { ResponseFormat = typeof(IntentTransition) };
-            var chatContextList = messages.Take(4).Select(x => $"Agent: {x.AuthorName ?? "User"}\n\nContent: {x.Content}");
+            var chatContextList = messages.Take(4).Select(x => $"Agent: {x.AuthorName ?? "User"}\n\nContent: {x.Text}");
             var chatContext = string.Join("\n\n", chatContextList);
             var agents = string.Join("\n\n", _agents.Select(x => x.ToString()));
-            var kernelArgs = new KernelArguments(settings) { ["chatContext"] = chatContext, ["agents"] = agents };
-            var responseJson = await _kernel.InvokePromptAsync<string>(NextAgentIntentPrompt, kernelArgs);
-            var response = JsonSerializer.Deserialize<IntentTransition>(responseJson);
-            var nextAgent = _agents.FirstOrDefault(x => x.Name == response.Agent);
+            var prompt = NextAgentIntentPrompt.Replace("{{ $chatContext }}", chatContext).Replace("{{ $agents }}", agents);
+            // Structured output: the chat client deserializes the model's reply straight into IntentTransition.
+            var response = await _chatClient.GetResponseAsync<IntentTransition>(prompt);
+            var nextAgent = _agents.FirstOrDefault(x => x.Name == response.Result?.Agent);
             _chatContext.IsIntentTranstion = false;
             return nextAgent ?? _agents.First();
-
         }
 
         return currentAgent;

@@ -1,39 +1,31 @@
-﻿using Microsoft.SemanticKernel;
+using Microsoft.Agents.AI;
+using Microsoft.Extensions.AI;
 
 namespace SemanticKernelAgentOrchestration.Models.Events;
 
 /// <summary>
-/// Initializes a new instance of the <see cref="AgentResponseArgs"/> class.
+/// Event args raised when an agent produces a response (a full message or a streaming update).
 /// </summary>
 public class AgentResponseArgs : EventArgs
 {
-	/// <summary>
-	/// Initializes a new instance of the <see cref="AgentResponseArgs"/> class.
-	/// </summary>
-	/// <param name="agentChatMessage">The agent chat message associated with the response.</param>
-	public AgentResponseArgs(ChatMessageContent agentChatMessage)
+	public AgentResponseArgs(ChatMessage agentChatMessage)
 	{
 		AgentChatMessage = agentChatMessage;
 	}
-	public AgentResponseArgs(StreamingChatMessageContent agentChatMessage)
+	public AgentResponseArgs(AgentResponseUpdate agentChatMessage)
 	{
 		AgentChatMessageUpdate = agentChatMessage;
 	}
 
-	/// <summary>
-    /// Gets the agent chat message associated with the response.
-    /// </summary>
-    public ChatMessageContent? AgentChatMessage { get; }
-	public StreamingChatMessageContent? AgentChatMessageUpdate { get; }
+    /// <summary>Gets the agent chat message associated with the response.</summary>
+    public ChatMessage? AgentChatMessage { get; }
+	public AgentResponseUpdate? AgentChatMessageUpdate { get; }
 	public bool IsCompleted { get; internal set; }
 	public bool IsStartToken { get; internal set; }
 }
-public class AgentStreamingResponseArgs(StreamingChatMessageContent agentChatMessage) : EventArgs
+public class AgentStreamingResponseArgs(AgentResponseUpdate agentChatMessage) : EventArgs
 {
-    /// <summary>
-    /// Gets the agent chat message update associated with the response.
-    /// </summary>
-    public StreamingChatMessageContent AgentChatMessageUpdate { get; } = agentChatMessage;
+    public AgentResponseUpdate AgentChatMessageUpdate { get; } = agentChatMessage;
     public bool IsCompleted { get; internal set; }
     public bool IsStartToken { get; internal set; }
 }
