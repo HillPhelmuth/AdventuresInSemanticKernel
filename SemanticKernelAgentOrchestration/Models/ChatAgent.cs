@@ -44,7 +44,7 @@ public abstract class ChatAgent : IChatAgent
 		var tools = new List<AITool>();
 		foreach (var plugin in Agent.Plugins)
 		{
-			tools.AddRange(plugin.Functions.Where(f => Agent.ExcludedFunctions.All(e => e.Name != f.Name)));
+			tools.AddRange(plugin.Functions.Where(f => Agent.ExcludedFunctions.All(e => e.Name != f.Name)).Select(plugin.Prefixed));
 		}
 		tools.AddRange(ExtraTools);
 		return tools;

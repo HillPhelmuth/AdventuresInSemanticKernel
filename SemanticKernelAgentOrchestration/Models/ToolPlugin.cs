@@ -22,7 +22,23 @@ public class ToolPlugin
     public string Description { get; }
     public List<AIFunction> Functions { get; }
     public int FunctionCount => Functions.Count;
-    public IEnumerable<AITool> Tools => Functions;
+    /// <summary>
+    /// The functions as tools an agent can call. Names are prefixed with the group name
+    /// (e.g. <c>TimePlugin_Now</c>) so tools from different groups never collide.
+    /// </summary>
+    public IEnumerable<AITool> Tools => Functions.Select(Prefixed);
+
+    public AITool Prefixed(AIFunction function) => new PrefixedFunction(Name, function);
+
+    private sealed class PrefixedFunction(string prefix, AIFunction inner) : DelegatingAIFunction(inner)
+    {
+        public override string Name { get; } = Sanitize($"{prefix}_{inner.Name}");
+        private static string Sanitize(string name)
+        {
+            var clean = new string(name.Select(c => char.IsLetterOrDigit(c) || c is '_' or '-' ? c : '_').ToArray());
+            return clean.Length > 64 ? clean[..64] : clean;
+        }
+    }
 
     public AIFunction? GetFunction(string name) =>
         Functions.FirstOrDefault(f => f.Name.Equals(name, StringComparison.OrdinalIgnoreCase));

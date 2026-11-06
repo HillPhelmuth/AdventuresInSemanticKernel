@@ -1,8 +1,8 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>net9.0</TargetFramework>
-		<NoWarn>SKEXP0001,SKEXP0010,SKEXP0020,SKEXP0030,SKEXP0040,SKEXP0050,SKEXP0060,SKEXP0070,SKEXP0090,SKEXP0100,SKEXP0101,SKEXP0110</NoWarn>
+		<NoWarn>MAAI001,MEAI001,OPENAI001</NoWarn>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<UserSecretsId>bcf24016-4cee-420b-b680-d7b179c6e56a</UserSecretsId>
@@ -44,31 +44,14 @@
 		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.7" />
 		<PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.13.0" />
 		<PackageReference Include="Microsoft.ML" Version="4.0.2" />
-		<PackageReference Include="Microsoft.ML.Tokenizers" Version="1.0.2" />
-		<PackageReference Include="Microsoft.SemanticKernel" Version="1.61.0" />
-		<PackageReference Include="Microsoft.SemanticKernel.Agents.Core" Version="1.61.0" />
-		<PackageReference Include="Microsoft.SemanticKernel.Agents.OpenAI" Version="1.61.0-preview" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.AzureAISearch" Version="1.61.0-preview" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Chroma" Version="1.61.0-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Google" Version="1.61.0-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.HuggingFace" Version="1.61.0-preview" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.InMemory" Version="1.61.0-preview" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.MistralAI" Version="1.61.0-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Ollama" Version="1.61.0-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Pinecone" Version="1.61.0-preview" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Qdrant" Version="1.61.0-preview" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Redis" Version="1.61.0-preview" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Sqlite" Version="1.51.0-preview" />
-		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Weaviate" Version="1.61.0-preview" />
-		<PackageReference Include="Microsoft.SemanticKernel.Experimental.Agents" Version="1.18.1-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Planners.Handlebars" Version="1.47.0-preview" />
-		<PackageReference Include="Microsoft.SemanticKernel.Planners.OpenAI" Version="1.47.0-preview" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Core" Version="1.61.0-preview" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Document" Version="1.61.0-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Grpc" Version="1.61.0-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Memory" Version="1.61.0-alpha" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.OpenApi" Version="1.61.0" />
-		<PackageReference Include="Microsoft.SemanticKernel.Plugins.Web" Version="1.61.0-alpha" />
+		<PackageReference Include="Microsoft.ML.Tokenizers" Version="2.0.0" />
+		<PackageReference Include="Microsoft.Agents.AI" Version="1.28.0" />
+		<PackageReference Include="Microsoft.Agents.AI.OpenAI" Version="1.28.0" />
+		<PackageReference Include="Microsoft.Agents.AI.Workflows" Version="1.28.0" />
+		<PackageReference Include="Microsoft.Extensions.AI" Version="10.11.0" />
+		<PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="10.11.0" />
+		<PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.7" />
+		<PackageReference Include="YamlDotNet" Version="16.3.0" />
 		<PackageReference Include="OpenMeteo.dotnet" Version="2.0.0" />
 		<PackageReference Include="PdfPig" Version="0.1.11" />
 		<PackageReference Include="PDFtoImage" Version="5.1.1" />
