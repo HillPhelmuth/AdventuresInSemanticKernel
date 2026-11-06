@@ -1,3 +1,5 @@
+namespace SkPluginLibrary.Examples;
+
 /// <summary>The same agent code running against OpenRouter (an OpenAI-compatible gateway) instead of OpenAI directly.</summary>
 public static class Maf13_OpenRouterModels
 {

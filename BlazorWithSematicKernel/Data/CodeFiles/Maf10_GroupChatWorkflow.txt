@@ -1,3 +1,5 @@
+namespace SkPluginLibrary.Examples;
+
 /// <summary>A round-robin group chat: a copywriter and a reviewer iterate until the iteration limit is reached.</summary>
 public static class Maf10_GroupChatWorkflow
 {

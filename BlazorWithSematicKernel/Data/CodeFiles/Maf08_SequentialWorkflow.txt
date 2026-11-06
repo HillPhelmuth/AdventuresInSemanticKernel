@@ -1,3 +1,5 @@
+namespace SkPluginLibrary.Examples;
+
 /// <summary>A sequential workflow: each agent receives the conversation produced by the one before it.</summary>
 public static class Maf08_SequentialWorkflow
 {
@@ -11,7 +13,7 @@ public static class Maf08_SequentialWorkflow
         await RunWorkflowAsync(workflow, "A solar powered backpack");
     }
 
-    internal static async Task RunWorkflowAsync(Workflow workflow, string input)
+    public static async Task RunWorkflowAsync(Workflow workflow, string input)
     {
         var messages = new List<ChatMessage> { new(ChatRole.User, input) };
         await using StreamingRun run = await InProcessExecution.RunStreamingAsync(workflow, messages);
@@ -24,7 +26,7 @@ public static class Maf08_SequentialWorkflow
                 if (update.ExecutorId != current)
                 {
                     current = update.ExecutorId;
-                    Console.WriteLine($"/n[{current}]");
+                    Console.WriteLine($"\n[{current}]");
                 }
                 Console.Write(update.Update.Text);
             }

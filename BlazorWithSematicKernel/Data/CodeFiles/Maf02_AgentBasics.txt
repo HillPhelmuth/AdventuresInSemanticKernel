@@ -1,3 +1,5 @@
+namespace SkPluginLibrary.Examples;
+
 /// <summary>A ChatClientAgent with instructions, run across several turns using an AgentSession.</summary>
 public static class Maf02_AgentBasics
 {

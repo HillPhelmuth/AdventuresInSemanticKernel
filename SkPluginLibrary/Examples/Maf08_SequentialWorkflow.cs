@@ -13,7 +13,7 @@ public static class Maf08_SequentialWorkflow
         await RunWorkflowAsync(workflow, "A solar powered backpack");
     }
 
-    internal static async Task RunWorkflowAsync(Workflow workflow, string input)
+    public static async Task RunWorkflowAsync(Workflow workflow, string input)
     {
         var messages = new List<ChatMessage> { new(ChatRole.User, input) };
         await using StreamingRun run = await InProcessExecution.RunStreamingAsync(workflow, messages);

@@ -1,3 +1,5 @@
+namespace SkPluginLibrary.Examples;
+
 /// <summary>
 /// Human-in-the-loop tool approval - something Semantic Kernel never had. Wrapping a function in
 /// ApprovalRequiredAIFunction makes the agent pause and ask before it runs.

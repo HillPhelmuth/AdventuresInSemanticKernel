@@ -1,3 +1,5 @@
+namespace SkPluginLibrary.Examples;
+
 /// <summary>An agent can be handed to another agent as a tool (replaces "agents as plugins").</summary>
 public static class Maf07_AgentAsTool
 {

@@ -5,26 +5,25 @@
             <RadzenRow>
                 <RadzenColumn Size="8" Offset="2">
                     <RadzenCard>
-                        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle2">Agent Group Chats in Semantic Kernel</RadzenText>
-                        <RadzenText TextStyle="TextStyle.Body2">Agent group chats in Semantic Kernel allow you to orchestrate conversations between multiple AI agents, each with its own role and instructions. This enables you to create complex workflows and automate tasks that require collaboration between different AI personalities.<br />An agent group chat is initiated by creating an <code style="display:inline;background-color:white !important">AgentGroupChat</code> instance and adding participating agents. You can then provide an initial message to start the conversation. The chat then proceeds according to the configured <code style="display:inline;background-color:white !important">SelectionStrategy</code> and <code style="display:inline;background-color:white !important">TerminationStrategy</code>. </RadzenText><br />
-                        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle2">Selection Strategy</RadzenText>
+                        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle2">Agent Group Chats in Microsoft Agent Framework</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2">Agent group chats let you orchestrate conversations between multiple AI agents, each with its own role and instructions. This enables complex workflows and automates tasks that need collaboration between different AI personalities.<br />A group chat is built as an Agent Framework workflow: the participating agents are added to a <code style="display:inline;background-color:white !important">GroupChatManager</code>, and you provide an initial message to start the conversation. The manager decides which agent speaks next and when the chat ends. </RadzenText><br />
+                        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle2">Speaker Selection</RadzenText>
                         <RadzenText TextStyle="TextStyle.Body2">
-                            The <code style="display:inline;background-color:white !important">SelectionStrategy</code> determines which agent gets to respond next in the conversation. This can be a simple round-robin approach or a more sophisticated strategy based on the conversation history and the agents' roles.<br />
-                            Semantic Kernel provides two built-in selection strategies:
+                            The manager's <code style="display:inline;background-color:white !important">SelectNextAgentAsync</code> determines which agent responds next. This can be a fixed order or a decision based on the conversation history and the agents' roles.<br />
+                            This demo offers these selection modes:
                             <ul style="list-style:disc; padding-left:1.5rem; margin-bottom:.5rem">
-                                <li><strong>RoundRobinSelectionStrategy:</strong> Agents take turns responding in the order they were added to the chat.</li>
-                                <li><strong>KernelFunctionSelectionStrategy:</strong> A AIFunction is used to analyze the conversation history or other context and decide which agent should respond next. This allows for more dynamic and context-aware agent selection.</li>
+                                <li><strong>Sequential:</strong> Agents take turns responding in the order they were added to the chat.</li>
+                                <li><strong>Hub and spoke:</strong> A designated admin agent alternates with each of the other agents.</li>
+                                <li><strong>Prompt based:</strong> A chat client reads the conversation history and picks the agent that should respond next, which allows for dynamic, context-aware selection.</li>
                             </ul>
                         </RadzenText><br />
 
-                        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle2">Termination Strategy</RadzenText>
+                        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle2">Termination</RadzenText>
                         <RadzenText TextStyle="TextStyle.Body2">
-                            The <code style="display:inline;background-color:white !important">TerminationStrategy</code> defines the conditions under which the chat ends. This could be after a certain number of turns, when a specific goal is achieved, or when a particular agent provides a certain response.<br />
-                            Semantic Kernel offers these built-in termination strategies:
+                            The manager's <code style="display:inline;background-color:white !important">ShouldTerminateAsync</code> defines when the chat ends: after a maximum number of iterations, or when an agent produces the configured stop text.<br />
                             <ul style="list-style:disc; padding-left:1.5rem; margin-bottom:.5rem">
-                               
-                                <li><strong>MaxTurnsTerminationStrategy::</strong> The chat ends after a specified number of turns.</li>
-                                <li><strong>KernelFunctionTerminationStrategy:</strong> A AIFunction is used to analyze the conversation history or other context and determine if the chat should terminate. This enables flexible and customizable termination conditions based on the conversation's content.</li>
+                                <li><strong>Iteration limit:</strong> The chat ends after a specified number of turns.</li>
+                                <li><strong>Stop text:</strong> The chat ends when an agent's response contains the stop word.</li>
                             </ul>
                         </RadzenText>
                         

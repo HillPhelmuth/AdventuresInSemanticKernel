@@ -1,3 +1,5 @@
+namespace SkPluginLibrary.Examples;
+
 /// <summary>Handoff: a triage agent routes the conversation to the right specialist.</summary>
 public static class Maf11_HandoffWorkflow
 {

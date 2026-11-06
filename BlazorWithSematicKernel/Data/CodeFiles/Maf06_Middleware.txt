@@ -1,3 +1,5 @@
+namespace SkPluginLibrary.Examples;
+
 /// <summary>Function-calling middleware: observe (or block) every tool call an agent makes.</summary>
 public static class Maf06_Middleware
 {

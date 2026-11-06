@@ -1,3 +1,5 @@
+namespace SkPluginLibrary.Examples;
+
 /// <summary>
 /// Tools replace Semantic Kernel plugins. Any C# method becomes an AIFunction with AIFunctionFactory,
 /// and an agent just takes a list of them.

@@ -1,3 +1,5 @@
+namespace SkPluginLibrary.Examples;
+
 /// <summary>A concurrent workflow: several agents work on the same input in parallel and their outputs are aggregated.</summary>
 public static class Maf09_ConcurrentWorkflow
 {
@@ -16,7 +18,7 @@ public static class Maf09_ConcurrentWorkflow
             if (evt is WorkflowOutputEvent output && output.Data is List<ChatMessage> result)
             {
                 foreach (var message in result.Where(m => m.Role == ChatRole.Assistant))
-                    Console.WriteLine($"[{message.AuthorName}] {message.Text}/n");
+                    Console.WriteLine($"[{message.AuthorName}] {message.Text}\n");
             }
         }
     }

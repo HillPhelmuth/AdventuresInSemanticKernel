@@ -45,7 +45,7 @@ namespace BlazorWithSematicKernel.Pages
 
         protected override Task OnInitializedAsync()
         {
-            _exampleCodeFiles = Directory.GetFiles(CodeFilesPath).Select(x => new CodeFile { Name = Path.GetFileNameWithoutExtension(x), Code = File.ReadAllText(x) }).ToList();
+            _exampleCodeFiles = Directory.GetFiles(CodeFilesPath).Select(x => new CodeFile { Name = Path.GetFileNameWithoutExtension(x), Code = File.ReadAllText(x).Replace("namespace SkPluginLibrary.Examples;", "") }).ToList();
             CoreKernelService.StringWritten += HandleString;
             return base.OnInitializedAsync();
         }
