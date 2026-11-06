@@ -1,0 +1,51 @@
+@page "/textchunking"
+@page "/tokens"
+@page "/logProbs"
+@page "/logprobsautocomplete"
+@inject TokenService Tokenizer
+@inject CoreAgentService Agents
+@inject ILogger<Tokens> Logger
+<h1>Chunking, tokens, logit bias, and log probabilities</h1>
+<p>Token counts and IDs use the GPT-4o tokenizer. Logit bias is enabled only for compatible OpenAI GPT-4o / GPT-4.1 models.</p>
+@if (_error is not null) { <div class="alert alert-danger" role="alert">@_error</div> }
+<label class="d-block">Text<textarea class="form-control" rows="6" @bind="_text"></textarea></label>
+<label>Line budget <input type="number" @bind="_line" /></label>
+<label>Chunk budget <input type="number" @bind="_chunk" /></label>
+<label>Overlap budget <input type="number" @bind="_overlap" /></label>
+<button @onclick="Tokenize">Tokenize and chunk</button>
+<button @onclick="Generate" disabled="@_busy">Generate sample text</button>
+<p>@_count tokens. Click a token to add its ID to the logit-bias map.</p>
+<div>@foreach (var piece in _pieces) { <button class="btn btn-sm btn-outline-secondary" title="@piece.Id.ToString()" @onclick="() => AddBias(piece.Id)">@piece.Text (@piece.Id)</button> }</div>
+@foreach (var chunk in _chunks) { <details><summary>Chunk @chunk.Index: @chunk.Tokens tokens</summary><pre>@chunk.Text</pre></details> }
+<h2>Completion options</h2>
+<label>Temperature <input type="number" step="0.1" @bind="_temperature" /></label>
+<label>Top P <input type="number" step="0.1" @bind="_topP" /></label>
+<label>Maximum output tokens <input type="number" @bind="_max" /></label>
+<label><input type="checkbox" @bind="_logprobs" /> Include log probabilities (must be enabled for this model)</label>
+<label class="d-block">Logit bias map (token ID to integer -100..100)<textarea class="form-control" @bind="_bias"></textarea></label>
+<button disabled="@_busy" @onclick="Complete">Generate completion / autocomplete</button>
+<pre role="status" style="white-space:pre-wrap">@_output</pre>
+@code {
+    private string _text = "", _bias = "{}", _output = "";
+    private int _line = 100, _chunk = 300, _overlap = 30, _max = 100, _count;
+    private float _temperature = 1, _topP = 1;
+    private bool _logprobs, _busy;
+    private string? _error;
+    private IReadOnlyList<TokenPiece> _pieces = [];
+    private IReadOnlyList<TextChunk> _chunks = [];
+    private Task Tokenize() => Guard(() => { _count = Tokenizer.Count(_text); _pieces = Tokenizer.Tokens(_text); _chunks = Tokenizer.Chunk(_text, _line, _chunk, _overlap); return Task.CompletedTask; });
+    private Task Generate() => Guard(async () => _text = await Agents.GenerateAsync("Write a short essay about text embeddings and retrieval."));
+    private Task AddBias(int id) => Guard(() =>
+    {
+        var values = JsonSerializer.Deserialize<Dictionary<int, int>>(_bias) ?? throw new ArgumentException("Provide a JSON object.");
+        values[id] = 10; _bias = JsonSerializer.Serialize(values); return Task.CompletedTask;
+    });
+    private Task Complete() => Guard(async () =>
+    {
+        var response = await Tokenizer.CompleteWithOptionsAsync(_text, _temperature, _topP, _max, _logprobs,
+            JsonSerializer.Deserialize<Dictionary<int, int>>(_bias));
+        _output = JsonSerializer.Serialize(new { Text = string.Concat(response.Content.Select(c => c.Text)), response.ContentTokenLogProbabilities },
+            new JsonSerializerOptions { WriteIndented = true });
+    });
+    private async Task Guard(Func<Task> action) { _error = null; _busy = true; try { await action(); } catch (Exception ex) { Logger.LogError(ex, "Token operation failed"); _error = ex.Message; } finally { _busy = false; } }
+}

@@ -1,87 +1,96 @@
-# Adventures in Semantic Kernel
+# AdventuresInMSAgentFramework
 
-## [Extensive Interactive Demo of the Semantic Kernel SDK](https://adventuresinsemantickernel.azurewebsites.net/)
+An interactive .NET 10 Blazor Server playground built with [Microsoft Agent Framework](https://learn.microsoft.com/agent-framework/overview/).
+Agents use `ChatClientAgent`, `AgentSession`, `IChatClient`, and `AIFunction`; group conversations run real Agent Framework workflows.
+The application no longer references Semantic Kernel packages.
 
-Welcome to **Adventures in Semantic Kernel**, your interactive guide to exploring the functionalities of Microsoft's AI Orchestration library, Semantic Kernel. Dive into hands-on experiences ranging from dynamic plan generation and Agent building for a dynamic chat experience to memory management and tokenization. This isn't just a passive learning experience; you'll get to actively experiment with these features to understand their cohesive interactions. [Try it out here](https://adventuresinsemantickernel.azurewebsites.net/)
+## Run locally
 
-## About Semantic Kernel
+Install the .NET 10 SDK. Open [AdventuresInMSAgentFramework.sln](./AdventuresInMSAgentFramework.sln), or use PowerShell:
 
-Originally developed by Microsoft, [Semantic Kernel](https://learn.microsoft.com/en-us/semantic-kernel/overview/) aims to democratize AI integration for developers. While the project benefits from open-source contributions, its core mission is to simplify the integration of AI services with app code. It comes equipped with a smart set of connectors that essentially act as your app's "virtual brain", capable of executing LLM prompts, native code or external REST Apis.
+```powershell
+dotnet build .\AdventuresInMSAgentFramework.sln
+dotnet test .\AgentFramework.Tests\AgentFramework.Tests.csproj
+dotnet run --project .\BlazorWithMSAgentFramework\BlazorWithMSAgentFramework.csproj
+```
 
-## Configurations
+Hard-refresh existing browser tabs after upgrading so cached JavaScript matches the migrated component assemblies.
 
-Current configuration will work for all the main features of the demo, and for most (though not all) plugins. However, several [KernelSyntaxExamples](https://github.com/microsoft/semantic-kernel/tree/main/dotnet/samples/KernelSyntaxExamples) will require config values for specific resources (e.g. Pinecone, Chroma, Weaviate, etc.) not available by default. Any service config highlighted in red is missing values that will need to be added for the associated sample to work.
+The existing Auth0 host integration requires `Auth0:Domain` and `Auth0:ClientId`.
+Keep real configuration in user secrets, environment variables, or your deployment's configuration, not committed files.
+For example:
 
-![Config Image](/Images/ConfigImage.jpeg)
+```powershell
+dotnet user-secrets set --project .\BlazorWithMSAgentFramework "Auth0:Domain" "YOUR_TENANT.auth0.com"
+dotnet user-secrets set --project .\BlazorWithMSAgentFramework "Auth0:ClientId" "YOUR_CLIENT_ID"
+dotnet user-secrets set --project .\BlazorWithMSAgentFramework "OpenAI:ApiKey" "YOUR_API_KEY"
+```
 
-You don't need to supply an OpenAI api key for most of the demo features, but if you want to use a gpt-4 model (or if you want to change the default service to Azure OAI), you will need to supply an api key in the `OpenAIConfig` or `AzureOpenAIConfig` section.
-_**Note:**_ All configurations added/changed are encrypted and saved to your browser's local storage so they can be loaded across sessions while remaining secure.
+Model keys are not needed for deterministic tests, tokenization, arithmetic tools, or explicit local code execution.
+Model, embedding, image, and speech requests require your own credentials and may incur charges.
 
+## Providers and configuration
 
-## Application features
+Only **OpenAI** and **OpenRouter** are active model providers. Configuration is scoped to the current Blazor circuit; one visitor's override does not mutate another visitor's credentials.
+Use **Configure services** to apply a profile or save/load an encrypted browser override.
+The existing `OpenAIConfig` and `OpenRouterConfig` keys are retained, including import of their older name/value-array payloads.
+Changing profiles or an agent definition starts a new conversation on the next send.
 
-### Samples
-View, modify, and execute dotnet examples. Examples are from [KernelSyntaxExamples](https://github.com/microsoft/semantic-kernel/tree/main/dotnet/samples/KernelSyntaxExamples) with small modifications.
+Supported server settings:
 
-![Samples Image](/Images/SkSamples.jpeg)
+| Key | Purpose |
+|---|---|
+| `CoreSettings:Service` | `OpenAI` or `OpenRouter` |
+| `OpenAI:ApiKey`, `OpenRouter:ApiKey` | Provider credentials |
+| `<provider>:ModelId` | Default chat model; older `Gpt4MiniModelId` remains readable |
+| `<provider>:Endpoint` | Optional HTTPS-compatible endpoint |
+| `<provider>:EmbeddingModelId`, `<provider>:EmbeddingDimensions` | Explicit embedding model and vector size |
+| `Google:ApiKey`, `Google:SearchEngineId` | Google Programmable Search, independent of the model provider |
+| `OpenAI:ImageModelId`, `OpenAI:SpeechModelId` | Optional image/speech model overrides |
+| `AgentFramework:MemoryDirectory` | Writable directory for the new SQLite database |
 
-### Execute Function
-Select a single plugin from a large variety of native, prompt and external plugins, then execute a function from that plugin.
+Defaults are `gpt-4.1-mini` / `openai/gpt-4.1-mini`, `text-embedding-3-small` with 1536 dimensions, `gpt-image-1`, and `tts-1`.
+Choose models that actually support the configured tools/log-probability capabilities. Unsupported operations and upstream failures are reported, not silently stripped or redirected to another provider.
 
-![Function Image](/Images/ExecuteFunction.jpeg)
+## Features
 
-### Build Agent
-Build a simple agent by providing a persona and collection of plugins used together with OpenAI Function Calling.
+- **Samples:** six original, editable examples for streaming, approval-required tools, sessions/reset, sequential workflows, host-supplied human input, and retrieval ranking. The exact displayed sources are compiled in tests. Run uses the existing Ace editor and Roslyn compiler.
+- **Execute a tool:** inspect generated JSON schemas and retained YAML prompt templates; run native functions, arithmetic, Wikipedia, web search/read, D&D, weather, user clarification, or C#/Blazor tools.
+- **Build an agent:** editable instructions, per-agent model, tool groups/exclusions, JSON import/export, streaming replies, tool progress, cancellation, and session reset.
+- **Group workflows:** sequential, hub-and-spoke, and schema-constrained model-selected routing; editable or generated teams, primary participant, history visibility, turn/stop limits, human input, and approvals. Human questions and approval requests are separate interactions.
+- **Web, Wikipedia, documentation, and D&D agents:** retain their routes with typed HTTP tools or retrieval from freshly indexed Agent Framework documentation. Web search requires its own Google configuration; retired Bing Search is not called.
+- **Novel writer:** outline and chapter generation, Markdown download, and explicitly requested OpenAI cover-image/speech utilities.
+- **C#/Blazor REPL:** console programs, stateful scripts, and the existing multi-file Razor compiler/preview. Compiler output is isolated by asynchronous execution context.
+- **Memory and clustering:** text/Markdown/PDF ingestion, chunked embeddings, in-memory or fresh SQLite collections, exact cosine search with filters/top-N/threshold, HDBSCAN metrics and generated summaries, and an embedding projection with cosine relationship edges. Scanned PDFs require OCR beforehand.
+- **Tokens:** measured chunk budgets/overlap, token IDs, native OpenAI logit bias for compatible GPT-4o/GPT-4.1 models, and explicitly enabled log-probability results. Token counts use the GPT-4o tokenizer, not an arbitrary provider's tokenizer.
 
-![Function Image](/Images/AgentBuilder.jpeg)
+Retained prompt tools bind explicit `{{$variable}}` inputs and declared defaults. Clock values are supplied in code; previous implicit recall expressions now require an explicit `context` input.
+Historical YAML `execution_settings` are not model-provider configuration; new calls use the selected provider/model defaults.
 
-### Build Agent Group Chat
-Build a group chat comprised of `ChatCompletionAgent`s using `AgentGroupChat`
+## Safety and persistence
 
-![GroupChat Image](/Images/BuildSKGroupChat.png)
+**This is a trusted-user development playground, not a code sandbox.**
+Model-initiated C#/script/Blazor execution requires a server-correlated, single-use approval on the same conversation.
+Rejecting or cancelling a pending approval never starts that action. A user-clicked Run is itself explicit authorization.
+Cancellation cannot forcibly terminate arbitrary host code that has already started. Do not expose execution tools to untrusted users.
 
-### Build Planner
-Select plugins and functions to build and execute your own:
-  - **OpenAI Function Calling** Agent
-  - *Handlebars planner* (Still available, but usage is discouraged in favor of Function Calling. See [Planners vs Function Calling](https://learn.microsoft.com/en-us/semantic-kernel/concepts/planning?pivots=programming-language-csharp#what-about-the-function-calling-stepwise-and-handlebars-planners) for more information.)
-  - *Stepwise planner* (Still available, but usage is discouraged in favor of Function Calling. See [Planners vs Function Calling](https://learn.microsoft.com/en-us/semantic-kernel/concepts/planning?pivots=programming-language-csharp#what-about-the-function-calling-stepwise-and-handlebars-planners) for more information.)
+Public-page tools accept public HTTPS hosts, reject private destinations, disallow redirects, bind connections to validated addresses, and limit pages to 2 MB.
+API keys are not placed in displayed sample source or tool-progress messages.
 
-![Planner Image](/Images/BuildPlanner.jpeg)
+New SQLite data uses **`agent-framework-memory.db`**, a separate `af_memory` table, and encrypted-browser owner IDs.
+Existing databases are not opened, imported, rewritten, or deleted. Changing embedding models/dimensions requires reindexing.
+Browser encryption depends on the ASP.NET Core Data Protection keys; preserve those keys if overrides must survive deployments.
+Conversation sessions, human waits, and approval waits are process/circuit-local, not durable workflow checkpoints.
 
-### Custom Examples
+## Migration and validation
 
-#### Web Chat Agent
-Chat with the web using _Bing_ search and a scrape-and-summarize plugin
+The legacy Stepwise/Handlebars planners, arbitrary marketplace-manifest imports, unsupported model providers, obsolete experiments, and the old 67-example collection are retired.
+Legacy agent JSON keeps logical tool-group/exclusion fields and numeric history values; removed tools produce actionable errors.
+`Gpt35`/`Gpt4` legacy aliases use the configured modern default model.
 
-![WebChat Image](/Images/WebChat.png)
+[Runtime tests](./AgentFramework.Tests) cover sessions, approvals, cancellation, provider requests/options, tools/prompts, workflows/human input, saved configuration, memory persistence/isolation, chunk budgets, gallery compilation, and the multi-file Blazor REPL, without paid model calls.
+Both deployment workflows build/test the renamed solution before publishing.
+Live provider and external-service checks require separately configured credentials and authorization; deterministic tests do not claim to validate model quality or tenant authentication.
 
-#### Wikipedia Chat Agent
-Chat with the Wikipedia articles using _Wikipedia_ Rest API
-
-#### C# REPL Agent
-Use natural language prompts to generate and execute c# code
- - Generate and execute a c# console application using prompts.
- - Generate and execute c# line-by-line using [Roslyn c# scripting api](https://github.com/dotnet/roslyn/blob/main/docs/wiki/Scripting-API-Samples.md).
-
- ![Repl Image](/Images/Repl.jpeg)
-
-#### Dnd Story Agent
-Example of a Stepwise Planner at work. Planner has access to the [D&D5e Api](https://www.dnd5eapi.co/) plugin and multiple prompt plugins. It uses these to create and execute a plan to generate a short story.
- - Leverages a native plugin from a Razor Class Library `AskUserPlugin` to provide user interaction during plan execution
-
-### SK Memory
-
-#### Vector Playground
-Play around with embeddings and similarities using your own or generated text snippets
-
-#### SK + Custom Hdbscan Clustering
-See how embeddings can be used to cluster text items, and then generate a title and summmary for each cluster using prompt plugins
-
-### Tokens
-
-#### Chunking and Tokenization
- - Generate or add text, set the text chunking parameters, and then see the Semantic Kernel `TextChunker` work
- - Search over chunked text to see how the `TextChunker` can be used to improve search results
-
-#### Tinker with Tokens
-See how input text translates into tokens. Select specific tokens to set the LogitBias for a chat completion request/response.
+The GitHub repository, workspace directory, Azure resource names, and deployment-secret identifiers remain unchanged.
+Existing Azure targets must support .NET 10 before deployment. No deployment is required to use the local migration.

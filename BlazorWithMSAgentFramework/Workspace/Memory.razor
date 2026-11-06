@@ -1,0 +1,127 @@
+@page "/testEmbed"
+@page "/cluster"
+@inject MemoryService Memories
+@inject CoreAgentService Agents
+@inject TokenService Tokenizer
+@inject ApiTools APIs
+@inject Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage.ProtectedLocalStorage Storage
+@inject ILogger<Memory> Logger
+<h1>Vector playground and clustering</h1>
+<p>New indexes only. Embedding model changes require reindexing. Stored SQLite collections are isolated by an encrypted browser owner identifier.</p>
+@if (_error is not null) { <div class="alert alert-danger" role="alert">@_error</div> }
+<label>Storage <select @bind="Memories.Storage" @bind:after="Refresh"><option value="@MemoryStorage.InMemory">In memory</option><option value="@MemoryStorage.Sqlite">SQLite</option></select></label>
+<label>Collection <input @bind="_collection" list="memory-collections" /></label>
+<datalist id="memory-collections">@foreach (var name in _collections) { <option value="@name"></option> }</datalist>
+<label>Tag <input @bind="_tag" /></label>
+<label>Source URL <input @bind="_source" size="60" /></label>
+<label class="d-block">Text or Markdown<textarea class="form-control" rows="6" @bind="_text"></textarea></label>
+<label>Upload text / Markdown / PDF <InputFile OnChange="Upload" accept=".txt,.md,.pdf" /></label>
+<button disabled="@_busy" @onclick="Add">Chunk and index</button>
+<button disabled="@_busy" @onclick="FetchDocs">Index Agent Framework getting-started documentation</button>
+<button disabled="@_busy" @onclick="Generate">Generate random example sentences</button>
+<button disabled="@_busy" @onclick="Refresh">List collection</button>
+<button disabled="@_busy" @onclick="Delete">Delete this new collection</button>
+<hr />
+<label>Query <input @bind="_query" /></label>
+<label>Top N <input type="number" min="1" max="100" @bind="_top" /></label>
+<label>Minimum cosine score <input type="number" min="-1" max="1" step="0.05" @bind="_threshold" /></label>
+<label>Exact tag filter <input @bind="_filter" /></label>
+<button disabled="@_busy" @onclick="Search">Search</button>
+<table class="table"><thead><tr><th>Score</th><th>Text</th><th>Tag</th><th>Source</th></tr></thead><tbody>
+@foreach (var match in _matches) { <tr><td>@match.Score.ToString("F4")</td><td>@match.Item.Text</td><td>@match.Item.Tag</td><td>@match.Item.Source</td></tr> }
+</tbody></table>
+<h2>HDBSCAN</h2>
+<label>Minimum points <input type="number" @bind="_points" /></label>
+<label>Minimum cluster size <input type="number" @bind="_size" /></label>
+<label>Distance <select @bind="_distance">@foreach (var metric in new[] { "Cosine", "Euclidean", "Manhattan", "Pearson", "Supremum" }) { <option>@metric</option> }</select></label>
+<button disabled="@_busy" @onclick="Cluster">Cluster and summarize</button>
+<label><input type="checkbox" @bind="_showRelations" /> Show similarity relationships</label>
+<label>Relationship minimum cosine <input type="number" min="-1" max="1" step="0.05" @bind="_relationThreshold" /></label>
+<svg viewBox="0 0 640 240" width="640" height="240" role="img" aria-label="Embedding projection using first two vector coordinates">
+    @if (_showRelations)
+    {
+        @foreach (var edge in Relations())
+        {
+            <line x1="@Coordinate(edge.A.Vector, 0, 320)" y1="@Coordinate(edge.A.Vector, 1, 120)"
+                  x2="@Coordinate(edge.B.Vector, 0, 320)" y2="@Coordinate(edge.B.Vector, 1, 120)" stroke="#aaa"><title>@edge.Score.ToString("F3")</title></line>
+        }
+    }
+    @foreach (var item in _items.Take(100))
+    {
+        <circle cx="@Coordinate(item.Vector, 0, 320)" cy="@Coordinate(item.Vector, 1, 120)" r="5"><title>@item.Text</title></circle>
+    }
+</svg>
+<p>The plot shows the first 100 records using their first two embedding dimensions, not a semantic 2D reduction. Edges use full-vector cosine similarity.</p>
+@foreach (var cluster in _clusters)
+{
+    <h3>Cluster @cluster.Cluster</h3><p>@cluster.Summary</p><ul>@foreach (var item in cluster.Items) { <li>@item.Text</li> }</ul>
+}
+<details><summary>@_items.Count records</summary><pre>@JsonSerializer.Serialize(_items, new JsonSerializerOptions { WriteIndented = true })</pre></details>
+@code {
+    private string _collection = "playground", _tag = "", _source = "", _text = "", _query = "", _filter = "", _distance = "Cosine";
+    private int _top = 3, _points = 3, _size = 3;
+    private double _threshold, _relationThreshold = 0.8;
+    private bool _busy, _showRelations;
+    private string? _error;
+    private IReadOnlyList<MemoryItem> _items = [];
+    private IReadOnlyList<MemoryMatch> _matches = [];
+    private IReadOnlyList<ClusterResult> _clusters = [];
+    private IReadOnlyList<string> _collections = [];
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        await Guard(async () =>
+        {
+            var owner = await Storage.GetAsync<string>("AgentFrameworkMemoryOwner");
+            if (owner.Success && Guid.TryParse(owner.Value, out _)) Memories.Owner = owner.Value!;
+            else await Storage.SetAsync("AgentFrameworkMemoryOwner", Memories.Owner);
+            _collections = await Memories.CollectionsAsync();
+        });
+        StateHasChanged();
+    }
+    private double Coordinate(float[] vector, int dimension, int center)
+    {
+        var values = _items.Take(100).Select(item => item.Vector.Length > dimension ? (double)item.Vector[dimension] : 0).ToArray();
+        var min = values.Min(); var max = values.Max();
+        var value = vector.Length > dimension ? vector[dimension] : 0;
+        return min == max ? center : 20 + (value - min) / (max - min) * (center * 2 - 40);
+    }
+    private Task Add() => Guard(async () => { ArgumentException.ThrowIfNullOrWhiteSpace(_text); foreach (var chunk in Tokenizer.Chunk(_text)) await Memories.AddAsync(_collection, chunk.Text, _tag, _source); _items = await Memories.ListAsync(_collection); _collections = await Memories.CollectionsAsync(); });
+    private Task Refresh() => Guard(async () => { _items = await Memories.ListAsync(_collection); _collections = await Memories.CollectionsAsync(); });
+    private Task Delete() => Guard(async () => { await Memories.DeleteAsync(_collection); _items = []; _matches = []; _clusters = []; _collections = await Memories.CollectionsAsync(); });
+    private Task Search() => Guard(async () => _matches = await Memories.SearchAsync(_collection, _query, _top, _threshold, string.IsNullOrEmpty(_filter) ? null : _filter));
+    private Task Cluster() => Guard(async () => _clusters = await Agents.ClusterAsync(_collection, _points, _size, _distance));
+    private Task Generate() => Guard(async () => _text = await Agents.GenerateAsync("Generate ten distinct random sentences, one per line."));
+    private Task FetchDocs() => Guard(async () =>
+    {
+        _source = "https://learn.microsoft.com/agent-framework/get-started/your-first-agent";
+        _text = await APIs.ReadPageAsync(_source);
+        _collection = "agent-framework-docs";
+        foreach (var chunk in Tokenizer.Chunk(_text)) await Memories.AddAsync(_collection, chunk.Text, "AgentFramework", _source);
+        _items = await Memories.ListAsync(_collection);
+    });
+    private Task Upload(InputFileChangeEventArgs e) => Guard(async () =>
+    {
+        await using var stream = e.File.OpenReadStream(2_000_000);
+        if (Path.GetExtension(e.File.Name).Equals(".pdf", StringComparison.OrdinalIgnoreCase))
+        {
+            using var buffer = new MemoryStream(); await stream.CopyToAsync(buffer);
+            using var pdf = UglyToad.PdfPig.PdfDocument.Open(buffer.ToArray());
+            _text = string.Join("\n\n", pdf.GetPages().Select(page => page.Text));
+            if (string.IsNullOrWhiteSpace(_text)) throw new InvalidDataException("This PDF has no extractable text. Scanned PDFs require OCR before indexing.");
+        }
+        else { using var reader = new StreamReader(stream); _text = await reader.ReadToEndAsync(); }
+    });
+    private IEnumerable<(MemoryItem A, MemoryItem B, double Score)> Relations()
+    {
+        var items = _items.Take(100).ToArray();
+        for (var i = 0; i < items.Length; i++)
+            for (var j = i + 1; j < items.Length; j++)
+            {
+                if (items[i].Model != items[j].Model) continue;
+                var score = MemoryService.Cosine(items[i].Vector, items[j].Vector);
+                if (score >= _relationThreshold) yield return (items[i], items[j], score);
+            }
+    }
+    private async Task Guard(Func<Task> action) { _error = null; _busy = true; try { await action(); } catch (Exception ex) { Logger.LogError(ex, "Memory operation failed"); _error = ex.Message; } finally { _busy = false; } }
+}

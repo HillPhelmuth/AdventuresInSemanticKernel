@@ -1,0 +1,26 @@
+@inherits LayoutComponentBase
+<PageTitle>Adventures in Microsoft Agent Framework</PageTitle>
+<div class="container-fluid">
+    <header class="p-3 border-bottom"><a href="/" class="h4">Adventures in Microsoft Agent Framework</a></header>
+    <div class="row">
+        <nav class="col-md-2 p-3 border-end" aria-label="Main navigation">
+            @foreach (var link in Links)
+            {
+                <NavLink class="d-block py-1" href="@link.Path" Match="NavLinkMatch.All">@link.Text</NavLink>
+            }
+            <hr /><a href="https://github.com/HillPhelmuth/AdventuresInSemanticKernel" target="_blank" rel="noopener">Source repository</a>
+        </nav>
+        <main class="col-md-10 p-4">@Body</main>
+    </div>
+</div>
+@code {
+    private static readonly (string Path, string Text)[] Links =
+    [
+        ("", "Home"), ("configuration", "Configure services"), ("samples", "Agent Framework samples"),
+        ("executeFunction", "Execute a tool"), ("simpleAgent", "Build an agent"),
+        ("agentGroupChat", "Build a group workflow"), ("autoSequentialChatPage", "Dynamic agent team"),
+        ("web", "Web agent"), ("wikiChat", "Wikipedia agent"), ("docs", "Agent Framework docs"),
+        ("repl", "C# / Blazor REPL"), ("novel", "Novel writer"), ("dnd", "D&D story agent"), ("testEmbed", "Vector playground"),
+        ("cluster", "HDBSCAN clustering"), ("textchunking", "Chunking and tokens"), ("logProbs", "Log probabilities")
+    ];
+}

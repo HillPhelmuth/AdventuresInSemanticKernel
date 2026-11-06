@@ -1,0 +1,185 @@
+@page "/simpleAgent"
+@page "/web"
+@page "/wikiChat"
+@page "/docs"
+@page "/repl"
+@page "/novel"
+@page "/dnd"
+@implements IAsyncDisposable
+@inject CoreAgentService Agents
+@inject RuntimeConfiguration ConfigurationState
+@inject ToolCatalog Catalog
+@inject MediaService Media
+@inject AgentFrameworkLibrary.Services.CompilerService Compiler
+@inject AgentFrameworkLibrary.Services.ScriptService Script
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+@inject ILogger<AgentChat> Logger
+<h1>@Title</h1>
+@if (_error is not null) { <div role="alert" class="alert alert-danger">@_error</div> }
+<details open>
+    <summary>Agent definition and tools</summary>
+    <label>Name <input @bind="_definition.Name" disabled="@_busy" /></label>
+    <label class="d-block">Instructions<textarea class="form-control" rows="3" @bind="_definition.Instructions" disabled="@_busy"></textarea></label>
+    <label>Model override (optional) <input @bind="_definition.GptModel" disabled="@_busy" /></label>
+    <div>@foreach (var group in Catalog.Groups)
+    {
+        <label class="me-3"><input type="checkbox" checked="@_definition.PluginNames.Contains(group)" disabled="@_busy"
+            @onchange="e => Toggle(group, (bool)e.Value!)" /> @group</label>
+    }</div>
+    <label class="d-block">Excluded function names (comma separated)<input class="form-control" @bind="_exclusions" disabled="@_busy" /></label>
+    <button @onclick="Reset" disabled="@_busy">Apply definition / reset conversation</button>
+    <button @onclick="DownloadDefinition" disabled="@_busy">Download definition</button>
+    <label>Import definition <InputFile OnChange="ImportDefinition" accept=".json" disabled="@_busy" /></label>
+</details>
+@if (Mode == "novel")
+{
+    <label>Chapters <input type="number" min="1" max="30" @bind="_chapters" /></label>
+    <button @onclick="Outline" disabled="@_busy">Generate outline from input</button>
+    <button @onclick="WriteNovel" disabled="@_busy">Write chapters from outline</button>
+    <button @onclick="DownloadNovel" disabled="@_busy">Download novel</button>
+    <button @onclick="GenerateCover" disabled="@_busy">Generate cover image (OpenAI)</button>
+    <button @onclick="Narrate" disabled="@_busy">Narrate input / selected excerpt (OpenAI)</button>
+    @if (_image is not null) { <div><img src="@_image" alt="Generated novel cover" style="max-width:24rem" /></div> }
+    @if (_audio is not null) { <audio controls src="@_audio"></audio> }
+}
+<ChatView @ref="_chat" Height="45vh" />
+<label class="d-block">@((Mode == "novel") ? "Theme or outline" : "Message")<textarea class="form-control" rows="4" @bind="_input" disabled="@_busy"></textarea></label>
+<button @onclick="Send" disabled="@_busy">Send</button>
+<button @onclick="Cancel" disabled="@(!_busy)">Cancel</button>
+<details><summary>Tool progress</summary><pre>@string.Join("\n", _progress)</pre></details>
+@if (_conversation is not null)
+{
+    @foreach (var request in _conversation.PendingApprovals)
+    {
+        <div class="alert alert-warning">
+            <strong>Tool approval required</strong>
+            <pre>@JsonSerializer.Serialize(request.ToolCall)</pre>
+            <button disabled="@_busy" @onclick="() => Respond(request.RequestId, true)">Approve once</button>
+            <button disabled="@_busy" @onclick="() => Respond(request.RequestId, false)">Reject</button>
+        </div>
+    }
+}
+@if (Mode == "repl")
+{
+    <h2>C# / Blazor execution</h2>
+    <p>Model-initiated execution uses approval-required tools. The Run button below explicitly executes your code on this host. This is not a sandbox.</p>
+    <label class="d-block">Code<textarea class="form-control" rows="12" @bind="_code"></textarea></label>
+    <label><input type="checkbox" @bind="_script" /> Stateful C# script</label>
+    <button @onclick="RunCode" disabled="@_busy">Run code</button>
+    <pre>@_codeOutput</pre>
+}
+@code {
+    private AgentDefinition _definition = new();
+    private AgentConversation? _conversation;
+    private ChatView? _chat;
+    private string _input = "", _exclusions = "", _code = "Console.WriteLine(\"Hello\");", _codeOutput = "", _novel = "";
+    private string? _error, _lastMode, _appliedDefinition, _image, _audio;
+    private ModelSettings? _profile;
+    private readonly List<string> _progress = [];
+    private int _chapters = 5;
+    private bool _busy, _script;
+    private CancellationTokenSource _cancellation = new();
+    protected override void OnInitialized() => Catalog.ToolProgress += Progress;
+    private void Progress(string message) => _ = InvokeAsync(() => { _progress.Add(message); StateHasChanged(); });
+    private string Mode => new Uri(Navigation.Uri).AbsolutePath.Trim('/');
+    private string Title => Mode switch { "web" => "Web agent", "wikiChat" => "Wikipedia agent", "docs" => "Agent Framework documentation", "repl" => "C# / Blazor REPL", "novel" => "Novel writer", "dnd" => "D&D story agent", _ => "Build an agent" };
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_lastMode == Mode) return;
+        _cancellation.Cancel();
+        if (_conversation is not null) await _conversation.DisposeAsync();
+        _conversation = null; _lastMode = Mode; _exclusions = ""; _progress.Clear();
+        _definition = new AgentDefinition { Name = Title, Instructions = "Assist the user using the selected tools. Cite source links when using external information." };
+        _definition.PluginNames = Mode switch
+        {
+            "web" => ["WebCrawlPlugin"], "wikiChat" => ["WikiChatPlugin"], "repl" => ["CodeExecutorPlugin", "BlazorReplPlugin"],
+            "dnd" => ["DndPlugin", "AskUserPlugin"], _ => []
+        };
+        _chat?.ChatState.Reset();
+    }
+    private void Toggle(string group, bool selected) { if (selected) _definition.PluginNames.Add(group); else _definition.PluginNames.Remove(group); }
+    private async Task Reset()
+    {
+        if (_conversation is not null) await _conversation.DisposeAsync();
+        _conversation = null; _chat?.ChatState.Reset(); _error = null;
+        _appliedDefinition = null; _progress.Clear();
+        _definition.ExcludedFunctionNames = _exclusions.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+    }
+    private Task Send() => Run(async token =>
+    {
+        await EnsureConversation();
+        _chat!.ChatState.AddUserMessage(_input);
+        _chat.ChatState.AddAssistantMessage("");
+        var input = Mode == "docs" ? await Agents.RetrieveContextAsync(_input, token) : _input;
+        await Stream(_conversation!.RunAsync(input, token));
+    });
+    private async Task EnsureConversation()
+    {
+        _definition.ExcludedFunctionNames = _exclusions.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+        var serialized = JsonSerializer.Serialize(_definition);
+        if (_conversation is not null && (_appliedDefinition != serialized || !ReferenceEquals(_profile, ConfigurationState.Current)))
+            await Reset();
+        if (_conversation is null)
+        {
+            _conversation = Agents.CreateConversation(_definition); _appliedDefinition = serialized; _profile = ConfigurationState.Current;
+        }
+    }
+    private Task Respond(string id, bool approved) => Run(async token =>
+    {
+        _chat!.ChatState.AddAssistantMessage("");
+        await Stream(_conversation!.RespondAsync(id, approved, token));
+    });
+    private async Task Stream(IAsyncEnumerable<Microsoft.Agents.AI.AgentResponseUpdate> stream)
+    {
+        await foreach (var update in stream)
+        {
+            if (!string.IsNullOrEmpty(update.Text)) _chat!.ChatState.UpdateAssistantMessage(update.Text);
+            await InvokeAsync(StateHasChanged);
+        }
+        if (Mode == "repl") _code = ToolCatalog.StripFence(_chat!.ChatState.ChatMessages.Last().Content ?? "");
+    }
+    private async Task Run(Func<CancellationToken, Task> action)
+    {
+        _error = null; _busy = true; _cancellation.Dispose(); _cancellation = new();
+        try { await action(_cancellation.Token); }
+        catch (OperationCanceledException) when (_cancellation.IsCancellationRequested)
+        {
+            _error = "Run cancelled. The conversation was reset; already-started host code may still be running.";
+            if (_conversation is not null) await _conversation.ResetAsync();
+        }
+        catch (Exception ex) { Logger.LogError(ex, "Agent operation failed"); _error = ex.Message; }
+        finally { _busy = false; }
+    }
+    private void Cancel() => _cancellation.Cancel();
+    private Task Outline() => Run(async token =>
+    {
+        _input = await Agents.GenerateAsync($"Write an outline for a {_chapters}-chapter novel. Theme and characters:\n{_input}", token);
+    });
+    private Task WriteNovel() => Run(async token =>
+    {
+        if (_chapters is < 1 or > 30) throw new ArgumentOutOfRangeException(nameof(_chapters));
+        await EnsureConversation();
+        _novel = ""; var outline = _input;
+        for (var chapter = 1; chapter <= _chapters; chapter++)
+        {
+            _chat!.ChatState.AddAssistantMessage("");
+            await Stream(_conversation!.RunAsync($"Write chapter {chapter} of {_chapters}, maintaining continuity. Outline:\n{outline}", token));
+            _novel += $"\n\n## Chapter {chapter}\n\n{_chat.ChatState.ChatMessages.Last().Content}";
+        }
+    });
+    private Task RunCode() => Run(async token => { _codeOutput = _script ? await Script.EvaluateAsync(_code, token) : await Compiler.SubmitCode(_code, AgentFrameworkLibrary.Services.CompileResources.PortableExecutableReferences, token); });
+    private Task DownloadNovel() => JS.InvokeVoidAsync("downloadFile", "novel.md", _novel).AsTask();
+    private Task GenerateCover() => Run(async token => _image = "data:image/png;base64," + Convert.ToBase64String(await Media.ImageAsync("Create a novel cover for:\n" + _input, token)));
+    private Task Narrate() => Run(async token => _audio = "data:audio/mpeg;base64," + Convert.ToBase64String(await Media.SpeechAsync(_input, token)));
+    private Task DownloadDefinition() => JS.InvokeVoidAsync("downloadFile", "agent.json", JsonSerializer.Serialize(_definition, new JsonSerializerOptions { WriteIndented = true })).AsTask();
+    private Task ImportDefinition(InputFileChangeEventArgs e) => Run(async token =>
+    {
+        await using var stream = e.File.OpenReadStream(1_000_000, token);
+        _definition = await JsonSerializer.DeserializeAsync<AgentDefinition>(stream, cancellationToken: token) ?? throw new InvalidDataException("Invalid agent definition.");
+        _definition.Validate();
+        _exclusions = string.Join(", ", _definition.ExcludedFunctionNames);
+        await Reset();
+    });
+    public async ValueTask DisposeAsync() { Catalog.ToolProgress -= Progress; _cancellation.Cancel(); if (_conversation is not null) await _conversation.DisposeAsync(); _cancellation.Dispose(); }
+}

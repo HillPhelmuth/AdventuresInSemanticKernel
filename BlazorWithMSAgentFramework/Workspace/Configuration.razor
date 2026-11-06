@@ -1,0 +1,39 @@
+@page "/configuration"
+@inject RuntimeConfiguration ConfigurationState
+@inject Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage.ProtectedLocalStorage Storage
+@inject ILogger<Configuration> Logger
+<h1>Configure services</h1>
+<p>Settings belong to this browser circuit. Provider capabilities must match your selected model. Keys are never included in logs or source files.</p>
+@if (_error is not null) { <div role="alert" class="alert alert-danger">@_error</div> }
+<label>Provider <select @bind="_provider" @bind:after="ChangeProvider"><option>OpenAI</option><option>OpenRouter</option></select></label>
+<div><label>API key <input type="password" autocomplete="off" @bind="_settings.ApiKey" /></label></div>
+<div><label>Model <input @bind="_settings.Model" /></label></div>
+<div><label>Endpoint (optional) <input @bind="_settings.Endpoint" size="60" /></label></div>
+<div><label>Embedding model <input @bind="_settings.EmbeddingModel" /></label></div>
+<div><label>Embedding dimensions <input type="number" @bind="_settings.EmbeddingDimensions" /></label></div>
+<div><label><input type="checkbox" @bind="_settings.SupportsTools" /> Model supports function tools</label></div>
+<div><label><input type="checkbox" @bind="_settings.SupportsLogprobs" /> Model supports log probabilities</label></div>
+<button @onclick="Apply">Apply to circuit</button>
+<button @onclick="Save">Apply and save encrypted browser override</button>
+<button @onclick="Load">Load encrypted browser override</button>
+<p role="status">@_status</p>
+<p>Web search uses Google:ApiKey and Google:SearchEngineId from server configuration. It is separate from the model provider. The retired Bing Search API is not used.</p>
+@code {
+    private ModelSettings _settings = new();
+    private string _provider = "OpenAI";
+    private string? _error, _status;
+    protected override void OnInitialized() { _settings = Clone(ConfigurationState.Current); _provider = _settings.Provider; }
+    private static ModelSettings Clone(ModelSettings settings) => JsonSerializer.Deserialize<ModelSettings>(JsonSerializer.Serialize(settings))!;
+    private void ChangeProvider() { _settings = ConfigurationState.ForProvider(_provider); _status = null; }
+    private Task Apply() => Guard(() => { _settings.Provider = _provider; _settings.Validate(); ConfigurationState.Current = Clone(_settings); _status = "Configuration applied. New conversations use these settings."; return Task.CompletedTask; });
+    private Task Save() => Guard(async () => { await Apply(); if (_error is null) await Storage.SetAsync(_provider + "Config", _settings); });
+    private Task Load() => Guard(async () =>
+    {
+        var stored = await Storage.GetAsync<JsonElement>(_provider + "Config");
+        if (!stored.Success) stored = await Storage.GetAsync<JsonElement>(_provider + "AgentFrameworkConfig");
+        if (!stored.Success) throw new InvalidOperationException("No saved configuration exists for this provider.");
+        _settings = ConfigurationState.ReadBrowserSettings(_provider, stored.Value);
+        await Apply();
+    });
+    private async Task Guard(Func<Task> action) { try { _error = null; await action(); } catch (Exception ex) { Logger.LogError(ex, "Configuration operation failed"); _error = ex.Message; } }
+}

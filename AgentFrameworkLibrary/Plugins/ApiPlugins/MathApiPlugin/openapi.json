@@ -1,0 +1,339 @@
+{
+  "openapi": "3.0.0",
+  "x-comment": "JSON does not support literal comments. This spec uses vendor-extension fields (x-*) as inline commentary to explain design choices without breaking OpenAPI tooling.",
+  "info": {
+    "title": "Newton Math API",
+    "description": "Newton does anything from numerical calculation to symbolic math parsing.",
+    "version": "0.1",
+    "x-comment": "High-level metadata only; operational semantics are documented at the operation and parameter levels."
+  },
+  "servers": [
+    {
+      "url": "https://newton.now.sh/api/v2/",
+      "description": "production",
+      "x-comment": "Single public server. If you proxy this API, add additional server objects here."
+    }
+  ],
+  "components": {
+    "x-comment": "Shared components reduce duplication and keep parameter descriptions in one place.",
+    "schemas": {
+      "OperationResponse": {
+        "type": "object",
+        "description": "Standard Newton response envelope.",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "description": "Operation name as defined by the route (e.g., 'simplify', 'derive')."
+          },
+          "expression": {
+            "type": "string",
+            "description": "Echo of the expression after parsing/normalization by the service."
+          },
+          "result": {
+            "type": "string",
+            "description": "Result of the computation. For symbolic ops this is an algebraic string; for numeric ops this is a numeric string."
+          }
+        },
+        "required": ["operation", "expression", "result"],
+        "x-comment": "Downstream SDKs will model a single response type, simplifying client code."
+      }
+    },
+    "parameters": {
+      "ExpressionPathParam": {
+        "name": "expression",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "string" },
+        "description": "Infix mathematical expression. **Must** be URL-encoded. Reserve characters that typically need encoding: space (%20), +, -, *, /, ^, (, ). Variables (e.g., x) are supported. Example: (x^2+2x+1) → %28x%5E2%2B2x%2B1%29",
+        "x-comment": "Made reusable so every endpoint shares the same parameter semantics and docs."
+      }
+    }
+  },
+  "paths": {
+    "/simplify/{expression}": {
+      "get": {
+        "summary": "Simplify",
+        "description": "Algebraically simplifies a URL-encoded mathematical expression written in infix notation. Combines like terms, reduces fractions, evaluates constant sub‑expressions, and returns an equivalent but simpler form. Typical use cases: cleaning user input before further processing, presenting canonical forms, or checking algebraic equality.\n\n**Input**: Provide the expression as a path segment in the `{expression}` parameter and URL‑encode reserved characters (`+`, `-`, `*`, `/`, `^`, `(`, `)`, spaces). Variables such as `x` are supported.\n\n**Examples**:\n- `GET /simplify/2%5E3%2B2*4` → result `\"16\"`\n- `GET /simplify/%28x%5E2%2B2x%2B1%29` → result `\"(x+1)^2\"`\n\n**Response**: JSON with `operation`, `expression` (as parsed/echoed), and the simplified `result` string.",
+        "operationId": "Simplify",
+        "parameters": [ { "$ref": "#/components/parameters/ExpressionPathParam" } ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OperationResponse" }
+              }
+            }
+          }
+        },
+        "x-comment": "This endpoint performs symbolic simplification; it does not evaluate variables unless the expression is fully numeric."
+      }
+    },
+    "/factor/{expression}": {
+      "get": {
+        "summary": "Factor",
+        "description": "Factors a URL‑encoded algebraic expression—commonly polynomials—into a product of simpler factors where possible (e.g., over integers/rationals). Useful for root analysis, partial fraction workflows, or presentation.\n\n**Input**: `{expression}` should be infix notation and URL‑encoded.\n\n**Examples**:\n- `GET /factor/x%5E2-1` → result `\"(x-1)(x+1)\"`\n- `GET /factor/%28x%5E2%2B2x%2B1%29` → result `\"(x+1)^2\"`\n\n**Response**: JSON with the factored `result` string when factorization is found; otherwise the original (or partially factored) expression.",
+        "operationId": "Factor",
+        "parameters": [ { "$ref": "#/components/parameters/ExpressionPathParam" } ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OperationResponse" }
+              }
+            }
+          }
+        },
+        "x-comment": "Result format mirrors common algebra systems; irreducible inputs return unchanged (normalized) expressions."
+      }
+    },
+    "/derive/{expression}": {
+      "get": {
+        "summary": "Derive",
+        "description": "Computes the symbolic derivative of the given expression with respect to `x`. Returns the derivative in algebraic form. Ideal for calculus features, slope analysis, and optimization workflows.\n\n**Input**: `{expression}` must be URL‑encoded infix. Variables such as `x` are supported.\n\n**Examples**:\n- `GET /derive/x%5E3` → result `\"3x^2\"`\n- `GET /derive/sin%28x%29` → result `\"cos(x)\"`\n\n**Response**: JSON with the derivative as a `result` string.",
+        "operationId": "Derive",
+        "parameters": [ { "$ref": "#/components/parameters/ExpressionPathParam" } ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OperationResponse" }
+              }
+            }
+          }
+        },
+        "x-comment": "Differentiation rules include power, product/quotient, and common trig/exp/log functions."
+      }
+    },
+    "/integrate/{expression}": {
+      "get": {
+        "summary": "Integrate",
+        "description": "Computes a symbolic antiderivative (indefinite integral) of the expression with respect to `x`, when possible. In some cases the service may also return a numeric value if the input encodes bounds (implementation‑dependent). Useful for accumulation, area, and solving differential equations.\n\n**Input**: URL‑encoded infix `{expression}`.\n\n**Examples**:\n- `GET /integrate/x` → result like `\"1/2 x^2\"`\n- `GET /integrate/cos%28x%29` → result `\"sin(x)\"`\n\n**Response**: JSON with an antiderivative as a `result` string (constant of integration handling is service‑defined).",
+        "operationId": "Integrate",
+        "parameters": [ { "$ref": "#/components/parameters/ExpressionPathParam" } ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OperationResponse" }
+              }
+            }
+          }
+        },
+        "x-comment": "Some inputs may not have elementary antiderivatives; behavior is service-defined in such cases."
+      }
+    },
+    "/zeroes/{expression}": {
+      "get": {
+        "summary": "Find Zeros",
+        "description": "Attempts to find zeros/roots of the function defined by the given expression in `x`. Depending on the expression and service heuristics, results may include exact or approximate roots represented as a string. Useful for intercepts, solving polynomial equations, and qualitative graphing.\n\n**Input**: URL‑encoded infix `{expression}`.\n\n**Examples**:\n- `GET /zeroes/x%5E2-1` → result may include `\"-1, 1\"`\n- `GET /zeroes/sin%28x%29` → result may include integer multiples of `π` (format is service‑defined)\n\n**Response**: JSON with roots as a `result` string.",
+        "operationId": "FindZeroes",
+        "parameters": [ { "$ref": "#/components/parameters/ExpressionPathParam" } ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OperationResponse" }
+              }
+            }
+          }
+        },
+        "x-comment": "Root finding may be symbolic for polynomials or numeric for transcendental expressions; precision/format is implementation-specific."
+      }
+    },
+    "/tangent/{expression}": {
+      "get": {
+        "summary": "Find Tangent",
+        "description": "Generates the equation of a tangent line to the curve `y = f(x)` derived from the provided expression. Some service implementations support specifying a point within the expression (e.g., providing `x = a`) to indicate the evaluation point; otherwise behavior is implementation‑defined. Useful for linear approximations and slope analysis.\n\n**Input**: URL‑encoded infix `{expression}`; if a point is supported, include it in the expression per service conventions.\n\n**Examples**:\n- `GET /tangent/x%5E2` → result is the tangent form (point selection is service‑defined)\n\n**Response**: JSON with the tangent line representation as a `result` string.",
+        "operationId": "FindTangent",
+        "parameters": [ { "$ref": "#/components/parameters/ExpressionPathParam" } ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OperationResponse" }
+              }
+            }
+          }
+        },
+        "x-comment": "If the API does not accept an explicit point, it may default to a particular x or return a family of tangents; check live behavior."
+      }
+    },
+    "/area/{expression}": {
+      "get": {
+        "summary": "Area Under Curve",
+        "description": "Computes area under the curve defined by the expression, typically via integration. Some implementations allow encoding bounds within the expression to request a definite integral; otherwise, a symbolic antiderivative or numeric approximation may be returned, depending on service behavior. Useful for accumulation and definite integral problems.\n\n**Input**: URL‑encoded infix `{expression}`; include bounds if supported by the service.\n\n**Examples**:\n- `GET /area/x` → service‑defined (antiderivative or area when bounds are encoded)\n\n**Response**: JSON with the area or antiderivative as a `result` string.",
+      "operationId": "AreaUnderCurve",
+        "parameters": [ { "$ref": "#/components/parameters/ExpressionPathParam" } ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OperationResponse" }
+              }
+            }
+          }
+        },
+        "x-comment": "When bounds are provided, this is effectively a definite integral; units/interpretation depend on the original function."
+      }
+    },
+    "/cos/{expression}": {
+      "get": {
+        "summary": "Cosine",
+        "description": "Evaluates or symbolically transforms the cosine of the provided expression. If the input is numeric (or reducible to a numeric value), a numeric result may be returned; otherwise a simplified symbolic form may be produced.\n\n**Input**: URL‑encoded infix `{expression}`.\n\n**Examples**:\n- `GET /cos/0` → result `\"1\"`\n- `GET /cos/%28x%29` → result `\"cos(x)\"` (if symbolic)\n\n**Response**: JSON with `result` as a string.",
+        "operationId": "Cosine",
+        "parameters": [ { "$ref": "#/components/parameters/ExpressionPathParam" } ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OperationResponse" }
+              }
+            }
+          }
+        },
+        "x-comment": "For angles in radians unless otherwise specified; symbolic outputs preserve function form."
+      }
+    },
+    "/sin/{expression}": {
+      "get": {
+        "summary": "Sine",
+        "description": "Evaluates or symbolically transforms the sine of the provided expression. Numeric inputs typically yield numeric results; expressions in `x` may be simplified symbolically.\n\n**Input**: URL‑encoded infix `{expression}`.\n\n**Examples**:\n- `GET /sin/0` → result `\"0\"`\n- `GET /sin/%28x%29` → result `\"sin(x)\"` (if symbolic)\n\n**Response**: JSON with `result` as a string.",
+        "operationId": "Sine",
+        "parameters": [ { "$ref": "#/components/parameters/ExpressionPathParam" } ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OperationResponse" }
+              }
+            }
+          }
+        },
+        "x-comment": "Same angle-unit conventions as cosine."
+      }
+    },
+    "/tan/{expression}": {
+      "get": {
+        "summary": "Tangent",
+        "description": "Evaluates or symbolically transforms the tangent of the provided expression. May return numeric values for numeric inputs or simplified symbolic forms for expressions in `x`.\n\n**Input**: URL‑encoded infix `{expression}`.\n\n**Examples**:\n- `GET /tan/0` → result `\"0\"`\n- `GET /tan/%28x%29` → result `\"tan(x)\"` (if symbolic)\n\n**Response**: JSON with `result` as a string.",
+        "operationId": "Tangent",
+        "parameters": [ { "$ref": "#/components/parameters/ExpressionPathParam" } ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OperationResponse" }
+              }
+            }
+          }
+        },
+        "x-comment": "Be mindful of discontinuities at odd multiples of π/2 when evaluating numerically."
+      }
+    },
+    "/arccos/{expression}": {
+      "get": {
+        "summary": "Inverse Cosine",
+        "description": "Evaluates or symbolically represents the inverse cosine (arccos) of the provided expression. Domain restrictions apply (typically `-1 ≤ x ≤ 1` for real outputs).\n\n**Input**: URL‑encoded infix `{expression}`.\n\n**Examples**:\n- `GET /arccos/1` → result `\"0\"`\n- `GET /arccos/%28x%29` → result `\"arccos(x)\"` (if symbolic)\n\n**Response**: JSON with `result` as a string.",
+        "operationId": "InverseCosine",
+        "parameters": [ { "$ref": "#/components/parameters/ExpressionPathParam" } ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OperationResponse" }
+              }
+            }
+          }
+        },
+        "x-comment": "Return value is in radians unless otherwise noted; out-of-domain inputs may yield complex or error behavior depending on the service."
+      }
+    },
+    "/arcsin/{expression}": {
+      "get": {
+        "summary": "Inverse Sine",
+        "description": "Evaluates or symbolically represents the inverse sine (arcsin) of the provided expression. Domain restrictions apply (typically `-1 ≤ x ≤ 1` for real outputs).\n\n**Input**: URL‑encoded infix `{expression}`.\n\n**Examples**:\n- `GET /arcsin/0` → result `\"0\"`\n- `GET /arcsin/%28x%29` → result `\"arcsin(x)\"` (if symbolic)\n\n**Response**: JSON with `result` as a string.",
+        "operationId": "InverseSine",
+        "parameters": [ { "$ref": "#/components/parameters/ExpressionPathParam" } ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OperationResponse" }
+              }
+            }
+          }
+        },
+        "x-comment": "As with arccos, angles are in radians; client code can convert to degrees if needed."
+      }
+    },
+    "/arctan/{expression}": {
+      "get": {
+        "summary": "Inverse Tangent",
+        "description": "Evaluates or symbolically represents the inverse tangent (arctan) of the provided expression.\n\n**Input**: URL‑encoded infix `{expression}`.\n\n**Examples**:\n- `GET /arctan/0` → result `\"0\"`\n- `GET /arctan/%28x%29` → result `\"arctan(x)\"` (if symbolic)\n\n**Response**: JSON with `result` as a string.",
+        "operationId": "InverseTangent",
+        "parameters": [ { "$ref": "#/components/parameters/ExpressionPathParam" } ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OperationResponse" }
+              }
+            }
+          }
+        },
+        "x-comment": "No domain restriction for real inputs, but output range is typically (-π/2, π/2)."
+      }
+    },
+    "/abs/{expression}": {
+      "get": {
+        "summary": "Absolute Value",
+        "description": "Computes the absolute value of the provided expression. Numeric inputs yield non‑negative numeric outputs; symbolic inputs may be returned with absolute‑value notation.\n\n**Input**: URL‑encoded infix `{expression}`.\n\n**Examples**:\n- `GET /abs/-3` → result `\"3\"`\n- `GET /abs/%28x%29` → result `\"|x|\"` or similar notation\n\n**Response**: JSON with `result` as a string.",
+        "operationId": "AbsoluteValue",
+        "parameters": [ { "$ref": "#/components/parameters/ExpressionPathParam" } ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OperationResponse" }
+              }
+            }
+          }
+        },
+        "x-comment": "Symbolic outputs may preserve |·|; numeric outputs are plain numbers as strings."
+      }
+    },
+    "/log/{expression}": {
+      "get": {
+        "summary": "Logarithm",
+        "description": "Computes the logarithm of the provided expression. The base follows the service’s default (commonly the natural logarithm); if base selection is supported by the service, it may be encoded within the expression. Useful for growth/decay modeling and transformation to linear relationships.\n\n**Input**: URL‑encoded infix `{expression}`.\n\n**Examples**:\n- `GET /log/e` → result often `\"1\"` (if natural log)\n- `GET /log/%28x%29` → result `\"log(x)\"` (symbolic)\n\n**Response**: JSON with `result` as a string.",
+        "operationId": "Logarithm",
+        "parameters": [ { "$ref": "#/components/parameters/ExpressionPathParam" } ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OperationResponse" }
+              }
+            }
+          }
+        },
+        "x-comment": "If a different log base is needed and the API doesn’t support it, clients can apply change-of-base around this endpoint."
+      }
+    }
+  }
+}

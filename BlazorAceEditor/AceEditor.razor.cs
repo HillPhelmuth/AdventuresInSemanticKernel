@@ -46,21 +46,21 @@ namespace BlazorAceEditor
 
         public async Task SetValue(string text) => await AceEditorInterop.SetValue(Id, text);
 
-        public async Task ChangeLanguage(string language) => await AceEditorInterop.SetLanguage(language);
+        public async Task ChangeLanguage(string language) => await AceEditorInterop.SetLanguage(Id, language);
 
-        public async Task ChangeTheme(string theme) => await AceEditorInterop.SetTheme(theme);
+        public async Task ChangeTheme(string theme) => await AceEditorInterop.SetTheme(Id, theme);
 
         protected async void HandleEditorChange(object? sender, AceChangeEventArgs args)
         {
             await OnEditorChange.InvokeAsync(args);
         }
 
-        public ValueTask DisposeAsync()
+        public async ValueTask DisposeAsync()
         {
             AceEditorInterop.AceEditorChange -= HandleEditorChange;
-            //await AceEditorInterop.DisposeAsync();
+            try { await AceEditorInterop.DisposeEditor(Id); }
+            catch (Microsoft.JSInterop.JSDisconnectedException) { }
             GC.SuppressFinalize(this);
-            return ValueTask.CompletedTask;
         }
     }
 }

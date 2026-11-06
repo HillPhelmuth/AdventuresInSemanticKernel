@@ -34,10 +34,11 @@ namespace BlazorAceEditor
 
         public async ValueTask SetValue(string elementId, string value) => await InvokeVoidAsync("setValue", elementId, value);
 
-        public async ValueTask SetLanguage(string language)
-        => await InvokeVoidAsync("setLanguage", language);
-        public async ValueTask SetTheme(string theme)
-        => await InvokeVoidAsync("setTheme", theme);
+        public async ValueTask SetLanguage(string elementId, string language)
+        => await InvokeVoidAsync("setLanguage", elementId, language);
+        public async ValueTask SetTheme(string elementId, string theme)
+        => await InvokeVoidAsync("setTheme", elementId, theme);
+        public async ValueTask DisposeEditor(string elementId) => await InvokeVoidAsync("dispose", elementId);
 
         public async ValueTask<List<ThemeModel>> GetThemes(bool excludeDark = false)
         {

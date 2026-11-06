@@ -1,0 +1,26 @@
+description: Turn natural language into a blazor application by generating multiple .razor component files.
+input_variables:
+- name: input
+  description: ''
+  default: ''
+name: BlazorCode
+template: |
+ Generate a complete Blazor application by creating multiple .razor component files. For each component, provide both the filename (ending with `.razor`) and the file's Blazor component code. Once you have created all required components, pass a list containing each file—represented as an object with a `filename` and `code`—to the `CreateBlazorApp` function. Do not generate the `CreateBlazorApp` function itself.
+
+ - Think step by step:
+  1. Plan the structure and major components of the Blazor app needed for the use-case.
+  2. For each component, define its filename and write its `.razor` content.
+  3. Organize these into a list as specified.
+  4. Only after all components are complete, call `CreateBlazorApp`.
+
+ 
+ - Do not output introduction, narration, or explanations.
+ - Only provide the JSON output above—no code blocks.
+ - Ensure all planning and component design is performed before outputting the results.
+
+ ---
+
+ Important: Your objective is to create multiple .razor files (filename and code), organize them in the specified JSON under `razorFiles`, and provide no additional narrative. Conclude with the JSON, including the instruction to call `CreateBlazorApp`. Plan the app and its components fully before producing the output.  
+
+
+ Description: {{$input}}

@@ -1,7 +1,5 @@
 import "./lib/ace/ace.js";
 
-//let editor;
-let dotNetRef;
 let editorMap = new Map();
 export function init(elem, options, dotNet) {
     const element = document.getElementById(elem);
@@ -13,8 +11,7 @@ export function init(elem, options, dotNet) {
     editorMap.set(elem, editor);
     if (!editor)
         return false;
-    dotNetRef = dotNet;
-    setEvents(editor);
+    setEvents(editor, dotNet);
     return true;
 }
 export function getValue(id) {
@@ -26,11 +23,11 @@ export function setValue(id, value) {
     if (!editor || !editor.session) return;
     editor.session.setValue(value);
 }
-export function setLanguage(lang) {
-    editor.session.setMode(`ace/mode/${lang}`);
+export function setLanguage(id, lang) {
+    editorMap.get(id).session.setMode(`ace/mode/${lang}`);
 }
-export function setTheme(theme) {
-    editor.setTheme(`ace/theme/${theme}`);
+export function setTheme(id, theme) {
+    editorMap.get(id).setTheme(`ace/theme/${theme}`);
 }
 export function availableThemes() {
     return getThemes();
@@ -38,19 +35,20 @@ export function availableThemes() {
 export function availableLanguageModes() {
     return getModes();
 }
-export function dispose() {
-
+export function dispose(id) {
+    const editor = editorMap.get(id);
+    if (editor) { editor.destroy(); editorMap.delete(id); }
 }
 
-function setEvents(editor) {
-    editor.on("change", e => handleChange(e));
+function setEvents(editor, dotNetRef) {
+    editor.on("change", e => handleChange(e, dotNetRef));
     editor.session.selection.on("changeSelection", e => handleChangeSelection(e));
     editor.session.selection.on("changeCursor", e => handleChangeCursor(e));
 }
 function handleScroll(e) {
     console.log("onScroll", e);
 }
-function handleChange(e) {
+function handleChange(e, dotNetRef) {
     console.log("onchange", e);
     dotNetRef.invokeMethodAsync("HandleAceChange", e);
 

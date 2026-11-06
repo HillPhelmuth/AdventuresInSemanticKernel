@@ -1,7 +1,7 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy ASP.Net Core app to Azure Web App - AdventuresInSemanticKernel
+name: Build and deploy AdventuresInMSAgentFramework to Azure Web App
 
 on:
   push:
@@ -21,13 +21,16 @@ jobs:
       - name: Set up .NET Core
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 'v9.0'
+          dotnet-version: '10.0.x'
 
       - name: Build with dotnet
-        run: dotnet build --configuration Release
+        run: dotnet build AdventuresInMSAgentFramework.sln --configuration Release
+
+      - name: Run migration regression tests
+        run: dotnet test AgentFramework.Tests\AgentFramework.Tests.csproj --configuration Release --no-build
 
       - name: dotnet publish
-        run: dotnet publish -c Release -o "${{env.DOTNET_ROOT}}/myapp"
+        run: dotnet publish BlazorWithMSAgentFramework\BlazorWithMSAgentFramework.csproj -c Release -o "${{env.DOTNET_ROOT}}/myapp"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4

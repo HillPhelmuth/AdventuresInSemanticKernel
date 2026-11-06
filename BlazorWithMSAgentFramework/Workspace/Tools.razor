@@ -1,0 +1,45 @@
+@page "/executeFunction"
+@inject ToolCatalog Catalog
+@inject ILogger<Tools> Logger
+<h1>Execute a tool</h1>
+<label>Tool <select @bind="_selected" @bind:after="SelectedChanged">
+    <option value="">Select a tool</option>
+    @foreach (var candidate in Catalog.Tools) { <option value="@candidate.Name">@candidate.Group / @candidate.Name</option> }
+</select></label>
+@if (Selected is { } tool)
+{
+    <p>@tool.Description</p>
+    <details><summary>JSON parameter schema</summary><pre>@tool.Function.JsonSchema</pre></details>
+    @if (tool.Prompt is not null) { <details><summary>Prompt template</summary><pre>@tool.Prompt</pre></details> }
+    <label class="d-block">Arguments (JSON object)<textarea class="form-control" rows="8" @bind="_arguments"></textarea></label>
+    @if (tool.RequiresApproval) { <p>This action can execute code or change host state. Clicking Run explicitly authorizes this invocation.</p> }
+    <button disabled="@_busy" @onclick="Run">Run selected tool</button>
+}
+@if (_error is not null) { <div class="alert alert-danger" role="alert">@_error</div> }
+<pre role="status" style="white-space:pre-wrap">@_output</pre>
+@code {
+    private string _selected = "", _arguments = "{}", _output = "";
+    private string? _error;
+    private bool _busy;
+    private ToolDefinition? Selected => Catalog.Tools.FirstOrDefault(t => t.Name == _selected);
+    private void SelectedChanged()
+    {
+        var values = new Dictionary<string, object?>();
+        if (Selected?.Function.JsonSchema.TryGetProperty("properties", out var props) == true)
+            foreach (var prop in props.EnumerateObject()) values[prop.Name] = "";
+        _arguments = JsonSerializer.Serialize(values, new JsonSerializerOptions { WriteIndented = true });
+        _output = ""; _error = null;
+    }
+    private async Task Run()
+    {
+        _busy = true; _error = null; _output = "";
+        try
+        {
+            var args = JsonSerializer.Deserialize<Dictionary<string, object?>>(_arguments) ?? throw new ArgumentException("Provide a JSON object.");
+            var result = await Selected!.Function.InvokeAsync(new AIFunctionArguments(args));
+            _output = result is string text ? text : JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true });
+        }
+        catch (Exception ex) { Logger.LogError(ex, "Direct tool invocation failed"); _error = ex.Message; }
+        finally { _busy = false; }
+    }
+}

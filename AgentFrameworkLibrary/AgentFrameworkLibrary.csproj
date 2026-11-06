@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <UserSecretsId>bcf24016-4cee-420b-b680-d7b179c6e56a</UserSecretsId>
+    <Platforms>AnyCPU;ARM64</Platforms>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AgentFrameworkOrchestration\AgentFrameworkOrchestration.csproj" />
+    <ProjectReference Include="..\AgentToolComponents\AgentToolComponents.csproj" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.14" />
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.5" />
+    <PackageReference Include="YamlDotNet" Version="18.1.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.14.0" />
+    <PackageReference Include="HdbscanSharp" Version="2.0.0" />
+    <PackageReference Include="Tiktoken" Version="2.2.0" />
+    <PackageReference Include="HtmlAgilityPack" Version="1.12.2" />
+    <PackageReference Include="PdfPig" Version="0.1.16" />
+    <Compile Include="Runtime\**\*.cs" />
+    <Compile Include="Services\CompilerService.cs;Services\CompileResources.cs;Services\ScriptService.cs;Services\ScriptSession.cs" />
+    <Content Include="Examples\*.cs" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="Plugins\YamlPlugins\**\*.yaml" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

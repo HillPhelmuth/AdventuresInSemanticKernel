@@ -1,0 +1,105 @@
+@page "/agentGroupChat"
+@page "/groupChat"
+@page "/autoSequentialChatPage"
+@implements IDisposable
+@inject CoreAgentService Agents
+@inject ToolCatalog Catalog
+@inject ILogger<WorkflowChat> Logger
+@inject IJSRuntime JS
+<h1>Agent group workflow</h1>
+<p>All group-chat routes now use the same Agent Framework workflow engine. The primary participant is the hub. Limits count individual participant turns.</p>
+@if (_error is not null) { <div class="alert alert-danger" role="alert">@_error</div> }
+<label class="d-block">Task<textarea class="form-control" @bind="_task"></textarea></label>
+<button disabled="@_busy" @onclick="Generate">Generate a dynamic team</button>
+<button disabled="@_busy" @onclick="Add">Add participant</button>
+<button disabled="@_busy" @onclick="Download">Download team</button>
+<label>Import team <InputFile OnChange="Import" accept=".json" disabled="@_busy" /></label>
+@foreach (var participant in _participants)
+{
+    <fieldset class="border p-2 my-2" @key="participant.Id">
+        <label>Name <input @bind="participant.Name" disabled="@_busy" /></label>
+        <label>Model override <input @bind="participant.GptModel" disabled="@_busy" /></label>
+        <label><input type="checkbox" @bind="participant.IsPrimary" disabled="@_busy" /> Primary</label>
+        <label><input type="checkbox" @bind="participant.IsUserProxy" disabled="@_busy" /> Human participant</label>
+        <label>History <select @bind="participant.ChatHistoryType" disabled="@_busy">@foreach (var mode in Enum.GetValues<HistoryVisibility>().Distinct()) { <option value="@mode">@mode</option> }</select></label>
+        <label class="d-block">Instructions<textarea class="form-control" @bind="participant.Instructions" disabled="@_busy"></textarea></label>
+        @foreach (var group in Catalog.Groups) { <label class="me-2"><input type="checkbox" checked="@participant.PluginNames.Contains(group)" disabled="@_busy" @onchange="e => Toggle(participant, group, (bool)e.Value!)" />@group</label> }
+        <label>Excluded functions <input value="@string.Join(", ", participant.ExcludedFunctionNames)" disabled="@_busy"
+            @onchange="e => participant.ExcludedFunctionNames = (e.Value?.ToString() ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList()" /></label>
+        <button disabled="@_busy" @onclick="() => _participants.Remove(participant)">Remove</button>
+    </fieldset>
+}
+<label>Transition <select @bind="_transition" disabled="@_busy">@foreach (var mode in Enum.GetValues<GroupTransition>()) { <option value="@mode">@mode</option> }</select></label>
+<label>Maximum turns <input type="number" min="1" max="100" @bind="_turns" disabled="@_busy" /></label>
+<label>Stop statement <input @bind="_stop" disabled="@_busy" /></label>
+<button disabled="@_busy" @onclick="Execute">Run workflow</button>
+<button disabled="@(!_busy)" @onclick="Cancel">Cancel</button>
+<button disabled="@_busy" @onclick="() => _output = string.Empty">Clear transcript</button>
+@if (_human is not null)
+{
+    <div class="alert alert-info"><label>@_humanPrompt<textarea class="form-control" @bind="_humanText"></textarea></label><button @onclick="Reply">Submit human input</button></div>
+}
+@if (_approval is not null)
+{
+    <div class="alert alert-warning"><p>Approve this tool call?</p><pre>@JsonSerializer.Serialize(_approvalRequest?.ToolCall)</pre>
+        <button @onclick="() => _approval.TrySetResult(true)">Approve once</button><button @onclick="() => _approval.TrySetResult(false)">Reject</button>
+    </div>
+}
+<pre role="status" style="white-space:pre-wrap">@_output</pre>
+@code {
+    private List<AgentDefinition> _participants = [new() { Name = "Writer", IsPrimary = true }, new() { Name = "Reviewer", Instructions = "Review the proposed answer. State [STOP] when the task is complete." }];
+    private GroupTransition _transition;
+    private int _turns = 6;
+    private string _stop = "[STOP]", _task = "", _output = "", _humanText = "", _humanPrompt = "";
+    private string? _error;
+    private bool _busy;
+    private CancellationTokenSource _cancellation = new();
+    private TaskCompletionSource<string>? _human;
+    private TaskCompletionSource<bool>? _approval;
+    private ToolApprovalRequestContent? _approvalRequest;
+    private void Add() => _participants.Add(new AgentDefinition { Name = $"Participant {_participants.Count + 1}" });
+    private static void Toggle(AgentDefinition definition, string group, bool selected) { if (selected) definition.PluginNames.Add(group); else definition.PluginNames.Remove(group); }
+    private Task Generate() => Guard(async token => _participants = await Agents.GenerateParticipantsAsync(_task, token));
+    private Task Execute() => Guard(async token =>
+    {
+        _output = ""; var speaker = "";
+        await foreach (var update in Agents.RunGroupAsync(_participants, _transition, _turns, _stop, _task, Approve, HumanInput, token))
+        {
+            if (update.AuthorName != speaker) { speaker = update.AuthorName ?? ""; _output += $"\n\n{speaker}:\n"; }
+            _output += update.Text; await InvokeAsync(StateHasChanged);
+        }
+        _output += "\n\nWorkflow complete.";
+    });
+    private async Task<bool> Approve(ToolApprovalRequestContent request, CancellationToken token)
+    {
+        _approvalRequest = request; _approval = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        await InvokeAsync(StateHasChanged);
+        try { return await _approval.Task.WaitAsync(token); }
+        finally { _approval = null; _approvalRequest = null; }
+    }
+    private async Task<string> HumanInput(string prompt, CancellationToken token)
+    {
+        _humanPrompt = prompt; _humanText = ""; _human = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        await InvokeAsync(StateHasChanged);
+        try { return await _human.Task.WaitAsync(token); }
+        finally { _human = null; }
+    }
+    private void Reply() => _human?.TrySetResult(_humanText);
+    private void Cancel() => _cancellation.Cancel();
+    private async Task Guard(Func<CancellationToken, Task> action)
+    {
+        _error = null; _busy = true; _cancellation.Dispose(); _cancellation = new();
+        try { await action(_cancellation.Token); }
+        catch (OperationCanceledException) when (_cancellation.IsCancellationRequested) { _error = "Workflow cancelled."; }
+        catch (Exception ex) { Logger.LogError(ex, "Workflow operation failed"); _error = ex.Message; }
+        finally { _busy = false; _human = null; _approval = null; }
+    }
+    private Task Import(InputFileChangeEventArgs e) => Guard(async token =>
+    {
+        await using var stream = e.File.OpenReadStream(1_000_000, token);
+        _participants = await JsonSerializer.DeserializeAsync<List<AgentDefinition>>(stream, cancellationToken: token) ?? throw new InvalidDataException("Invalid team.");
+        foreach (var agent in _participants) agent.Validate();
+    });
+    private Task Download() => JS.InvokeVoidAsync("downloadFile", "team.json", JsonSerializer.Serialize(_participants, new JsonSerializerOptions { WriteIndented = true })).AsTask();
+    public void Dispose() { _cancellation.Cancel(); _cancellation.Dispose(); }
+}

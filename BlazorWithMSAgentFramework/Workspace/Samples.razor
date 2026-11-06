@@ -1,0 +1,36 @@
+@page "/samples"
+@inject AgentFrameworkLibrary.Services.CompilerService Compiler
+@inject RuntimeConfiguration ConfigurationState
+@inject ILogger<Samples> Logger
+<h1>Agent Framework samples</h1>
+<p>Original, editable examples using the installed SDK. Run can make billed provider requests using your circuit configuration. Approval examples stop at the request instead of auto-approving actions.</p>
+<select @bind="_selected" @bind:after="Select">
+    <option value="">Select a sample</option>
+    @foreach (var path in _paths) { <option value="@path">@Path.GetFileNameWithoutExtension(path)</option> }
+</select>
+<BlazorAceEditor.AceEditor OnEditorInit="EditorReady" Style="height:32rem;width:100%" />
+<button @onclick="Run" disabled="@_busy">Compile and run</button>
+@if (_error is not null) { <div role="alert" class="alert alert-danger">@_error</div> }
+<pre role="status">@_output</pre>
+@code {
+    private string[] _paths = [];
+    private string _selected = "", _code = "", _output = "";
+    private bool _busy;
+    private string? _error;
+    private BlazorAceEditor.AceEditor? _editor;
+    private async Task EditorReady(BlazorAceEditor.AceEditor editor) { _editor = editor; await editor.ChangeLanguage("csharp"); await editor.SetValue(_code); }
+    protected override void OnInitialized()
+    {
+        var directory = Path.Combine(AppContext.BaseDirectory, "Data", "CodeFiles");
+        _paths = Directory.Exists(directory) ? Directory.GetFiles(directory, "*.cs").Order().ToArray() : [];
+        if (_paths.Length == 0) _error = "Sample sources are missing from the build output.";
+    }
+    private async Task Select() { if (!string.IsNullOrEmpty(_selected)) { _code = await File.ReadAllTextAsync(_selected); if (_editor is not null) await _editor.SetValue(_code); } }
+    private async Task Run()
+    {
+        _busy = true; _error = null;
+        try { if (_editor is null) throw new InvalidOperationException("The code editor is not ready."); _code = await _editor.GetValue(); using var scope = SampleContext.Enter(ConfigurationState.Current); _output = await Compiler.SubmitCode(_code, AgentFrameworkLibrary.Services.CompileResources.PortableExecutableReferences); }
+        catch (Exception ex) { Logger.LogError(ex, "Sample execution failed"); _error = ex.Message; }
+        finally { _busy = false; }
+    }
+}

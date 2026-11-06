@@ -1,14 +1,14 @@
-name: Build and deploy .NET Core application to Web App AdventuresInSemanticKernel
+name: Build and deploy AdventuresInMSAgentFramework
 on:
   push:
     branches:
     - master
 env:
   AZURE_WEBAPP_NAME: AdventuresInSemanticKernel
-  AZURE_WEBAPP_PACKAGE_PATH: BlazorWithSematicKernel\published
+  AZURE_WEBAPP_PACKAGE_PATH: BlazorWithMSAgentFramework\published
   CONFIGURATION: Release
-  DOTNET_CORE_VERSION: 9.0.x
-  WORKING_DIRECTORY: BlazorWithSematicKernel
+  DOTNET_CORE_VERSION: 10.0.x
+  WORKING_DIRECTORY: BlazorWithMSAgentFramework
 jobs:
   build:
     runs-on: windows-latest
@@ -19,9 +19,11 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_CORE_VERSION }}
     - name: Restore
-      run: dotnet restore "${{ env.WORKING_DIRECTORY }}"
+      run: dotnet restore AdventuresInMSAgentFramework.sln
     - name: Build
-      run: dotnet build "${{ env.WORKING_DIRECTORY }}" --configuration ${{ env.CONFIGURATION }} --no-restore
+      run: dotnet build AdventuresInMSAgentFramework.sln --configuration ${{ env.CONFIGURATION }} --no-restore
+    - name: Test
+      run: dotnet test AgentFramework.Tests\AgentFramework.Tests.csproj --configuration ${{ env.CONFIGURATION }} --no-build
     - name: Publish
       run: dotnet publish "${{ env.WORKING_DIRECTORY }}" --configuration ${{ env.CONFIGURATION }} --no-build --output "${{ env.AZURE_WEBAPP_PACKAGE_PATH }}"
     - name: Publish Artifacts

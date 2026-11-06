@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>ad3ef5ee-b319-4099-85a4-568668603689</UserSecretsId>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <EnableDefaultRazorGenerateItems>false</EnableDefaultRazorGenerateItems>
+    <EnableDefaultRazorComponentItems>false</EnableDefaultRazorComponentItems>
+    <Platforms>AnyCPU;ARM64</Platforms>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Auth0.AspNetCore.Authentication" Version="1.5.0" />
+    <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.23.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.ApplicationInsights" Version="2.23.0" />
+    <ProjectReference Include="..\AgentFrameworkLibrary\AgentFrameworkLibrary.csproj" />
+    <ProjectReference Include="..\ChatComponents\ChatComponents.csproj" />
+    <ProjectReference Include="..\BlazorAceEditor\BlazorAceEditor.csproj" />
+    <Compile Include="Program.cs;GlobalUsings.cs" />
+    <RazorComponent Include="App.razor;Routes.razor;_Imports.razor;Workspace\**\*.razor" />
+    <Content Remove="Pages\**;Components\**;Data\CodeFiles\**;Shared\**;TempSKContent*.txt" />
+    <Content Include="..\AgentFrameworkLibrary\Examples\*.cs" Link="Data\CodeFiles\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>
