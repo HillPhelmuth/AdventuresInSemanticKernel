@@ -1,5 +1,5 @@
-## Blazor Semantic Kernel Plugins
-An RCL that combines Semantic Kernel's native functions alongside Blazor to allow LLMs to interact with a user interface.
+## Blazor Agent Tools
+An RCL that exposes Blazor UI interactions as Agent Framework tools to allow LLMs to interact with a user interface.
 
 ### Getting Started
 
@@ -13,29 +13,27 @@ builder.Services.AddAskUserService();
 <SkPluginComponents.AskUser />
 ```
 
-3. Inject `AskUserService` into any class or component in which you invoke Kernel functions. The following is the simplest implementation, but like any other native function, it can be called by any Semantic Kernel planner, using OpenAI Function Calling, or inside a prompt template. 
+3. Inject `AskUserService` into any class or component in which you build agents. `AskUserPlugin.GetTools()` returns `AIFunction`s that any Agent Framework agent (or `IChatClient` with function invocation) can call.
 ```
 @using SkPluginComponents.Models
 @using SkPluginComponents
 @inject AskUserService AskUserService
-<button @onclick=AskUser>Ask User</button>
+<button @onclick=Ask>Ask the agent</button>
 <p>
     Answer: @_answer
 </p>
 @code {
     private string? _answer;
-    private async Task AskUser()
+    private async Task Ask()
     {
-        var askUserPluginObject = new AskUserPlugin(AskUserService);
-        var kernel = Kernel.CreateBuilder().Build();
-        var plugin = kernel.ImportPluginFromObject(askUserPluginObject);
-        var kernelArgs = new KernelArguments() { ["question"] = "What is your name?", ["inputType"] = "Text" };
-        var result = await kernel.InvokeAsync<string>(plugin["AskUser"], kernelArgs);
-        _answer = result;
+        var tools = new AskUserPlugin(AskUserService).GetTools();
+        AIAgent agent = new ChatClientAgent(chatClient, new ChatClientAgentOptions
+        {
+            ChatOptions = new ChatOptions { Instructions = "Ask the user for their name, then greet them.", Tools = tools }
+        });
+        _answer = (await agent.RunAsync("Start")).Text;
     }
 }
 
 ```
-Execution of the function will display a modal with the question. The input type specified in the `kernelArgs` object will determine the type of the input component. The user's response will be returned as a string.
-
-![images/image.png](Images/image.jpeg)
+When the agent calls the tool, a modal displays the question. The input type chosen by the agent determines the input component, and the user's response is returned to the agent as a string.

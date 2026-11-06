@@ -1,7 +1,6 @@
-﻿using HdbscanSharp.Distance;
+using HdbscanSharp.Distance;
 using HdbscanSharp.Runner;
 using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel.Memory;
 using System.Diagnostics;
 
 namespace SkPluginLibrary.Services;
@@ -51,7 +50,7 @@ public class HdbscanService(ILoggerFactory loggerFactory)
         _logger.LogInformation("Starting Hdbscan of {memCount} items.\nMinPoints: {minPoints}\nMinClusterSize: {minCluster}", memCount, minPoints, minCluster);
         var sw = new Stopwatch();
         sw.Start();
-        var data = memories.Select(x => x.Embedding.Value.ToArray().Select(y => (double)y).ToArray()).ToArray();
+        var data = memories.Select(x => x.Embedding.ToArray().Select(y => (double)y).ToArray()).ToArray();
         //var runResult = HdbscanRunner.Run(data, minPoints, minCluster, GetDistanceFunction(distanceFunction), 4);
         var result = HdbscanRunner.Run(new HdbscanParameters<double[]>
         {

@@ -1,5 +1,4 @@
-﻿using Azure.AI.OpenAI;
-using OpenAI.Chat;
+﻿using OpenAI.Chat;
 
 namespace SkPluginLibrary.Models.Helpers;
 

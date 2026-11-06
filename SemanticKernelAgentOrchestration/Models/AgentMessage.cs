@@ -1,32 +1,17 @@
-﻿using System.Text;
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.ChatCompletion;
+using Microsoft.Extensions.AI;
 
 namespace SemanticKernelAgentOrchestration.Models;
 
-public class AgentMessage : ChatMessageContent
+/// <summary>A chat message attributed to a named agent.</summary>
+public class AgentMessage : ChatMessage
 {
-	public AgentMessage(AuthorRole role, string? content, string name, string? modelId = null, object? innerContent = null, Encoding? encoding = null, IReadOnlyDictionary<string, object?>? metadata = null) : base(role, content, modelId, innerContent, encoding, metadata)
-	{
-		AuthorName = name;
-	}
+    public AgentMessage(ChatRole role, string? content, string name) : base(role, content)
+    {
+        AuthorName = name;
+    }
 
-	public AgentMessage(AuthorRole role, ChatMessageContentItemCollection items, string name, string? modelId = null, object? innerContent = null, Encoding? encoding = null, IReadOnlyDictionary<string, object?>? metadata = null) : base(role, items, modelId, innerContent, encoding, metadata)
-	{
-		AuthorName = name;
-	}
-	//public string? AuthorName { get; set; }
-}
-public class AgentMessageStreamUpdate(
-	AuthorRole? role,
-	string? content,
-	string name,
-	object? innerContent = null,
-	int choiceIndex = 0,
-	string? modelId = null,
-	Encoding? encoding = null,
-	IReadOnlyDictionary<string, object?>? metadata = null)
-	: StreamingChatMessageContent(role, content, innerContent, choiceIndex, modelId, encoding, metadata)
-{
-	public string? AuthorName { get; set; } = name;
+    public AgentMessage(ChatRole role, IList<AIContent> contents, string name) : base(role, contents)
+    {
+        AuthorName = name;
+    }
 }

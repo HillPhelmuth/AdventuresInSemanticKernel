@@ -1,59 +1,50 @@
-﻿using System.Text;
+using System.Text;
 using System.Text.Json;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel.Connectors.Sqlite;
-using Microsoft.SemanticKernel.Embeddings;
-using Microsoft.SemanticKernel.Memory;
 using SkPluginLibrary.Services;
 
 namespace SkPluginLibrary.Plugins.NativePlugins;
 
-public class AgenticPlanningPlugin(ILoggerFactory loggerFactory)
+public class AgenticPlanningPlugin(ILoggerFactory loggerFactory, AgentPlanState agentPlanState)
 {
-    [KernelFunction, Description("Generate a detailed, step-by-step plan to complete the user provided task")]
-    public async Task<string> GeneratePlan([FromKernelServices] AgentPlanState agentPlanState,
+    private static string PromptFromYaml(string fileName) =>
+        YamlPromptFunction.FromYaml(File.ReadAllText(Path.Combine(RepoFiles.PathToYamlPlugins, "AgenticPromptsPlugin", fileName))).Template;
+
+    [Description("Generate a detailed, step-by-step plan to complete the user provided task")]
+    public async Task<string> GeneratePlan(
         [Description("Task or objective")] string task,
         [Description("Relevent context required to properly formulate a plan")] string context,
         [Description("Constraints that must be observed")] string constraints,
         [Description("An object containing the available tools/functions that can be used to complete the task and thus may be included in the plan")] AvailableTools availableTools
         )
     {
-        var kernel = CoreKernelService.CreateKernel(AIModel.O4Mini);
-        var settings = new OpenAIPromptExecutionSettings() { ReasoningEffort = "low", ResponseFormat = typeof(AgentPlan) };
-        var planFunction = KernelFunctionYaml.FromPromptYaml(FileHelper.ExtractFromAssembly<string>("CreatePlan.yaml"));
-        var kernelArguments = new KernelArguments(settings)
+        var client = ChatClientFactory.Create(AIModel.O4Mini);
+        // Structured output: the model's reply is deserialized straight into an AgentPlan.
+        var plan = await PromptRunner.RunAsync<AgentPlan>(client, PromptFromYaml("CreatePlan.yaml"), new Dictionary<string, object?>
         {
             ["task"] = task,
             ["context"] = context,
             ["constraints"] = constraints,
             ["availableTools"] = availableTools.ToMarkdown()
-        };
-        var planResult = await kernel.InvokeAsync(planFunction, kernelArguments);
-        var planJson = planResult.ToString();
-        agentPlanState.ActivePlan = JsonSerializer.Deserialize<AgentPlan>(planJson);
-        return planJson;
+        });
+        agentPlanState.ActivePlan = plan ?? new AgentPlan();
+        return JsonSerializer.Serialize(agentPlanState.ActivePlan);
     }
 
-    [KernelFunction, Description("Evaluate a plan step and determine whether it has been completed successfully based on the **ExpectedOutput**")]
-    public async Task<string> EvaluatePlanStep([FromKernelServices] AgentPlanState agentPlanState, [Description("The step to evaluate")] Step step, [Description("The result of the step actions")] string stepResult)
+    [Description("Evaluate a plan step and determine whether it has been completed successfully based on the **ExpectedOutput**")]
+    public async Task<string> EvaluatePlanStep([Description("The step to evaluate")] Step step, [Description("The result of the step actions")] string stepResult)
     {
-        var kernel = CoreKernelService.CreateKernel(AIModel.Gpt41);
-
-        var settings = new OpenAIPromptExecutionSettings() { Temperature = 0.3 };
-        var planFunction = KernelFunctionYaml.FromPromptYaml(FileHelper.ExtractFromAssembly<string>("EvaluateStep.yaml"));
-
-        var kernelArguments = new KernelArguments(settings)
+        var client = ChatClientFactory.Create(AIModel.Gpt41);
+        return await PromptRunner.RunAsync(client, PromptFromYaml("EvaluateStep.yaml"), new Dictionary<string, object?>
         {
-            ["step"] = step,
+            ["step"] = JsonSerializer.Serialize(step),
             ["stepResult"] = stepResult
-        };
-
-        var evaluationResult = await kernel.InvokeAsync(planFunction, kernelArguments);
-        return evaluationResult.ToString();
+        }, new ChatOptions { Temperature = 0.3f });
     }
-    [KernelFunction, Description("Modify an existing plan to complete the user provided task when the current plan is insufficient and/or incomplete.")]
-    public async Task<string> ModifyPlan([FromKernelServices] AgentPlanState agentPlanState,
+
+    [Description("Modify an existing plan to complete the user provided task when the current plan is insufficient and/or incomplete.")]
+    public async Task<string> ModifyPlan(
         [Description("Task or objective")] string task,
         [Description("Relevent context required to properly formulate a plan")] string context,
         [Description("Constraints that must be observed")] string constraints,
@@ -61,10 +52,8 @@ public class AgenticPlanningPlugin(ILoggerFactory loggerFactory)
         [Description("An object containing the available tools/functions that can be used to complete the task and thus may be included in the plan")] AvailableTools availableTools
         )
     {
-        var kernel = CoreKernelService.CreateKernel(AIModel.O4Mini);
-        var settings = new OpenAIPromptExecutionSettings() { ReasoningEffort = "low", ResponseFormat = typeof(AgentPlan) };
-        var planFunction = KernelFunctionYaml.FromPromptYaml(FileHelper.ExtractFromAssembly<string>("ModifyPlan.yaml"));
-        var kernelArguments = new KernelArguments(settings)
+        var client = ChatClientFactory.Create(AIModel.O4Mini);
+        var plan = await PromptRunner.RunAsync<AgentPlan>(client, PromptFromYaml("ModifyPlan.yaml"), new Dictionary<string, object?>
         {
             ["task"] = task,
             ["context"] = context,
@@ -72,42 +61,15 @@ public class AgenticPlanningPlugin(ILoggerFactory loggerFactory)
             ["availableTools"] = availableTools.ToMarkdown(),
             ["currentPlan"] = agentPlanState.ActivePlan?.ToMarkdown() ?? "No Active Plan",
             ["requestedModifications"] = requestedModifications
-        };
-        var planResult = await kernel.InvokeAsync(planFunction, kernelArguments);
-        var planJson = planResult.ToString();
-        agentPlanState.ActivePlan = JsonSerializer.Deserialize<AgentPlan>(planJson);
-        return planJson;
+        });
+        agentPlanState.ActivePlan = plan ?? new AgentPlan();
+        return JsonSerializer.Serialize(agentPlanState.ActivePlan);
     }
 
-    [KernelFunction, Description("Use the tool to think about something. It will not obtain new information or change the database, but just append the thought to the log. Use it when complex reasoning or some cache memory is needed.")]
-    public void Think(Kernel kernel, [Description("The thought to append to the log")] string thought)
+    [Description("Use the tool to think about something. It will not obtain new information or change the database, but just append the thought to the log. Use it when complex reasoning or some cache memory is needed.")]
+    public void Think([Description("The thought to append to the log")] string thought)
     {
-        
-        
-    }
-    private const string CollectionName = "thoughts";
-    private async Task<ISemanticTextMemory> GetOrCreateMemoryStore(ITextEmbeddingGenerationService embeddingGenerationService, bool delete = false)
-    {
-        var sqliteConnect = await SqliteMemoryStore.ConnectAsync(@".\Data\PromptLab.db");
-        var collections = new List<string>();
-        await foreach (var item in sqliteConnect.GetCollectionsAsync())
-        {
-            collections.Add(item);
-        }
-        //var collections = await sqliteConnect.GetCollectionsAsync().ToListAsync() ?? [];
-        if (!collections.Contains(CollectionName))
-        {
-            await sqliteConnect.CreateCollectionAsync(CollectionName);
-        }
-        else if (delete)
-        {
-            await sqliteConnect.DeleteCollectionAsync(CollectionName);
-            await sqliteConnect.CreateCollectionAsync(CollectionName);
-        }
-
-        var memoryBuilder = new MemoryBuilder().WithMemoryStore(sqliteConnect).WithLoggerFactory(loggerFactory);
-        return memoryBuilder.WithTextEmbeddingGeneration(embeddingGenerationService)
-            .Build();
+        loggerFactory.CreateLogger<AgenticPlanningPlugin>().LogInformation("Thought: {thought}", thought);
     }
 }
 [TypeConverter(typeof(GenericTypeConverter<AgentPlan>))]

@@ -1,55 +1,38 @@
-﻿using System.Text;
+using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.Sqlite;
-using Microsoft.SemanticKernel.Memory;
-using Microsoft.SemanticKernel.Text;
 using SkPluginLibrary.Services;
 using static SkPluginLibrary.Models.Helpers.AppConstants;
-using static SkPluginLibrary.CoreKernelService;
-
-#pragma warning disable SKEXP0120
 
 namespace SkPluginLibrary.Plugins.NativePlugins;
 
 public class WebResearchPlugin
 {
-    private KernelFunction _summarizeWebContent;
     private const int MaxTokens = 1024;
-    private Kernel _kernel;
+    private readonly IChatClient _chatClient = ChatClientFactory.Create(AIModel.Gpt41Mini);
     private readonly IWebSearchService? _searchService;
     private readonly IConfiguration _configuration;
     private readonly ILoggerFactory _loggerFactory;
-    private ISemanticTextMemory? _semanticTextMemory;
     public WebResearchPlugin(BingWebSearchService bingWebSearchService, IConfiguration configuration, ILoggerFactory loggerFactory)
     {
-        //var kernel = CreateKernel();
-        //var summarizePlugin = kernel.ImportPluginFromPromptDirectoryYaml("SummarizePlugin");
-        //_summarizeWebContent = summarizePlugin["SummarizeLong"];
-        //_kernel = kernel;
         _searchService = bingWebSearchService;
         _configuration = configuration;
         _loggerFactory = loggerFactory;
     }
 
 
-    [KernelFunction, Description("Extract a web search query from a question")]
-    public async Task<string> ExtractWebSearchQuery(Kernel kernel, string input)
+    [Description("Extract a web search query from a question")]
+    public async Task<string> ExtractWebSearchQuery(string input)
     {
-        var extractPlugin = kernel.CreateFunctionFromPrompt("Extract terms for a simple web search query from a question. Include no other content\nquestion:{{$input}}", executionSettings: new OpenAIPromptExecutionSettings { MaxTokens = 128, Temperature = 0.0, TopP = 0 });
-        var result = await kernel.InvokeAsync<string>(extractPlugin, new KernelArguments { { "input", input } });
-        return result;
+        return await PromptRunner.RunAsync(_chatClient, "Extract terms for a simple web search query from a question. Include no other content\nquestion:{{$input}}",
+            new Dictionary<string, object?> { ["input"] = input }, new ChatOptions { MaxOutputTokens = 128, Temperature = 0.0f, TopP = 0 });
     }
-    [KernelFunction, Description("Conduct a deep Web Search, and save content for later retrieval")]
+    [Description("Conduct a deep Web Search, and save content for later retrieval")]
     [return: Description("A json collection of objects designed to facilitate web citations including url, title, and content")]
-    public async Task<string> DeepSearchAndSaveWebContent(Kernel kernel, [Description("Web search query")] string query, [Description("Maximum depth of related links to follow")] int maxDepth = 2, [Description("Number of web search results to use")] int resultCount = 3)
+    public async Task<string> DeepSearchAndSaveWebContent([Description("Web search query")] string query, [Description("Maximum depth of related links to follow")] int maxDepth = 2, [Description("Number of web search results to use")] int resultCount = 3)
     {
-        _kernel = kernel.Clone();
-        _summarizeWebContent = KernelFunctionFactory.CreateFromPrompt(SummarizePrompt, functionName: "SummarizeLong");
-
         var results = await _searchService!.DeepSearchAsync(query, resultCount);
         var scraperTaskList = new List<Task<List<SearchResultItem>>>();
 
@@ -70,17 +53,13 @@ public class WebResearchPlugin
 
         var scrapeResults = await Task.WhenAll(scraperTaskList);
         var searchResultItems = scrapeResults.SelectMany(x => x).ToList();
-        var items = await SaveResearchItems(searchResultItems, kernel);
+        var items = await SaveResearchItems(searchResultItems);
         return JsonSerializer.Serialize(searchResultItems, new JsonSerializerOptions { WriteIndented = true });
     }
-    [KernelFunction, Description("Search Web and save content for later retrieval")]
+    [Description("Search Web and save content for later retrieval")]
     [return: Description("A json collection of objects ")]
-    public async Task<string> SearchAndSaveWeb(Kernel kernel, [Description("Web search query")] string query, [Description("Number of web search results to use")] int resultCount = 3, [Description("Defines the freshness of the results. Options are 'Day', 'Week', or 'Month'")] string? freshness = null)
+    public async Task<string> SearchAndSaveWeb([Description("Web search query")] string query, [Description("Number of web search results to use")] int resultCount = 3, [Description("Defines the freshness of the results. Options are 'Day', 'Week', or 'Month'")] string? freshness = null)
     {
-        _kernel = CreateKernel();
-
-        //var summarizePlugin = kernel.ImportPluginFromPromptDirectoryYaml("SummarizePlugin");
-        _summarizeWebContent = KernelFunctionFactory.CreateFromPrompt(SummarizePrompt, functionName: "SummarizeLong");
         var results = await _searchService!.SearchAsync(query, resultCount, freshness) ?? [];
         var scraperTaskList = new List<Task<List<SearchResultItem>>>();
         foreach (var result in results.Take(Math.Min(results.Count, 5)))
@@ -122,7 +101,7 @@ public class WebResearchPlugin
                 resultItems.Add(new SearchResultItem(group.Key) { Title = group.First().Title, Content = group.First().Content });
             }
         }
-        var savedItems = await SaveResearchItems(resultItems, kernel);
+        var savedItems = await SaveResearchItems(resultItems);
         var searchCiteJson = JsonSerializer.Serialize(savedItems, new JsonSerializerOptions { WriteIndented = true });
 #if DEBUG
         await File.WriteAllTextAsync("researchJson.json", searchCiteJson);
@@ -130,52 +109,28 @@ public class WebResearchPlugin
         return searchCiteJson;
     }
     public const string CollectionName = WebResearchCollection;
-    private async Task<List<string>> SaveResearchItems(List<SearchResultItem> searchResultItems, Kernel kernel)
+    private async Task<List<string>> SaveResearchItems(List<SearchResultItem> searchResultItems)
     {
-        var textEmbeddingGeneration = new OpenAITextEmbeddingGenerationService(
-            modelId: "text-embedding-3-small",
-            apiKey: TestConfiguration.OpenAI.ApiKey!);
-
-        var config = kernel.Services.GetRequiredService<IConfiguration>();
-        //var pineconeClient = new PineconeClient(config["Pinecone:ApiKey"]);
-        var memory = await CreateMemory(textEmbeddingGeneration, "text-embedding-3-small");
+        var memory = await CreateMemory("text-embedding-3-small");
         var contextItems = searchResultItems.Select(x => new ResearchVectorStoreContextItem(x.Url, x.Title, x.Content, WebContentSourceName)).ToList();
         var saveTasks = contextItems.Select(contextItem => memory.SaveInformationAsync($"{CollectionName}-{contextItem.Source}", contextItem.Content!, contextItem.id, contextItem.Title!, JsonSerializer.Serialize(contextItem.Metadata), cancellationToken: new CancellationToken())).ToList();
-        var ids = await Task.WhenAll(saveTasks);
-        
+        await Task.WhenAll(saveTasks);
+
         return contextItems.Select(item => JsonSerializer.Serialize(new { item.Source, item.Title, item.Link })).ToList();
     }
-    private async Task<ISemanticTextMemory> CreateMemory(OpenAITextEmbeddingGenerationService embeddingGenService,
-        string? model = null, string? collection = null, bool reset = false)
+    private async Task<TextMemory> CreateMemory(string? model = null, string? collection = null, bool reset = false)
     {
         model ??= _configuration["OpenAI:EmbeddingModelId"] ?? "";
         collection ??= $"{CollectionName}-{WebContentSourceName}";
-        var sqliteConnect = await SqliteMemoryStore.ConnectAsync(TestConfiguration.Sqlite.ConnectionString);
-        var collections = await sqliteConnect.GetCollectionsAsync().ToListAsync();
-        if (!collections.Contains(collection))
-        {
-            await sqliteConnect.CreateCollectionAsync(collection);
-        }
-        else if (reset)
-        {
-            await sqliteConnect.DeleteCollectionAsync(collection);
-            await sqliteConnect.CreateCollectionAsync(collection);
-        }
-
-        var memoryBuilder = new MemoryBuilder();
-        memoryBuilder.WithLoggerFactory(_loggerFactory);
-        memoryBuilder.WithMemoryStore(sqliteConnect);
-        memoryBuilder.WithTextEmbeddingGeneration(embeddingGenService!);
-        return memoryBuilder.Build();
+        var store = await SqliteVectorMemoryStore.ConnectAsync(TestConfiguration.Sqlite!.ConnectionString);
+        if (reset) await store.DeleteCollectionAsync(collection);
+        if (!await store.DoesCollectionExistAsync(collection)) await store.CreateCollectionAsync(collection);
+        return new TextMemory(store, ChatClientFactory.CreateEmbeddingGenerator(model));
     }
-    [KernelFunction, Description("Find most relevant web content snippets from previously saved web search results for a given prompt or task")]
-    public async Task<string> SearchResearchResults(Kernel kernel,[Description("Prompt or task description")] string query, int maxResults = 10)
+    [Description("Find most relevant web content snippets from previously saved web search results for a given prompt or task")]
+    public async Task<string> SearchResearchResults([Description("Prompt or task description")] string query, int maxResults = 10)
     {
-        var textEmbeddingGeneration = new OpenAITextEmbeddingGenerationService(
-            modelId: "text-embedding-3-small",
-            apiKey: TestConfiguration.OpenAI.ApiKey!);
-
-        var memory = await CreateMemory(textEmbeddingGeneration, "text-embedding-3-small");
+        var memory = await CreateMemory("text-embedding-3-small");
         var searchResults = memory.SearchAsync($"{CollectionName}-{WebContentSourceName}", query, maxResults);
         var sb = new StringBuilder();
         await foreach (var result in searchResults)
@@ -210,11 +165,11 @@ public class WebResearchPlugin
         var count = tokens / 8192;
         var segments = ChunkIntoSegments(text, Math.Max(count, 1), 8192, title).ToList();
         Console.WriteLine($"Segment count: {segments.Count}");
-        var argList = segments.Select(segment => new KernelArguments { ["input"] = segment, ["query"] = input }).ToList();
+        var argList = segments.Select(segment => new Dictionary<string, object?> { ["input"] = segment, ["query"] = input }).ToList();
         var summaryResults = new List<SearchResultItem>();
         foreach (var arg in argList)
         {
-            var result = await _kernel.InvokeAsync<string>(_summarizeWebContent, arg);
+            var result = await PromptRunner.RunAsync(_chatClient, SummarizePrompt, arg);
             summaryResults.Add(new SearchResultItem(url) { Title = title, Content = result });
         }
 
@@ -243,17 +198,13 @@ public class WebResearchPlugin
 
     private async Task<string> DescribeImageAsync(string imageUrl)
     {
-        var history = new ChatHistory
-        {
-            new(AuthorRole.User,
-            [
-                new ImageContent(new Uri(imageUrl)),
-                new TextContent("describe and summarize image")
-            ])
-        };
-        var chatService = _kernel.Services.GetRequiredService<IChatCompletionService>();
-        var result = await chatService.GetChatMessageContentAsync(history);
-        return result.Content;
+        var message = new ChatMessage(ChatRole.User,
+        [
+            new UriContent(new Uri(imageUrl), "image/*"),
+            new TextContent("describe and summarize image")
+        ]);
+        var result = await _chatClient.GetResponseAsync([message]);
+        return result.Text;
     }
     public const string SummarizePrompt = """
                                            Create a detailed and comprehensive outline of a given document by structuring and paraphrasing its contents. The outline should retain all relevant information and present the ideas clearly and cohesively while maintaining the original context. Consider the original user query `{{ $query }}` for context in this outline.

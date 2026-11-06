@@ -1,6 +1,5 @@
 ﻿using Markdig;
 using Microsoft.AspNetCore.Components;
-using Microsoft.SemanticKernel.Memory;
 using SkPluginLibrary.Abstractions;
 
 namespace BlazorWithSematicKernel.Pages

@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Components;
-using Microsoft.SemanticKernel.ChatCompletion;
 using SkPluginLibrary.Abstractions;
 
 namespace BlazorWithSematicKernel.Components.ModalDialogComponents

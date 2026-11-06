@@ -1,9 +1,5 @@
-## Custom Agent Orchestration using Semantic Kernel
+## Custom Agent Orchestration using Microsoft Agent Framework
 
-### Note
+A custom group-chat style orchestration built on Agent Framework agents (`ChatClientAgent`) and Microsoft.Extensions.AI. It keeps its own agent classes (`ChatAgent`, `InteractiveAgent`, `UserProxyAgent`), transition graphs and a dynamic agent chat service, and uses MAF for the agents, tools and function-calling middleware.
 
-This project and the corresponding examples pre-date the agent orchestration features in the current version of Semantic Kernel. This is a custom implementation of agent orchestration using Semantic Kernel but _**not**_ using the `ChatCompletionAgent`, `OpenAIAssistantAgent`, or `AgentGroupChat`.
-
-Similar examples using the current version of Semantic Kernel agents will likely be added to this repo in the future. 
-
-See [GettingStartedWithAgents](https://github.com/microsoft/semantic-kernel/tree/main/dotnet/samples/GettingStartedWithAgents) or [Concepts/Agents](https://github.com/microsoft/semantic-kernel/tree/main/dotnet/samples/Concepts/Agents) for examples of the Semantic Kernel agent orchestration framework.
+For the framework's built-in orchestrations (sequential, concurrent, group chat, handoff) see the samples in `SkPluginLibrary/Examples` and the [Agent Framework docs](https://learn.microsoft.com/en-us/agent-framework/).

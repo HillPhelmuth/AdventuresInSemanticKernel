@@ -1,4 +1,4 @@
-﻿using Microsoft.SemanticKernel.ChatCompletion;
+using ChatComponents;
 
 namespace SkPluginLibrary.Abstractions;
 

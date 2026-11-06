@@ -1,6 +1,8 @@
-﻿namespace SkPluginLibrary.Models;
+using Microsoft.Extensions.AI;
 
-public record Function(string Name, KernelFunction SkFunction)
+namespace SkPluginLibrary.Models;
+
+public record Function(string Name, AIFunction SkFunction)
 {
     public int Order { get; set; }
 }

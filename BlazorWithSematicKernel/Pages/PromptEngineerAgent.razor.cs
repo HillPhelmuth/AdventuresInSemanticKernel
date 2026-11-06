@@ -3,7 +3,6 @@ using SkPluginLibrary.Abstractions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.SemanticKernel.ChatCompletion;
 using SkPluginLibrary.Plugins;
 
 namespace BlazorWithSematicKernel.Pages

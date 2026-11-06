@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using SkPluginLibrary.Services;
 
 namespace SkPluginLibrary.Plugins.NativePlugins;
@@ -6,7 +6,7 @@ namespace SkPluginLibrary.Plugins.NativePlugins;
 public class ArxivPlugin(ILoggerFactory loggerFactory)
 {
     private readonly ArxivApiService _arxivApiService = new(loggerFactory);
-    [KernelFunction, Description("Searches arXiv for papers")]
+    [Description("Searches arXiv for papers")]
     [return:Description("Metadata for the papers that meet the search criteria")]
     public async Task<string> SearchArxiv(
         [Description("The search query")] string query,
@@ -16,7 +16,7 @@ public class ArxivPlugin(ILoggerFactory loggerFactory)
         return searchResults?.ToString() ?? "Search Failed!";
 
     }
-    [KernelFunction, Description("Full content for selected arXiv paper")]
+    [Description("Full content for selected arXiv paper")]
     public async Task<string> GetArxivPaper(
         [Description("The arXiv metadata for the paper")] ArxivEntry arxivEntry)
     {

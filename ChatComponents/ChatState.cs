@@ -1,4 +1,4 @@
-﻿using Microsoft.SemanticKernel.ChatCompletion;
+﻿using Microsoft.Extensions.AI;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
@@ -42,7 +42,7 @@ namespace ChatComponents
         {
             if (ChatMessages.All(x => x.Role != Role.Assistant)) throw new ArgumentOutOfRangeException(nameof(token),"No assistant message found.");
             ChatMessages.Last(x => x.Role == Role.Assistant).Content += token;
-            ChatHistory.Last(x => x.Role == AuthorRole.Assistant).Content += token;
+            { var last = ChatHistory.Last(x => x.Role == ChatRole.Assistant); last.Contents = [new TextContent(last.Text + token)]; }
             MessagePropertyChanged();
         }
         /// <summary>

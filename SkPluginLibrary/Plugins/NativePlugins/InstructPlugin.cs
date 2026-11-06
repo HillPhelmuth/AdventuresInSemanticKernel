@@ -1,12 +1,15 @@
-﻿namespace SkPluginLibrary.Plugins.NativePlugins;
+using Microsoft.Extensions.AI;
+using SkPluginLibrary.Services;
+
+namespace SkPluginLibrary.Plugins.NativePlugins;
 
 public class InstructPlugin
 {
-    private readonly Kernel _kernel;
-    public InstructPlugin(Kernel kernel)
+    private readonly IChatClient _chatClient;
+    public InstructPlugin(IChatClient chatClient)
     {
-            _kernel = kernel;
-        }
+        _chatClient = chatClient;
+    }
 
     private const string FunctionPrompt = """
                                           You are a generative AI chatbot instruction prompt generator.
@@ -21,18 +24,13 @@ public class InstructPlugin
                                           [related content]
                                           {{$related}}
                                           """;
-    [KernelFunction, Description("Generates an instruction prompt that semantically bridges the gap between user input and relevant content")]
+    [Description("Generates an instruction prompt that semantically bridges the gap between user input and relevant content")]
     public async Task<string> Bridge(string input, string related)
     {
-            var ctx = new KernelArguments
-            {
-                ["input"] = input,
-                ["related"] = related
-            };
-            var function = _kernel.CreateFunctionFromPrompt(FunctionPrompt, executionSettings: new OpenAIPromptExecutionSettings { Temperature = 0.0, TopP = 0.0, MaxTokens = 256 });
-            var kernelResult = await _kernel.InvokeAsync(function, ctx);
-            var result = kernelResult.Result();
-            Console.WriteLine($"Bridge function generated instruction: '{result}'");
-            return result;
-        }
+        var result = await PromptRunner.RunAsync(_chatClient, FunctionPrompt,
+            new Dictionary<string, object?> { ["input"] = input, ["related"] = related },
+            new ChatOptions { Temperature = 0.0f, TopP = 0.0f, MaxOutputTokens = 256 });
+        Console.WriteLine($"Bridge function generated instruction: '{result}'");
+        return result;
+    }
 }

@@ -1,4 +1,4 @@
-﻿namespace SkPluginLibrary.Models.Helpers
+namespace SkPluginLibrary.Models.Helpers
 {
     public static class EnumHelpers
     {
@@ -18,14 +18,9 @@
             return attributes is { Length: > 0 } ? attributes[0].LongDescription : string.Empty;
 
         }
-        public static string GetOpenAIModelName(this Enum value, bool isAzure = false)
+        public static string GetOpenAIModelName(this Enum value)
         {
             var fi = value.GetType().GetField(value.ToString());
-            if (isAzure)
-            {
-                var attribs = (AzureOpenAIModelAttribute[])fi.GetCustomAttributes(typeof(AzureOpenAIModelAttribute), false);
-                return attribs is { Length: > 0 } ? attribs[0].Model : string.Empty;
-            }
             var attributes = (ModelNameAttribute[])fi.GetCustomAttributes(typeof(ModelNameAttribute), false);
 
             return attributes is { Length: > 0 } ? attributes[0].Model : string.Empty;

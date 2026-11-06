@@ -79,8 +79,13 @@
 	<ItemGroup>
 	  <Folder Include="Data\CodeFiles\" />
 	</ItemGroup>
-	<Target Name="PreBuild" BeforeTargets="PreBuildEvent" Condition="'$(Configuration)' == 'Debug'">
-	  <Exec Command="&quot;$(SolutionDir)PostBuildCopyCode.exe&quot; $(SolutionDir)SkPluginLibrary\Examples $(SolutionDir)BlazorWithSematicKernel\Data\CodeFiles" />
+	<!-- Copies the MAF sample sources into Data\CodeFiles as .txt so the Samples page can show and run them. The page strips the namespace line. -->
+	<Target Name="CopyExampleCode" BeforeTargets="PreBuildEvent">
+	  <ItemGroup>
+	    <ExampleSource Include="..\SkPluginLibrary\Examples\*.cs" />
+	  </ItemGroup>
+	  <MakeDir Directories="Data\CodeFiles" />
+	  <Copy SourceFiles="@(ExampleSource)" DestinationFiles="@(ExampleSource->'Data\CodeFiles\%(Filename).txt')" SkipUnchangedFiles="true" />
 	</Target>
 
 </Project>

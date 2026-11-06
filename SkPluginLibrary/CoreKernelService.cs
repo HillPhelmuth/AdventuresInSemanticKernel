@@ -1,49 +1,37 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Http.Resilience;
+using System.Runtime.CompilerServices;
+using System.Text.Json;
+using ChatComponents;
+using Microsoft.Agents.AI;
+using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.VectorData;
-using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.Pinecone;
-using Microsoft.SemanticKernel.Connectors.Sqlite;
-using Microsoft.SemanticKernel.Memory;
-using Microsoft.SemanticKernel.Planning;
-using Microsoft.SemanticKernel.Plugins.Memory;
-using Microsoft.SemanticKernel.Plugins.OpenApi;
-using Microsoft.SemanticKernel.Text;
-using Pinecone;
-using Polly;
+using SemanticKernelAgentOrchestration.Models;
 using SkPluginComponents;
 using SkPluginComponents.Models;
 using SkPluginLibrary.Abstractions;
-using SkPluginLibrary.Models.Hooks;
 using SkPluginLibrary.Plugins.NativePlugins;
 using SkPluginLibrary.Services;
-using System.Net;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Text.Json;
-using UglyToad.PdfPig;
-using PDFtoImage;
-using SkiaSharp;
-
 
 namespace SkPluginLibrary;
 
+/// <summary>
+/// The app's main service. Everything model-facing goes through Microsoft.Extensions.AI chat clients and
+/// Microsoft Agent Framework agents/workflows (see <see cref="ChatClientFactory"/>).
+/// </summary>
 public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSamples, IMemoryConnectors, ITokenization, ICustomNativePlugins, IChatWithSk
 {
     private static IConfiguration? _configuration;
-    private readonly IMemoryStore _memoryStore;
     private readonly CompilerService _compilerService;
     private readonly ScriptService _scriptService;
     private readonly HdbscanService _hdbscanService;
-    private SqliteMemoryStore? _sqliteStore;
     private readonly ILoggerFactory _loggerFactory;
     private readonly BingWebSearchService _bingSearchService;
-    private readonly ISemanticTextMemory _semanticTextMemory;
+    private readonly TextMemory _textMemory;
     private readonly IHttpClientFactory _httpClientFactory;
-    private static string _appInsightConnectionString;
+    private static string? _appInsightConnectionString;
     private readonly ILogger<CoreKernelService> _logger;
+    private readonly AskUserService _askUserService;
+
     public class CollectionName
     {
         public const string ClusterCollection = "clusterCollection";
@@ -54,6 +42,7 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
         public const string LangchainDocsCollection = "langchainDocsCollection";
         public const string PromptEngineerCollection = "promptEngineerCollection";
     }
+
     public CoreKernelService(IConfiguration configuration, ScriptService scriptService, CompilerService compilerService,
         HdbscanService hdbscanService, ILoggerFactory loggerFactory, BingWebSearchService bingSearchService,
         AskUserService modalService, IHttpClientFactory httpClientFactory)
@@ -67,343 +56,98 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
         _httpClientFactory = httpClientFactory;
         _askUserService = modalService;
         _logger = loggerFactory.CreateLogger<CoreKernelService>();
-        _memoryStore = new VolatileMemoryStore();
-        CreateKernel();
-        _semanticTextMemory = new MemoryBuilder()
-            .WithMemoryStore(_memoryStore)
-            .WithOpenAITextEmbeddingGeneration("text-embedding-ada-002", TestConfiguration.OpenAI!.ApiKey)
-            .WithLoggerFactory(_loggerFactory)
-            .Build();
-        _appInsightConnectionString = _configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"] ?? _configuration["ApplicationInsights:ConnectionString"]!;
+        _textMemory = new TextMemory(new VectorMemoryStore(), EmbeddingGenerator);
+        _appInsightConnectionString = _configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"] ?? _configuration["ApplicationInsights:ConnectionString"];
     }
 
-    public static Kernel ChatCompletionKernel()
-    {
-        return Kernel.CreateBuilder().AddAIChatCompletion(AIModel.Gpt41Mini)
-            .Build();
-    }
-    public static Kernel CreateKernel(AIModel aiModel = AIModel.Gpt41Mini)
-    {
-        var kernelBuilder = GetKernelBuilder(aiModel);
-        kernelBuilder.Services.AddSingleton(new AgentPlanState());
-        return kernelBuilder
-            .Build();
-    }
+    #region Chat clients and agents
 
-    public static IKernelBuilder GetKernelBuilder(AIModel aiModel)
+    private static readonly Lazy<IEmbeddingGenerator<string, Embedding<float>>> _embeddingGenerator = new(() => ChatClientFactory.CreateEmbeddingGenerator());
+    internal static IEmbeddingGenerator<string, Embedding<float>> EmbeddingGenerator => _embeddingGenerator.Value;
+
+    /// <summary>Creates a chat client for a model (OpenAI or OpenRouter) with tool invocation enabled.</summary>
+    public static IChatClient CreateChatClient(AIModel aiModel = AIModel.Gpt41Mini) => ChatClientFactory.Create(aiModel);
+
+    /// <summary>Creates an Agent Framework agent over a chat client.</summary>
+    public static AIAgent CreateAgent(IChatClient chatClient, string instructions, IEnumerable<AITool>? tools = null,
+        string name = "Assistant", ChatOptions? options = null, IEnumerable<AgentFunctionMiddleware>? middleware = null, string? description = null)
     {
-        var kernelBuilder = Kernel.CreateBuilder();
-        kernelBuilder.Services.AddLogging(builder =>
+        var chatOptions = options ?? new ChatOptions();
+        chatOptions.Instructions = instructions;
+        var toolList = tools?.ToList();
+        if (toolList is { Count: > 0 }) chatOptions.Tools = toolList;
+        AIAgent agent = new ChatClientAgent(chatClient, new ChatClientAgentOptions
         {
-            builder.AddConsole();
+            Name = ChatAgent.EnsurePattern(name),
+            Description = description,
+            ChatOptions = chatOptions
         });
-        if (_configuration is not null)
-            kernelBuilder.Services.AddSingleton(_configuration);
-        kernelBuilder.Services.ConfigureHttpClientDefaults(c =>
+        var builder = new AIAgentBuilder(agent);
+        var hasMiddleware = false;
+        foreach (var m in middleware ?? [])
         {
-            c.AddStandardResilienceHandler().Configure(o =>
-            {
-                o.Retry.ShouldHandle = args => ValueTask.FromResult(args.Outcome.Result?.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.InternalServerError);
-                o.Retry.BackoffType = DelayBackoffType.Exponential;
-                o.AttemptTimeout = new HttpTimeoutStrategyOptions { Timeout = TimeSpan.FromSeconds(90) };
-                o.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(180);
-                o.TotalRequestTimeout = new HttpTimeoutStrategyOptions { Timeout = TimeSpan.FromMinutes(5) };
-            });
-        });
-        var providor = aiModel.GetModelProvidors().FirstOrDefault();
-        if (providor.Contains("OpenAI"))
-            kernelBuilder.AddAIChatCompletion(aiModel);
-        if (providor == "GoogleAI")
-            kernelBuilder.AddGoogleAIGeminiChatCompletion(aiModel.GetOpenAIModelName(), TestConfiguration.GoogleAI.ApiKey);
-        if (providor == "MistralAI")
-            kernelBuilder.AddMistralChatCompletion(aiModel.GetOpenAIModelName(), TestConfiguration.MistralAI.ApiKey);
-        return kernelBuilder;
-    }
-    public static Kernel CreateKernelGoogle(string modelId = "gemini-1.0-pro")
-    {
-        var kernelBuilder = Kernel.CreateBuilder();
-        kernelBuilder.AddGoogleAIGeminiChatCompletion(modelId, TestConfiguration.GoogleAI.ApiKey);
-        kernelBuilder.Services.AddLogging(builder =>
-        {
-            builder.AddConsole();
-        });
-        kernelBuilder.Services.ConfigureHttpClientDefaults(c =>
-        {
-            c.AddStandardResilienceHandler().Configure(o =>
-            {
-                o.Retry.ShouldHandle = args => ValueTask.FromResult(args.Outcome.Result?.StatusCode is HttpStatusCode.TooManyRequests);
-                o.Retry.BackoffType = DelayBackoffType.Exponential;
-                o.AttemptTimeout = new HttpTimeoutStrategyOptions { Timeout = TimeSpan.FromSeconds(90) };
-                o.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(180);
-                o.TotalRequestTimeout = new HttpTimeoutStrategyOptions { Timeout = TimeSpan.FromMinutes(5) };
-            });
-        });
-        return kernelBuilder.Build();
-    }
-    private IMemoryStore _playgroundStore = new VolatileMemoryStore();
-    private IMemoryStore CreateMemoryStore(MemoryStoreType memoryStoreType)
-    {
-        return memoryStoreType switch
-        {
-            MemoryStoreType.InMemory => new VolatileMemoryStore(),            
-        };
-    }
-
-    private ISemanticTextMemory CreateSemanticMemory(MemoryStoreType memoryStoreType, string model = "text-embedding-3-small")
-    {
-        return new MemoryBuilder()
-            .WithMemoryStore(CreateMemoryStore(memoryStoreType))
-            .WithOpenAITextEmbeddingGeneration(model, TestConfiguration.OpenAI.ApiKey)
-            .WithLoggerFactory(_loggerFactory)
-            .Build();
-    }
-
-    private static async Task<ISemanticTextMemory> CreateSqliteMemoryAsync()
-    {
-        var connectionString = TestConfiguration.Sqlite!.ConnectionString!;
-        var sqliteMemoryStore = await SqliteMemoryStore.ConnectAsync(connectionString);
-
-        //_sqliteStore = sqliteMemoryStore;
-        var collections = await sqliteMemoryStore.GetCollectionsAsync().ToListAsync();
-        if (collections.Count == 0)
-            await sqliteMemoryStore.CreateCollectionAsync(CollectionName.ClusterCollection);
-        Console.WriteLine($"Collections: {string.Join((string?)"\n", collections)}");
-        return new MemoryBuilder()
-            .WithMemoryStore(sqliteMemoryStore)
-            .WithOpenAITextEmbeddingGeneration(TestConfiguration.OpenAI.EmbeddingModelId, TestConfiguration.OpenAI!.ApiKey)
-            .WithLoggerFactory(ConsoleLogger.LoggerFactory)
-            .Build();
-    }
-
-    public static ISemanticTextMemory CreateMemoryStore(IMemoryStore? memory = null, string model = "text-embedding-3-small")
-    {
-        memory ??= new VolatileMemoryStore();
-        return new MemoryBuilder()
-            .WithMemoryStore(memory)
-            .WithOpenAITextEmbeddingGeneration(model, TestConfiguration.OpenAI.ApiKey)
-            .Build();
-    }
-    internal static async Task<Kernel> ChatWithSkKernal()
-    {
-        var sqliteMemoryStore = await SqliteMemoryStore.ConnectAsync(TestConfiguration.Sqlite!.ChatContentConnectionString!);
-
-        var collections = await sqliteMemoryStore.GetCollectionsAsync().ToListAsync();
-        Console.WriteLine($"Collections: {string.Join((string?)"\n", collections)}");
-        if (!collections.Contains(CollectionName.SkDocsCollection))
-        {
-            await sqliteMemoryStore.CreateCollectionAsync(CollectionName.SkDocsCollection);
+            builder.Use(m.InvokeAsync);
+            hasMiddleware = true;
         }
-
-        var kernelBuilder = Kernel.CreateBuilder();
-        kernelBuilder.Services.AddLogging(builder => builder.AddConsole());
-        var kernel = kernelBuilder
-            .AddAIChatCompletion(AIModel.Gpt41Mini)
-            .Build();
-        var semanticMemory = await ChatWithSkKernelMemory();
-        var textMemory = KernelPluginFactory.CreateFromObject(new TextMemoryPlugin(semanticMemory), "TextMemoryPlugin");
-        kernel.Plugins.Add(textMemory);
-        return kernel;
+        return hasMiddleware ? builder.Build() : agent;
     }
-    internal static PineconeVectorStore GetPineconeVectorStore()
+
+    /// <summary>Streams the text of an agent run.</summary>
+    internal static async IAsyncEnumerable<string> StreamText(AIAgent agent, IEnumerable<ChatMessage> messages,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var pineconeApiKey = TestConfiguration.Pinecone!.ApiKey;
-        var pineconeEnvironment = TestConfiguration.Pinecone.Environment;
-        if (string.IsNullOrEmpty(pineconeApiKey) || string.IsNullOrEmpty(pineconeEnvironment))
+        await foreach (var update in agent.RunStreamingAsync(messages, cancellationToken: cancellationToken))
         {
-            throw new ArgumentException("Pinecone API Key and Environment must be set in the configuration.");
+            if (!string.IsNullOrEmpty(update.Text)) yield return update.Text;
         }
-        var client = new PineconeClient(pineconeApiKey);
-        return new PineconeVectorStore(client,new PineconeVectorStoreOptions(){EmbeddingGenerator = _textEmbeddingGeneration});
     }
 
-    internal static async Task<ReadOnlyMemory<float>> GenerateEmbeddingsAsync(string text)
-    {
-        var result = await _textEmbeddingGeneration.GenerateAsync([text]);
-        return result[0].Vector;
-    }
-    internal static async Task<PineconeCollection<string, VectorStoreContextItem>> ChatWithSKVectorCollection()
-    {
-        var vectorStore = GetPineconeVectorStore();
-        var collection = vectorStore.GetCollection<string, VectorStoreContextItem>(TestConfiguration.Pinecone.Environment);
-        await collection.EnsureCollectionExistsAsync();
-        return collection;
-    }
-    internal static async Task<ISemanticTextMemory> ChatWithSkKernelMemory(bool drop = false)
-    {
-        var sqliteMemoryStore = await SqliteMemoryStore.ConnectAsync(TestConfiguration.Sqlite!.ChatContentConnectionString!);
-        var collections = await sqliteMemoryStore.GetCollectionsAsync().ToListAsync();
-        Console.WriteLine($"Collections: {string.Join((string?)"\n", collections)}");
-        if (!collections.Contains(CollectionName.SkDocsCollection))
-        {
-            await sqliteMemoryStore.CreateCollectionAsync(CollectionName.SkDocsCollection);
-        }
-        else if (drop)
-        {
-            await sqliteMemoryStore.DeleteCollectionAsync(CollectionName.SkDocsCollection);
-        }
-        return new MemoryBuilder()
-            .WithMemoryStore(sqliteMemoryStore)
-            .WithLoggerFactory(ConsoleLogger.LoggerFactory)
-            .WithOpenAITextEmbeddingGeneration(TestConfiguration.OpenAI.EmbeddingModelId, TestConfiguration.OpenAI.ApiKey)
-            .Build();
-    }
-    private VectorStoreCollection<string, VectorStoreContextItem>? _sqliteCollection;
-    private async Task<IEnumerable<string>> SearchPinecone(string text, int limit = 10, CancellationToken cancellationToken = default)
-    {
-        var collection = await ChatWithSKVectorCollection();
-        var vectorSearchResults = await collection.SearchAsync(text, limit, cancellationToken: cancellationToken).ToListAsync(cancellationToken: cancellationToken);
-        foreach (var result in vectorSearchResults)
-        {
-            Console.WriteLine($"Found: {result.Record.MemoryId} with score: {result.Score}");
-        }
-        var search = vectorSearchResults.Select(x => x.Record.Content);
-        return search;
-    }
-    public static async Task SaveNewSKPdf()
-    {
-        var pdfPath = @"C:\Users\adamh\Downloads\semantic-kernel_Microsoft Learn_0802.pdf";
-        var fileData = await File.ReadAllBytesAsync(pdfPath);
-        //var fileDataBase64 = Convert.ToBase64String(fileData);
-        var pdfImages = Conversion.ToImages(fileData);
-        var count = pdfImages.Count();
-        Console.WriteLine($"Pdf page images: {count}");
-        List<byte[]> rawImageData = [];
-        foreach (var bitmap in pdfImages)
-        {
-            using var image = SKImage.FromBitmap(bitmap);
-            using var data = image.Encode(SKEncodedImageFormat.Jpeg, 100);
-            var raw = data.ToArray();
-            rawImageData.Add(raw);
-        }
-        var rawCount = rawImageData.Count;
-        if (rawCount != count)
-        {
-            Console.WriteLine($"WARNING: raw data count does not equal initial image count: {rawCount} vs {count}");
-            await Task.Delay(TimeSpan.FromSeconds(30));
-        }
-        var textExtractSp = """
-                            Convert the contents of PDF page images into well-formatted, semantic Markdown.
-                            Extract all relevant text, headings, lists, tables, code blocks, and formatting as accurately as possible from the images.
-                            If math, diagrams, or non-text elements are present, describe them in plain text while clearly indicating it is an image description.
-                            """;
-        var sb = new StringBuilder();
-        using var document = PdfDocument.Open(fileData, new ParsingOptions { UseLenientParsing = true });
-        var kernel = CreateKernel(AIModel.Gpt41);
-        var chatService = kernel.GetRequiredService<IChatCompletionService>();
-        foreach (var imageData in rawImageData)
-        {
-            var history = new ChatHistory(textExtractSp)
-            {
-                new ChatMessageContent(AuthorRole.User,
-                [
-                    new ImageContent(imageData, "image/jpeg"),
-                    new TextContent("Extract content from this pdf page image")
-                ])
-            };
-            var content = await chatService.GetChatMessageContentAsync(history, new OpenAIPromptExecutionSettings { Temperature = 0.5});
+    #endregion
 
-            Console.WriteLine($"{content.Content}");
-            sb.AppendLine(content.Content ?? "");
-        }
-        
-        //foreach (var page in document.GetPages())
-        //{
-        //    var pageText = page.Text;
-        //    var images = page.GetImages();
-        //    var imageBuilder = new StringBuilder();
-        //    imageBuilder.AppendLine("## Page Image Descriptions");
-        //    var imageIndex = 0;
-        //    foreach (var image in images ?? [])
-        //    {
-        //        var history = new ChatHistory("Provide a detailed description and summary of provided images");
-        //        //var imageBytes = image.RawBytes.ToArray();
-        //        if (!image.TryGetPng(out var imageBytes))
-        //        {
-        //            Console.WriteLine("Could not get PNG image bytes");
-        //            continue;
-        //        }
+    #region Chat with the documentation (retrieval-augmented agent)
 
-        //        history.Add(new ChatMessageContent(AuthorRole.User,
-        //        [
-        //            new ImageContent(new ReadOnlyMemory<byte>(imageBytes), "image/png"),
-        //            new TextContent("describe and summarize image")
-        //        ]));
-        //        var content = await chatService.GetChatMessageContentAsync(history, new OpenAIPromptExecutionSettings { MaxTokens = 512 });
-        //        Console.WriteLine($"{content.Content}");
-        //        var text = content.Content;
-        //        text = $"Image {++imageIndex}\n{text}";
-        //        imageBuilder.AppendLine(text);
-        //    }
-
-        //    pageText += $"\n{imageBuilder}";
-
-        //    sb.Append(pageText);
-        //}
-        var textString = sb.ToString();
-        await File.WriteAllTextAsync("TempSKContent0802_fromImages.txt", textString);
-        var lines = TextChunker.SplitPlainTextLines(textString, 200, StringHelpers.GetTokens);
-        var paragraphs = TextChunker.SplitPlainTextParagraphs(lines, 1024, 200, tokenCounter: StringHelpers.GetTokens);
-        //var memory = await ChatWithSkKernelMemory(true);
-        var collection = await ChatWithSKVectorCollection();
-        var index = 0;
-        var ids = new List<string>();
-        foreach (var paragraph in paragraphs)
-        {
-            await collection.UpsertAsync(new VectorStoreContextItem()
-            {
-                Content = paragraph,
-                Embedding = await GenerateEmbeddingsAsync(paragraph),
-                MemoryId = $"SKDocs_P_{index++}"
-
-            });
-            //var id = await memory.SaveInformationAsync(CollectionName.SkDocsCollection, paragraph, $"SKDocs_P_{index++}", "semantic-kernel Documentation");
-            //ids.Add(id);
-        }
-        Console.WriteLine($"Saved {ids.Count} Items to {CollectionName.SkDocsCollection}");
-    }
-    private const string ChatWithSkSystemPromptTemplate =
+    private const string ChatWithDocsInstructionsTemplate =
         """
-        You are a Semantic Kernel Expert and a helpful and friendly Instructor. Use the [Semantic Kernel CONTEXT] below to answer the user's questions.
+        You are a Microsoft Agent Framework and Semantic Kernel Expert and a helpful and friendly Instructor. Use the [CONTEXT] below to answer the user's questions.
 
-        # Semantic Kernel CONTEXT
-        
-        {{$context}}
+        # CONTEXT
+
+        {context}
 
         """;
 
-    private Kernel? _skChatKernel;
+    private TextMemory? _docsMemory;
+    private async Task<TextMemory> GetDocsMemoryAsync()
+    {
+        if (_docsMemory is not null) return _docsMemory;
+        var store = await SqliteVectorMemoryStore.ConnectAsync(TestConfiguration.Sqlite!.ChatContentConnectionString!);
+        _docsMemory = new TextMemory(store, EmbeddingGenerator);
+        return _docsMemory;
+    }
+
     public async IAsyncEnumerable<string> ExecuteChatWithSkStream(string query, ChatHistory? chatHistory = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        _skChatKernel ??= await ChatWithSkKernal();
-        var searchResults = (await SearchPinecone(query, 5, cancellationToken: cancellationToken)).Where(x => !string.IsNullOrEmpty(x));
-        var index = 1;
-        var searchContent = $"1. {string.Join($"\n{++index}. ", searchResults)}";
-        var context = new KernelArguments
-        {
-            ["context"] = searchContent
-        };
+        var memory = await GetDocsMemoryAsync();
+        var searchResults = await memory.SearchAsync(CollectionName.SkDocsCollection, query, 5, 0.0, cancellationToken: cancellationToken).ToListAsync(cancellationToken);
+        var texts = searchResults.Select(x => x.Metadata.Text).Where(x => !string.IsNullOrEmpty(x)).ToList();
+        var index = 0;
+        var searchContent = texts.Count == 0 ? "" : $"{++index}. {string.Join($"\n{++index}. ", texts)}";
         _logger.LogInformation("Context retrieved:\n\n{context}", searchContent);
-        var promptTemplateFactory = new KernelPromptTemplateFactory();
-        var engine = promptTemplateFactory.Create(new PromptTemplateConfig(ChatWithSkSystemPromptTemplate));
-        var systemPrompt = await engine.RenderAsync(_skChatKernel, context, cancellationToken);
-        var chatService = new OpenAIChatCompletionService(TestConfiguration.OpenAI.Gpt4MiniModelId, TestConfiguration.OpenAI.ApiKey);
-        var chat = new ChatHistory(systemPrompt);
-
-        foreach (var message in chatHistory ?? [])
-        {
-            chat.Add(message);
-        }
-
-        chat.AddUserMessage(query);
-        await foreach (var token in chatService.GetStreamingChatMessageContentsAsync(chat, new OpenAIPromptExecutionSettings { MaxTokens = 2000, Temperature = 1 }, cancellationToken: cancellationToken))
-        {
-            yield return token.Content ?? "";
-        }
-
+        var instructions = ChatWithDocsInstructionsTemplate.Replace("{context}", searchContent);
+        var chatClient = ChatClientFactory.Create(TestConfiguration.OpenAI!.Gpt4MiniModelId, ChatClientFactory.OpenAIProvider);
+        var agent = CreateAgent(chatClient, instructions, name: "DocsExpert", options: new ChatOptions { MaxOutputTokens = 2000, Temperature = 1 });
+        var messages = new List<ChatMessage>(chatHistory ?? []);
+        messages.Add(new ChatMessage(ChatRole.User, query));
+        await foreach (var token in StreamText(agent, messages, cancellationToken))
+            yield return token;
     }
+
     public event EventHandler<string>? StringWritten;
 
-    #region D&D Writer with Sequential Planner and DndApiSkill (DndOpenApiSkillPage.razor)
+    #endregion
+
+    #region D&D story writer (agent with tools: DnD API, writer prompts, ask-the-user)
+
     public event Action<SimpleChatMessage>? DndPlannerFunctionHook;
     public async Task<string> FunctionCallStepwiseDndApi(string characterDescription,
         (string? Race, string? Class, string? Alignment) details,
@@ -412,62 +156,33 @@ public partial class CoreKernelService : ICoreKernelExecution, ISemanticKernelSa
         var detailString = $" a {details.Race} {details.Class} with a {details.Alignment} alignment";
         characterDescription += detailString;
 
-        var kernel = CreateKernel(AIModel.Gpt4OCurrent);
-        var functionHook = new FunctionFilterHook();
-        kernel.FunctionInvocationFilters.Add(functionHook);
-        var dndApiPlugin = await kernel.ImportPluginFromOpenApiAsync("DndApiPlugin", Path.Combine(RepoFiles.ApiPluginDirectoryPath, "DndApiPlugin", "openapi.json"), new OpenApiFunctionExecutionParameters { IgnoreNonCompliantErrors = true }, cancellationToken: cancellationToken);
-        var writer = kernel.ImportPluginFromPromptDirectoryYaml("WriterPlugin");
-        var dndPlugin = new DndPlugin();
-        kernel.ImportPluginFromObject(dndPlugin);
-        var askUserplugin = new AskUserPlugin(_askUserService);
-        var askUser = kernel.ImportPluginFromObject(askUserplugin, "AskUserPlugin");
-
-        var config = new FunctionCallingStepwisePlannerOptions
-        {
-            MaxTokens = 9500,
-            MaxIterations = 15,
-            ExecutionSettings = new OpenAIPromptExecutionSettings { Temperature = 0.3, TopP = 1.0, ModelId = TestConfiguration.OpenAI.Gpt4MiniModelId, ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions },
-
-        };
+        var chatClient = ChatClientFactory.Create(AIModel.Gpt4OCurrent, _loggerFactory);
+        var dndApiPlugin = await OpenApiToolFactory.FromFileAsync("DndApiPlugin", Path.Combine(RepoFiles.ApiPluginDirectoryPath, "DndApiPlugin", "openapi.json"), cancellationToken: cancellationToken);
+        var writer = ToolPlugin.FromObject(new NovelWriterPlugin(), "NovelWriterPlugin");
+        var writerPrompts = KernelPluginExtensions.CreatePluginFromPromptDirectoryYaml("WriterPlugin", () => chatClient);
+        var dndPlugin = ToolPlugin.FromObject(new DndPlugin(chatClient), nameof(DndPlugin));
+        var askUser = ToolPlugin.FromTools("AskUserPlugin", new AskUserPlugin(_askUserService).GetTools());
 
         var included = new List<string> { "ParseCharacterInfo", "Races", "Alignments", "Classes", "ShortStory", "AskUser", "Monster", "Monsters" };
-        var excluded = new List<string> { "AbilityScores", "RacesTraits", "GenerateMonsterDescription", "RacesProficiencies" };
-        foreach (var include in included)
-        {
-            config.SemanticMemoryConfig.IncludedFunctions.Add(("DndApiPlugin", include));
-        }
+        var tools = new List<AITool>();
+        foreach (var plugin in new[] { dndApiPlugin, writerPrompts, dndPlugin, askUser })
+            tools.AddRange(plugin.Functions.Where(f => included.Contains(f.Name)).Select(plugin.Prefixed));
+        _logger.LogInformation("D&D agent tools: {tools}", string.Join(", ", tools.Select(t => t.Name)));
 
-        excluded.AddRange(dndApiPlugin.Where(function => !included.Contains(function.Name)).Select(x => x.Name));
-        excluded.AddRange(writer.Where(function => !included.Contains(function.Name)).Select(x => x.Name));
-        var excludeditems = string.Join(", ", excluded);
-        _loggerFactory.LogInformation("Excluded functions: {excludeditems}", excludeditems);
-        foreach (var exclude in excluded)
-        {
-            config.ExcludedFunctions.Add(exclude);
-        }
+        var middleware = new AgentFunctionMiddleware();
+        middleware.FunctionInvoked += (_, call) => DndPlannerFunctionHook?.Invoke(new SimpleChatMessage("ToolCall", call.Function.Name));
+        var agent = CreateAgent(chatClient, "You are a creative D&D storyteller. Work step by step, using the available tools to gather character and monster details, and ask the user when you need a choice made.",
+            tools, "DndStoryAgent", new ChatOptions { Temperature = 0.3f, TopP = 1.0f, MaxOutputTokens = 9500 }, [middleware]);
         var ask = $"Invent a D&D character based on the description below as the protagonist. Generate a short story using the available relevant details of the character and a DndMonster as a primary antagonist. The DndMonster should be selected from a list of all dnd monsters by Asking the User filtereed by challenge rating, also selected by asking the user.\ndescription: \n {characterDescription}.\n\n YOUR FINAL RESPONSE MUST BE A COMPLETE STORY.";
-        functionHook.FunctionInvoked += HandleDndFunctionFilterInvoked;
-
-        var stepwisePlanner = new FunctionCallingStepwisePlanner(config);
-        var planResult = await stepwisePlanner.ExecuteAsync(kernel, ask, cancellationToken: cancellationToken)/*await PlanResult(plan, context)*/;
-        foreach (var item in planResult.ChatHistory ?? [])
+        var response = await agent.RunAsync(ask, cancellationToken: cancellationToken);
+        foreach (var item in response.Messages)
         {
-            DndPlannerFunctionHook?.Invoke(new SimpleChatMessage(item.Role.ToString(), item.Content ?? ""));
+            DndPlannerFunctionHook?.Invoke(new SimpleChatMessage(item.Role.ToString(), item.Text));
         }
-        return planResult.FinalAnswer;
-
-
-    }
-
-    private void HandleDndFunctionFilterInvoked(object? sender, FunctionInvocationContext context)
-    {
-        var name = context.Function.Name;
-        var plugin = context.Function.Metadata.PluginName;
-        DndPlannerFunctionHook?.Invoke(new SimpleChatMessage("ToolCall", $"{plugin}_{name}"));
+        return response.Text;
     }
 
     #endregion
-
 }
 
 public record SimpleChatMessage(string Role, string Content);

@@ -1,24 +1,21 @@
-﻿namespace SkPluginLibrary.Abstractions;
+using Microsoft.Extensions.AI;
+using SemanticKernelAgentOrchestration.Models;
+
+namespace SkPluginLibrary.Abstractions;
 
 public interface ICoreKernelExecution
 {
-    Task<Dictionary<string, KernelFunction>> GetExternalPluginFunctions(ChatGptPluginManifest manifest);
-
+    Task<Dictionary<string, AIFunction>> GetExternalPluginFunctions(ChatGptPluginManifest manifest);
     IAsyncEnumerable<string> ChatWithAutoFunctionCalling(string query, ChatRequestModel chatRequestModel,
         bool runAsChat = true, string? askOverride = null, CancellationToken cancellationToken = default,
         bool resetChat = false);
-
-    Task<Dictionary<PluginType, List<KernelPlugin>>> GetAllPlugins();
-
-    IAsyncEnumerable<string> ChatWithStepwisePlanner(string query, ChatRequestModel chatRequestModel,
+    Task<Dictionary<PluginType, List<ToolPlugin>>> GetAllPlugins();
+    IAsyncEnumerable<string> ChatWithStepwiseAgent(string query, ChatRequestModel chatRequestModel,
         bool runAsChat = true, string? askOverride = null, CancellationToken cancellationToken = default,
         bool resetChat = false);
-
     event Action<string>? YieldAdditionalText;
-    Task<FunctionResult> ExecuteKernelFunction(KernelFunction function, Dictionary<string, object>? variables = null);
-    IAsyncEnumerable<string> ChatWithHandlebarsPlanner(string query, ChatRequestModel chatRequestModel,
+    Task<string> ExecuteFunction(AIFunction function, Dictionary<string, object>? variables = null);
+    IAsyncEnumerable<string> ChatWithPlanAndExecuteWorkflow(string query, ChatRequestModel chatRequestModel,
         bool runAsChat = true, string? askOverride = null, CancellationToken cancellationToken = default,
         bool resetChat = false);
-
-    
 }

@@ -39,7 +39,7 @@ public partial class AgentGroupChatPage : ComponentBase
     private string Css => _isUserInputRequested ? "blinking-input" : "";
     private string? _summary;
     private List<AgentProxy> _agentProxies = [];
-    private List<KernelPlugin> _allKernelPlugins = [];
+    private List<ToolPlugin> _allKernelPlugins = [];
    
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

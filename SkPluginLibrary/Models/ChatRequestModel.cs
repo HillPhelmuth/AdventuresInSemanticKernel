@@ -1,4 +1,5 @@
-﻿using System.Text;
+using System.Text;
+using SemanticKernelAgentOrchestration.Models;
 
 namespace SkPluginLibrary.Models;
 
@@ -6,7 +7,7 @@ namespace SkPluginLibrary.Models;
 public class ChatRequestModel
 {
     public ExecutionType ExecutionType { get; set; }
-    public List<KernelPlugin> SelectedPlugins { get; set; } = [];
+    public List<ToolPlugin> SelectedPlugins { get; set; } = [];
     public AIModel SelectedModel { get; set; }
     public List<string>? ExcludedFunctions { get; set; }
     public List<string>? RequredFunctions { get; set; }

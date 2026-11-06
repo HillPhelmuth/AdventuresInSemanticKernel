@@ -1,0 +1,17 @@
+namespace SkPluginLibrary.Examples;
+
+/// <summary>An agent can be handed to another agent as a tool (replaces "agents as plugins").</summary>
+public static class Maf07_AgentAsTool
+{
+    public static async Task RunAsync()
+    {
+        var client = ChatClientFactory.Create(AIModel.Gpt41Mini);
+        AIAgent translator = new ChatClientAgent(client, instructions: "Translate whatever you receive into French.", name: "Translator",
+            description: "Translates text into French");
+
+        AIAgent manager = new ChatClientAgent(client, instructions: "You are a helpful assistant. Delegate translation work to your tools.", name: "Manager",
+            tools: [translator.AsAIFunction()]);
+
+        Console.WriteLine((await manager.RunAsync("Please say 'good morning, how are you?' in French.")).Text);
+    }
+}

@@ -1,5 +1,5 @@
-﻿using Microsoft.JSInterop;
-using Microsoft.SemanticKernel;
+using Microsoft.JSInterop;
+using Microsoft.Extensions.AI;
 using SkPluginComponents.Models;
 using System;
 using System.Collections.Generic;
@@ -12,7 +12,9 @@ namespace SkPluginComponents
 {
     public class DownloadFilePlugin(DownloadFileService downloadFileService)
     {
-        [KernelFunction, Description("Download a file")]
+        public IList<AITool> GetTools() => [AIFunctionFactory.Create(DownloadFile, "DownloadFile")];
+
+        [Description("Download a file")]
         public async Task<string> DownloadFile([Description("Name of file to download. Must include file extension.")] string fileName, [Description("Content of the file to download")] string fileText)
         {
             try

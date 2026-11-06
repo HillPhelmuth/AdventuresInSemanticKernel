@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
@@ -18,8 +18,7 @@ public class YouTubePlugin
         _youTubeSearch = new YouTubeSearch(youtubeApiKey);
     }
 
-    [KernelFunction,
-     Description("Search YouTube for videos. Outputs a json array of youtube video descriptions and Ids")]
+    [Description("Search YouTube for videos. Outputs a json array of youtube video descriptions and Ids")]
     [return: Description("YouTube search results")]
     public async Task<string> SearchVideos([Description("Youtube search query")] string query,
         [Description("Number of results")] int count = 10)
@@ -29,8 +28,7 @@ public class YouTubePlugin
 
     }
     
-    [KernelFunction,
-     Description("Transcribe a YouTube video. Outputs the transcript of the video")]
+    [Description("Transcribe a YouTube video. Outputs the transcript of the video")]
     [return: Description("Youtube Video transcript")]
     public async Task<string> TranscribeVideo(string videoId, string language = "en")
     {

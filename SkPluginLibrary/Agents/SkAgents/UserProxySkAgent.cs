@@ -1,15 +1,32 @@
-using Microsoft.SemanticKernel.ChatCompletion;
 using System.Runtime.CompilerServices;
-using Microsoft.SemanticKernel.Agents;
+using System.Text.Json;
+using Microsoft.Agents.AI;
+using Microsoft.Extensions.AI;
 using SkPluginLibrary.Agents.Models.Events;
-
 
 namespace SkPluginLibrary.Agents.SkAgents;
 
-public class UserProxySkAgent : Agent
+/// <summary>
+/// A human-in-the-loop participant for Agent Framework group chats. It is an <see cref="AIAgent"/> whose
+/// "response" is whatever the person types: when it is its turn it raises <see cref="AgentInputRequest"/>
+/// and waits for <see cref="ProvideInput"/>.
+/// </summary>
+public class UserProxySkAgent : AIAgent
 {
+    public UserProxySkAgent(string name = "User", string? description = null)
+    {
+        _name = name;
+        _description = description;
+    }
+
+    private readonly string _name;
+    private readonly string? _description;
+    public new string Name => _name;
+    protected override string? IdCore => _name;
+    public override string? Description => _description;
+
     public event EventHandler<SkAgentInputRequestArgs>? AgentInputRequest;
-    
+
     public async Task<string?> GetHumanInputAsync()
     {
         // Trigger the event to request input
@@ -32,32 +49,28 @@ public class UserProxySkAgent : Agent
     }
     public TaskCompletionSource<string?> Tcs { get; set; } = new();
 
-    public override async IAsyncEnumerable<AgentResponseItem<ChatMessageContent>> InvokeAsync(ICollection<ChatMessageContent> messages, AgentThread? thread = null, AgentInvokeOptions? options = null,
-        [EnumeratorCancellation] CancellationToken cancellationToken = new())
+    protected override async Task<AgentResponse> RunCoreAsync(IEnumerable<ChatMessage> messages, AgentSession? session = null,
+        AgentRunOptions? options = null, CancellationToken cancellationToken = default)
     {
         var content = await GetHumanInputAsync();
-        yield return new AgentResponseItem<ChatMessageContent>(new ChatMessageContent(AuthorRole.User, content) { AuthorName = Name }, thread ?? new ChatHistoryAgentThread(new ChatHistory(messages)));
+        return new AgentResponse(new ChatMessage(ChatRole.User, content) { AuthorName = Name });
     }
 
-    public override async IAsyncEnumerable<AgentResponseItem<StreamingChatMessageContent>> InvokeStreamingAsync(ICollection<ChatMessageContent> messages, AgentThread? thread = null,
-        AgentInvokeOptions? options = null, [EnumeratorCancellation] CancellationToken cancellationToken = new())
+    protected override async IAsyncEnumerable<AgentResponseUpdate> RunCoreStreamingAsync(IEnumerable<ChatMessage> messages,
+        AgentSession? session = null, AgentRunOptions? options = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var content = await GetHumanInputAsync();
-        yield return new AgentResponseItem<StreamingChatMessageContent>(new StreamingChatMessageContent(AuthorRole.User, content) { AuthorName = Name }, thread ?? new ChatHistoryAgentThread(new ChatHistory(messages)));
+        yield return new AgentResponseUpdate(ChatRole.User, content) { AuthorName = Name };
     }
 
-    protected override IEnumerable<string> GetChannelKeys()
-    {
-        throw new NotImplementedException();
-    }
+    protected override ValueTask<AgentSession> CreateSessionCoreAsync(CancellationToken cancellationToken = default) =>
+        new(new UserProxySession());
 
-    protected override Task<AgentChannel> CreateChannelAsync(CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
-    }
+    protected override ValueTask<JsonElement> SerializeSessionCoreAsync(AgentSession session, JsonSerializerOptions? jsonSerializerOptions = null,
+        CancellationToken cancellationToken = default) => new(JsonSerializer.SerializeToElement(new { }));
 
-    protected override Task<AgentChannel> RestoreChannelAsync(string channelState, CancellationToken cancellationToken)
-    {
-        return this.CreateChannelAsync(cancellationToken);
-    }
+    protected override ValueTask<AgentSession> DeserializeSessionCoreAsync(JsonElement serializedState, JsonSerializerOptions? jsonSerializerOptions = null,
+        CancellationToken cancellationToken = default) => new(new UserProxySession());
+
+    private sealed class UserProxySession : AgentSession;
 }

@@ -49,12 +49,6 @@ namespace BlazorWithSematicKernel.Pages
         {
             return memoryStoreType switch
             {
-                MemoryStoreType.Redis when string.IsNullOrEmpty(TestConfiguration.Redis?.Configuration) => false,
-                MemoryStoreType.Redis => true,
-                MemoryStoreType.Qdrant when string.IsNullOrEmpty(TestConfiguration.Qdrant?.Endpoint) => false,
-                MemoryStoreType.Qdrant => true,
-                MemoryStoreType.Weaviate when TestConfiguration.Weaviate?.IsValid() == false => false,
-                MemoryStoreType.Weaviate => true,
                 _ => true
             };
         }

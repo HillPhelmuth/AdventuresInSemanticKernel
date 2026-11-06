@@ -1,0 +1,29 @@
+namespace SkPluginLibrary.Examples;
+
+/// <summary>Function-calling middleware: observe (or block) every tool call an agent makes.</summary>
+public static class Maf06_Middleware
+{
+    [Description("Adds two numbers")]
+    private static int Add(int a, int b) => a + b;
+
+    public static async Task RunAsync()
+    {
+        AIAgent inner = new ChatClientAgent(ChatClientFactory.Create(AIModel.Gpt41Mini), new ChatClientAgentOptions
+        {
+            Name = "Calculator",
+            ChatOptions = new ChatOptions { Instructions = "Use the tool to add numbers.", Tools = [AIFunctionFactory.Create(Add)] }
+        });
+
+        AIAgent agent = new AIAgentBuilder(inner)
+            .Use(async (agent, context, next, cancellationToken) =>
+            {
+                Console.WriteLine($"-> calling {context.Function.Name}");
+                var result = await next(context, cancellationToken);
+                Console.WriteLine($"<- {context.Function.Name} returned {result}");
+                return result;
+            })
+            .Build();
+
+        Console.WriteLine((await agent.RunAsync("What is 1234 + 8765?")).Text);
+    }
+}

@@ -1,58 +1,32 @@
-﻿using Microsoft.SemanticKernel;
+using Microsoft.Extensions.AI;
 
 namespace SemanticKernelAgentOrchestration.Models
 {
-    public class AgentFunctionFilters : IFunctionInvocationFilter
+    /// <summary>Describes one tool call made by an agent.</summary>
+    public class AgentFunctionCall(AIFunction function, AIFunctionArguments arguments, object? result = null) : EventArgs
     {
-        public event EventHandler<FunctionInvocationContext>? FunctionInvoking;
-        public event EventHandler<FunctionInvocationContext>? FunctionInvoked;
-        public void OnFunctionInvoking(FunctionInvocationContext context)
-        {
-            FunctionInvoking?.Invoke(this, context);
-        }
-
-        public void OnFunctionInvoked(FunctionInvocationContext context)
-        {
-            FunctionInvoked?.Invoke(this, context);
-        }
-
-        public async Task OnFunctionInvocationAsync(FunctionInvocationContext context, Func<FunctionInvocationContext, Task> next)
-        {
-            OnFunctionInvoking(context);
-            await next.Invoke(context);
-            OnFunctionInvoked(context);
-        }
+        public AIFunction Function { get; } = function;
+        public AIFunctionArguments Arguments { get; } = arguments;
+        public object? Result { get; set; } = result;
     }
-    public class AgentAutoInvokeFilter : IAutoFunctionInvocationFilter
-    {
-        public event EventHandler<AutoFunctionInvocationContext>? AutoFunctionInvoking;
-        public event EventHandler<AutoFunctionInvocationContext>? AutoFunctionInvoked;
-	    public async Task OnAutoFunctionInvocationAsync(AutoFunctionInvocationContext context, Func<AutoFunctionInvocationContext, Task> next)
-	    {
-            AutoFunctionInvoking?.Invoke(this, context);
-            await next.Invoke(context);
-            AutoFunctionInvoked?.Invoke(this, context);
-	    }
-    }
-    public class PromptFilterHook : IPromptRenderFilter
-    {
-        public event EventHandler<PromptRenderContext>? PromptRendered;
-        public event EventHandler<PromptRenderContext>? PromptRendering;
-        public void OnPromptRendering(PromptRenderContext context)
-        {
-            PromptRendering?.Invoke(this, context);
-        }
 
-        public void OnPromptRendered(PromptRenderContext context)
-        {
-            PromptRendered?.Invoke(this, context);
-        }
+    /// <summary>
+    /// Agent Framework function-calling middleware that raises events before and after each tool call.
+    /// Replaces the Semantic Kernel IFunctionInvocationFilter. Attach with
+    /// <c>new AIAgentBuilder(agent).Use(middleware.InvokeAsync).Build()</c>.
+    /// </summary>
+    public class AgentFunctionMiddleware
+    {
+        public event EventHandler<AgentFunctionCall>? FunctionInvoking;
+        public event EventHandler<AgentFunctionCall>? FunctionInvoked;
 
-        public async Task OnPromptRenderAsync(PromptRenderContext context, Func<PromptRenderContext, Task> next)
+        public async ValueTask<object?> InvokeAsync(Microsoft.Agents.AI.AIAgent agent, FunctionInvocationContext context,
+            Func<FunctionInvocationContext, CancellationToken, ValueTask<object?>> next, CancellationToken cancellationToken)
         {
-            OnPromptRendering(context);
-            await next.Invoke(context);
-            OnPromptRendered(context);
+            FunctionInvoking?.Invoke(this, new AgentFunctionCall(context.Function, context.Arguments));
+            var result = await next(context, cancellationToken);
+            FunctionInvoked?.Invoke(this, new AgentFunctionCall(context.Function, context.Arguments, result));
+            return result;
         }
     }
 }

@@ -20,7 +20,7 @@ public partial class AgentBuilder
     private NotificationService NotificationService { get; set; } = default!;
     [Inject]
     private TooltipService TooltipService { get; set; } = default!;
-    private Dictionary<PluginType, List<KernelPlugin>> _allPluginTypes = [];
+    private Dictionary<PluginType, List<ToolPlugin>> _allPluginTypes = [];
     private List<PluginData> _allPlugins = [];
     private IEnumerable<PluginData> _selectedPlugins = [];
     private RadzenDropDownDataGrid<IEnumerable<PluginData>> _pluginGrid;
@@ -44,23 +44,23 @@ public partial class AgentBuilder
         return base.OnParametersSetAsync();
     }
 
-    private class PluginData(PluginType pluginType, KernelPlugin kernelPlugin)
+    private class PluginData(PluginType pluginType, ToolPlugin kernelPlugin)
     {
         public PluginType PluginType { get; set; } = pluginType;
-        public KernelPlugin KernelPlugin { get; set; } = kernelPlugin;
+        public ToolPlugin ToolPlugin { get; set; } = kernelPlugin;
         public bool IsSelected { get; set; }
-        public string Name => KernelPlugin.Name;
+        public string Name => ToolPlugin.Name;
     }
     private async Task AllPlugins()
     {
         _allPluginTypes = await CoreKernelService.GetAllPlugins();
         if (AgentsAsPlugins.Count > 0)
         {
-            var kernel = CreateKernel();
-            var plugins = new List<KernelPlugin>();
+            var chatClient = SkPluginLibrary.CoreKernelService.CreateChatClient();
+            var plugins = new List<ToolPlugin>();
             foreach (var agent in AgentsAsPlugins)
             {
-                var interactive = new InteractiveAgent(agent, kernel.Clone());
+                var interactive = new InteractiveAgent(agent, chatClient);
                 var plugin = interactive.AsPlugin();
                 plugins.Add(plugin);
             }
@@ -85,7 +85,7 @@ public partial class AgentBuilder
         public string Description { get; set; } = "";
         public string Instructions { get; set; } = "";
         public IEnumerable<PluginData> Plugins { get; set; } = [];
-        public IEnumerable<KernelFunction> ExcludedFunctions { get; set; } = [];
+        public IEnumerable<AIFunction> ExcludedFunctions { get; set; } = [];
         public bool IsPrimary { get; set; }
         public string? Model { get; set; } = "Gpt4";
         public bool IsUserProxy { get; set; }
@@ -127,7 +127,7 @@ public partial class AgentBuilder
             Description = agentForm.Description,
             Instructions = agentForm.Instructions,
             Name = agentForm.Name,
-            Plugins = agentForm.Plugins.Select(x => x.KernelPlugin).ToList(),
+            Plugins = agentForm.Plugins.Select(x => x.ToolPlugin).ToList(),
             ExcludedFunctions = agentForm.ExcludedFunctions.ToList(),
             IsPrimary = agentForm.IsPrimary,
             IsUserProxy = agentForm.IsUserProxy,
@@ -173,7 +173,7 @@ public partial class AgentBuilder
         StateHasChanged();
     }
    
-    private void ShowFunctions(KernelPlugin kernelFunctions)
+    private void ShowFunctions(ToolPlugin kernelFunctions)
     {
         var paramters = new Dictionary<string, object> { { "Plugin", kernelFunctions } };
         var dialogOptions = new DialogOptions { Draggable = true, ShowClose = true, Style = "width:40vw; height:max-content" };

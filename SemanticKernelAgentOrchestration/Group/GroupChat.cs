@@ -1,6 +1,5 @@
-﻿using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
+using ChatComponents;
+using Microsoft.Extensions.AI;
 using SemanticKernelAgentOrchestration.Models;
 
 namespace SemanticKernelAgentOrchestration.Group;
@@ -18,7 +17,7 @@ public class GroupChat : IGroupChat
         interactives.Insert(0, Admin);
         _allAgents = interactives;
         _isRoundRobin = isRoundRobin;
-        var functionHook = new AgentFunctionFilters();
+        var functionHook = new AgentFunctionMiddleware();
         functionHook.FunctionInvoking += (sender, context) =>
         {
             Console.WriteLine($"Function Invoking: {context.Function.Name}");
@@ -27,23 +26,11 @@ public class GroupChat : IGroupChat
         {
             Console.WriteLine($"Function Invoked: {context.Function.Name}");
         };
-        var promptHook = new PromptFilterHook();
-        promptHook.PromptRendered += (sender, context) =>
-        {
-            Console.WriteLine($"Prompt Rendered: {context.RenderedPrompt}");
-        };
-        promptHook.PromptRendering += (sender, context) =>
-        {
-            Console.WriteLine($"Prompt Rendering for: {context.Function.Name}");
-        };
-        Admin.Kernel.FunctionInvocationFilters.Add(functionHook);
-        Admin.Kernel.PromptRenderFilters.Add(promptHook);
+        Admin.FunctionMiddleware.Add(functionHook);
         foreach (var agent in InteractiveAgents)
         {
-            agent.Kernel.FunctionInvocationFilters.Add(functionHook);
-            agent.Kernel.PromptRenderFilters.Add(promptHook);
+            agent.FunctionMiddleware.Add(functionHook);
         }
-     
     }
     private string _endStatement;
     private bool _isRoundRobin;
@@ -58,11 +45,11 @@ public class GroupChat : IGroupChat
     private const string NextAgentPromptTemplate = """
         You are in a role play game. Carefully read the conversation history and carry on the conversation, always starting with 'From {name}:'.
         The available roles are:
-        - {{$speakerList}}
+        - {speakerList}
 
         ### Conversation history
 
-        - {{$conversationHistory}}
+        - {conversationHistory}
 
         Each message MUST start with 'From {name}:', e.g:
         From admin:
@@ -78,7 +65,7 @@ public class GroupChat : IGroupChat
        
         var groupConversion = new ChatHistory
         {
-            new(AuthorRole.User, userInput, "User")
+            new ChatMessage(ChatRole.User, userInput) { AuthorName = "User" }
         };
         return CallAsync(groupConversion, maxRound, ct);
     }
@@ -100,7 +87,7 @@ public class GroupChat : IGroupChat
 
         var round = 0;
         var adminResponse = await Admin.RunAgentAsync(groupConversion, cancellationToken: ct);
-        groupConversion.Add(adminResponse);
+        if (adminResponse is not null) groupConversion.Add(adminResponse);
         ChatAgent lastSpeaker = Admin;
         while (round < maxRound)
         {
@@ -111,7 +98,7 @@ public class GroupChat : IGroupChat
             lastSpeaker = nextSpeaker;
             if (agentResponse is null) break;
             groupConversion.Add(agentResponse);
-            if (agentResponse?.Content?.Contains(_endStatement) == true) break;
+            if (agentResponse?.Text?.Contains(_endStatement) == true) break;
             round++;
         }
         return groupConversion;
@@ -155,24 +142,17 @@ public class GroupChat : IGroupChat
 
     private async Task<ChatAgent> AutoSelectNextAgent(ChatHistory groupConversion, IEnumerable<IChatAgent> agents, CancellationToken ct)
     {
-        var settings = new OpenAIPromptExecutionSettings
+        var options = new ChatOptions
         {
-            
-            Temperature = 0.0,
-            MaxTokens = 128,
+            Temperature = 0.0f,
+            MaxOutputTokens = 128,
             StopSequences = [":"],
         };
-        var kernelArgs = UpdateKernelArguments(groupConversion, agents, settings);
-        var promptFactory = new KernelPromptTemplateFactory();
-        var templateConfig = new PromptTemplateConfig(NextAgentPromptTemplate);
-        var prompt = await promptFactory.Create(templateConfig).RenderAsync(Admin.Kernel, kernelArgs, ct);
-        var chat = Admin.Kernel.GetRequiredService<IChatCompletionService>();
-        var chatHistory = new ChatHistory(prompt);
-        //var functionResponse = await Admin.Kernel.InvokeAsync(function, kernelArgs, ct);
+        var prompt = BuildNextAgentPrompt(groupConversion, agents);
         try
         {
-            var nextAgentName = await chat.GetChatMessageContentAsync(chatHistory, settings, cancellationToken:ct);
-            var name = nextAgentName!.ToString()[5..];
+            var response = await Admin.ChatClient.GetResponseAsync(prompt, options, ct);
+            var name = response.Text[5..];
             Console.WriteLine("AutoSelectNextAgent: " + name);
             var nextAgent = InteractiveAgents.FirstOrDefault(interactive => interactive.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase)) ?? Admin;
             return nextAgent;
@@ -185,14 +165,10 @@ public class GroupChat : IGroupChat
         }
     }
 
-    private static KernelArguments UpdateKernelArguments(ChatHistory groupConversion, IEnumerable<IChatAgent> interactiveAgents, OpenAIPromptExecutionSettings settings)
+    private static string BuildNextAgentPrompt(ChatHistory groupConversion, IEnumerable<IChatAgent> interactiveAgents)
     {
-        var groupConvoHistory = string.Join("\n ", groupConversion?.Select(message => $"From: \n{message?.AuthorName}\n### Message\n {message?.Content}\n") ?? []);
-        var kernelArgs = new KernelArguments(settings)
-        {
-            ["speakerList"] = string.Join("\n ", interactiveAgents.Select(interactiveagent => $"### Name\n{interactiveagent?.Name}\n### Description\n {interactiveagent?.Description}\n")),
-            ["conversationHistory"] = groupConvoHistory
-        };
-        return kernelArgs;
+        var groupConvoHistory = string.Join("\n ", groupConversion?.Select(message => $"From: \n{message?.AuthorName}\n### Message\n {message?.Text}\n") ?? []);
+        var speakerList = string.Join("\n ", interactiveAgents.Select(interactiveagent => $"### Name\n{interactiveagent?.Name}\n### Description\n {interactiveagent?.Description}\n"));
+        return NextAgentPromptTemplate.Replace("{speakerList}", speakerList).Replace("{conversationHistory}", groupConvoHistory);
     }
 }

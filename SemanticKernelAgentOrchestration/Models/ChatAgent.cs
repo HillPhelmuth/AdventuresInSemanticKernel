@@ -1,20 +1,23 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
+using ChatComponents;
+using Microsoft.Agents.AI;
+using Microsoft.Extensions.AI;
 using SemanticKernelAgentOrchestration.Models.Events;
 
 namespace SemanticKernelAgentOrchestration.Models;
 
+/// <summary>
+/// Base class for the orchestration agents. Each agent wraps a Microsoft Agent Framework
+/// <see cref="AIAgent"/> (a <see cref="ChatClientAgent"/> over an <see cref="IChatClient"/>).
+/// </summary>
 public abstract class ChatAgent : IChatAgent
 {
-	protected ChatAgent(AgentProxy agent, Kernel kernel)
+	protected ChatAgent(AgentProxy agent, IChatClient chatClient)
 	{
 		Name = agent.Name;
 		Description = agent.Description;
 		SystemPrompt = agent.SystemPrompt;
 		Agent = agent;
-		Kernel = kernel;
+		ChatClient = chatClient;
 	}
 
 	public AgentProxy Agent { get; }
@@ -25,8 +28,47 @@ public abstract class ChatAgent : IChatAgent
     {
         return includeSystemPrompt ? $"{SystemPrompt}\n{prompt}" : prompt;
     }
-    public Kernel Kernel { get; }
+    public IChatClient ChatClient { get; }
 	public ChatHistoryType ChatHistoryType { get; set; } = ChatHistoryType.All;
+
+	/// <summary>Function-calling middleware shared across agents so tool calls can be observed.</summary>
+	public List<AgentFunctionMiddleware> FunctionMiddleware { get; } = [];
+
+	/// <summary>Extra tools (beyond the agent proxy's plugins), such as the interactive AskUser tool.</summary>
+	protected List<AITool> ExtraTools { get; } = [];
+
+	public void AddTools(IEnumerable<AITool> tools) => ExtraTools.AddRange(tools);
+
+	protected virtual IList<AITool> GetTools()
+	{
+		var tools = new List<AITool>();
+		foreach (var plugin in Agent.Plugins)
+		{
+			tools.AddRange(plugin.Functions.Where(f => Agent.ExcludedFunctions.All(e => e.Name != f.Name)).Select(plugin.Prefixed));
+		}
+		tools.AddRange(ExtraTools);
+		return tools;
+	}
+
+	/// <summary>Builds the Agent Framework agent for this participant with its current tools.</summary>
+	public AIAgent BuildAgent(ChatOptions? options = null, string? instructions = null)
+	{
+		var chatOptions = options ?? new ChatOptions { Temperature = Temperature };
+		chatOptions.Instructions = instructions ?? SystemPrompt;
+		var tools = GetTools();
+		if (tools.Count > 0) chatOptions.Tools = tools;
+		AIAgent aiAgent = new ChatClientAgent(ChatClient, new ChatClientAgentOptions
+		{
+			Name = EnsurePattern(Name),
+			Description = Description,
+			ChatOptions = chatOptions
+		});
+		if (FunctionMiddleware.Count == 0) return aiAgent;
+		var builder = new AIAgentBuilder(aiAgent);
+		foreach (var middleware in FunctionMiddleware) builder.Use(middleware.InvokeAsync);
+		return builder.Build();
+	}
+
     protected List<Func<ChatHistory, Task<ChatHistory>>>? PreReplyHooks { get; set; }
 	public void RegisterPreReplyHook(Func<ChatHistory, Task<ChatHistory>> hook)
 	{
@@ -42,32 +84,46 @@ public abstract class ChatAgent : IChatAgent
 	public event AgentInputRequestEventHandler? AgentInputRequest;
 	public event AgentResponseEventHandler? AgentResponse;
 	public float Temperature { get; set; } = 0.7f;
-	// ReSharper disable ValueParameterNotUsed
-	//public virtual event AgentStreamingResponseEventHandler? AgentStreamingResponse { add { } remove { } }
 	protected virtual void OnAgentResponse(AgentResponseArgs agentResponseArgs)
 	{
 		AgentResponse?.Invoke(this, agentResponseArgs);
 	}
-	
-	public virtual async Task<ChatMessageContent?> RunAgentAsync(ChatHistory chatHistory,
-		PromptExecutionSettings? settings = null, CancellationToken cancellationToken = default)
+
+	public virtual async Task<ChatMessage?> RunAgentAsync(ChatHistory chatHistory,
+		ChatOptions? settings = null, CancellationToken cancellationToken = default)
 	{
-		var chat = Kernel.Services.GetRequiredService<IChatCompletionService>();
-		var chatmessageHistory = new ChatHistory(SystemPrompt);
-		if (chatHistory is not null)
-			chatmessageHistory.AddRange(chatHistory);
-		settings ??= new OpenAIPromptExecutionSettings() { Temperature = Temperature, ChatSystemPrompt = SystemPrompt, ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions };
-
-		var result = await chat.GetChatMessageContentAsync(chatmessageHistory, settings, Kernel, cancellationToken);
-
-		var agentChatMessageContent = new AgentMessage(result.Role, result.Content, Name, result.ModelId, result.InnerContent, result.Encoding, result.Metadata);
+		var aiAgent = BuildAgent(settings);
+		var messages = PrepareMessages(chatHistory);
+		var result = await aiAgent.RunAsync(messages, cancellationToken: cancellationToken);
+		var agentChatMessageContent = new AgentMessage(ChatRole.Assistant, result.Text, Name);
 		AgentResponse?.Invoke(this, new AgentResponseArgs(agentChatMessageContent));
 		return agentChatMessageContent;
 	}
 
-	public virtual Task<ChatMessageContent?> RunAgent(string input, CancellationToken cancellationToken = default)
+	protected List<ChatMessage> PrepareMessages(ChatHistory? chatHistory)
 	{
-		return RunAgentAsync([new AgentMessage(AuthorRole.Assistant, input, Name)], null, cancellationToken);
+		var messages = new List<ChatMessage>();
+		if (chatHistory is null) return messages;
+		foreach (var message in chatHistory)
+		{
+			// The system prompt is supplied through the agent's instructions, so skip stray system messages.
+			if (message.Role == ChatRole.System) continue;
+			var copy = message.Clone();
+			copy.AuthorName = EnsurePattern(copy.AuthorName);
+			messages.Add(copy);
+		}
+		return messages;
+	}
+
+	public static string? EnsurePattern(string? input)
+	{
+		if (string.IsNullOrEmpty(input)) return input;
+		return System.Text.RegularExpressions.Regex.Replace(input, @"[^a-zA-Z0-9_-]", "_");
+	}
+
+	public virtual Task<ChatMessage?> RunAgent(string input, CancellationToken cancellationToken = default)
+	{
+		return RunAgentAsync([new AgentMessage(ChatRole.Assistant, input, Name)], null, cancellationToken);
 	}
 
 	public virtual async Task<string?> GetHumanInputAsync()

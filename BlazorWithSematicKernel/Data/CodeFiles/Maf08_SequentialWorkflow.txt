@@ -1,0 +1,36 @@
+namespace SkPluginLibrary.Examples;
+
+/// <summary>A sequential workflow: each agent receives the conversation produced by the one before it.</summary>
+public static class Maf08_SequentialWorkflow
+{
+    public static async Task RunAsync()
+    {
+        var client = ChatClientFactory.Create(AIModel.Gpt41Mini);
+        AIAgent writer = new ChatClientAgent(client, instructions: "Write a two-sentence product description for the user's product.", name: "Writer");
+        AIAgent editor = new ChatClientAgent(client, instructions: "Improve the previous message: make it punchier and fix any mistakes.", name: "Editor");
+
+        Workflow workflow = AgentWorkflowBuilder.BuildSequential(writer, editor);
+        await RunWorkflowAsync(workflow, "A solar powered backpack");
+    }
+
+    public static async Task RunWorkflowAsync(Workflow workflow, string input)
+    {
+        var messages = new List<ChatMessage> { new(ChatRole.User, input) };
+        await using StreamingRun run = await InProcessExecution.RunStreamingAsync(workflow, messages);
+        await run.TrySendMessageAsync(new TurnToken(emitEvents: true));
+        string? current = null;
+        await foreach (WorkflowEvent evt in run.WatchStreamAsync())
+        {
+            if (evt is AgentResponseUpdateEvent update)
+            {
+                if (update.ExecutorId != current)
+                {
+                    current = update.ExecutorId;
+                    Console.WriteLine($"\n[{current}]");
+                }
+                Console.Write(update.Update.Text);
+            }
+        }
+        Console.WriteLine();
+    }
+}

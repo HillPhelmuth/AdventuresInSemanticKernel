@@ -30,7 +30,7 @@ public class ActivityLogging
             // Define the sampling behavior
             Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllData,
             // Define the activity source predicate
-            ShouldListenTo = activitySource => activitySource.Name.StartsWith("Microsoft.SemanticKernel", StringComparison.Ordinal)
+            ShouldListenTo = activitySource => activitySource.Name.StartsWith("Microsoft.Extensions.AI", StringComparison.Ordinal)
         };
 
         // Subscribe to the listener

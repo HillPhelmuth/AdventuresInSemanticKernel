@@ -1,7 +1,6 @@
-﻿using Azure.AI.OpenAI;
+
 using Markdig;
 using Microsoft.AspNetCore.Components;
-using Microsoft.SemanticKernel.ChatCompletion;
 using OpenAI.Chat;
 using SkPluginLibrary.Abstractions;
 using SkPluginLibrary.Models.Helpers;

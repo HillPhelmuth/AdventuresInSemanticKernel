@@ -1,12 +1,12 @@
-﻿using System.Text.RegularExpressions;
-using Microsoft.SemanticKernel;
+using System.Text.RegularExpressions;
 using SemanticKernelAgentOrchestration.Models;
 
 namespace SemanticKernelAgentOrchestration.Extensions;
 
 public static class AgentExtensions
 {
-	public static KernelPlugin AsPlugin(this ChatAgent agent)
+	/// <summary>Wraps an agent as a tool group so it can be handed to another agent as a callable tool.</summary>
+	public static ToolPlugin AsPlugin(this ChatAgent agent)
 	{
 		return new InteractiveAgentPlugin(PluginAllowedName(agent.Name), agent, agent.Description);
 	}

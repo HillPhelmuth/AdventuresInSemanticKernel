@@ -1,104 +1,63 @@
-﻿using Microsoft.SemanticKernel;
 using System.Text.Json;
+using Microsoft.Extensions.AI;
+using SemanticKernelAgentOrchestration.Models;
+using SkPluginLibrary.Services;
 
 namespace SkPluginLibrary.Models.Helpers
 {
+    /// <summary>Helpers for working with tool groups (<see cref="ToolPlugin"/>) and tools (<see cref="AIFunction"/>).</summary>
     public static class KernelPluginExtensions
     {
-        //public static string Result(this FunctionResult result)
-        //{
-        //    var value = result.GetValue<object>();
-        //    if (IsAsyncEnumerable(value)) return $"This is an IAsyncEnumerable Collection: {value?.GetType().FullName}";
-        //    return value switch
-        //    {
-        //        RestApiOperationResponse apiOperationResponse => apiOperationResponse.Content.ToString() ?? "",
-        //        string stringResult => stringResult,
-        //        _ => JsonSerializer.Serialize(value)
-        //    };
-        //}
-        public static Dictionary<string, KernelFunction> ToDictionary(this KernelPlugin plugin)
+        public static Dictionary<string, AIFunction> ToDictionary(this ToolPlugin plugin) =>
+            plugin.Functions.ToDictionary(x => x.Name, x => x);
+
+        public static ToolPlugin ToPlugin(this Dictionary<string, AIFunction> functions, string pluginName) =>
+            new(pluginName, functions.Values);
+
+        /// <summary>Invokes a tool and returns its result as text.</summary>
+        public static async Task<string> InvokeToStringAsync(this AIFunction function, Dictionary<string, object?>? variables = null,
+            CancellationToken cancellationToken = default)
         {
-            return plugin.ToDictionary(x => x.Name, x => x);
-        }
-        public static string Result(this FunctionResult result)
-        {
-            var value = result.GetValue<object>();
-            if (IsAsyncEnumerable(value)) return $"This is an IAsyncEnumerable Collection: {value?.GetType().FullName}";
-            return value switch
-            {
-                RestApiOperationResponse apiOperationResponse => apiOperationResponse.Content.ToString() ?? "",
-                ChatMessageContent chatMessageContent => chatMessageContent.Content ?? "",
-                string stringResult => stringResult,
-                _ => JsonSerializer.Serialize(value)
-            };
+            var args = new AIFunctionArguments();
+            foreach (var item in variables ?? []) args[item.Key] = item.Value;
+            var value = await function.InvokeAsync(args, cancellationToken);
+            return ResultToString(value);
         }
 
-        public static IAsyncEnumerable<TResult> ResultStream<TResult>(this FunctionResult result)
+        public static string ResultToString(object? value) => value switch
         {
-            var value = result.GetValue<object>();
-            if (value is IAsyncEnumerable<object> asyncEnumerable)
-            {
-                return (IAsyncEnumerable<TResult>)asyncEnumerable;
-            }
+            null => "",
+            string s => s,
+            JsonElement { ValueKind: JsonValueKind.String } e => e.GetString() ?? "",
+            JsonElement e => e.GetRawText(),
+            ChatMessage message => message.Text,
+            _ => JsonSerializer.Serialize(value)
+        };
 
-            throw new Exception("This is not a streaming object");
-        }
-
-        public static bool IsStreamingResult(this FunctionResult result)
-        {
-            var value = result.GetValue<object>();
-            return IsAsyncEnumerable(value);
-        }
         public static bool IsAsyncEnumerable(object? obj)
         {
             if (obj == null) return false;
-
             var type = obj.GetType();
             return type.GetInterfaces().Any(iface => iface.IsGenericType && iface.GetGenericTypeDefinition() == typeof(IAsyncEnumerable<>));
         }
 
-        public static KernelPlugin CreatePluginFromPromptDirectoryYaml(string pluginName)
+        /// <summary>Loads every YAML prompt in a plugin directory as a tool.</summary>
+        public static ToolPlugin CreatePluginFromPromptDirectoryYaml(string pluginName, Func<IChatClient>? clientFactory = null)
         {
             var files = Directory.GetFiles(Path.Combine(RepoFiles.PathToYamlPlugins, pluginName), "*.yaml");
-            var kFunctions = new List<KernelFunction>();
+            var functions = new List<AIFunction>();
             foreach (var file in files)
             {
-                var yamlText = File.ReadAllText(file);
                 try
                 {
-                    var func = KernelFunctionYaml.FromPromptYaml(yamlText);
-                    kFunctions.Add(func);
+                    functions.Add(YamlPromptFunction.FromYaml(File.ReadAllText(file), clientFactory));
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"ERROR DESERIALIZING YAML\n\nFunction: {Path.GetFileName(file)}\n\n{ex}");
                 }
             }
-            //var functions = Directory.GetFiles(Path.Combine(RepoFiles.PathToYamlPlugins, pluginName), "*.yaml").Select(functionYml => kernel.CreateFunctionFromPromptYaml(File.ReadAllText(functionYml))).ToList();
-            var plugin = KernelPluginFactory.CreateFromFunctions(pluginName, kFunctions);
-            return plugin;
+            return new ToolPlugin(pluginName, functions);
         }
-        public static KernelPlugin ImportPluginFromPromptDirectoryYaml(this Kernel kernel, string pluginName)
-        {
-            var files = Directory.GetFiles(Path.Combine(RepoFiles.PathToYamlPlugins, pluginName), "*.yaml");
-            var kFunctions = new List<KernelFunction>();
-            foreach (var file in files)
-            {
-                var yamlText = File.ReadAllText(file);
-                try
-                {
-                    var func = kernel.CreateFunctionFromPromptYaml(yamlText);
-                    kFunctions.Add(func);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"ERROR DESERIALIZING YAML\n\nFunction: {Path.GetFileName(file)}\n\n{ex}");
-                }
-            }
-            //var functions = Directory.GetFiles(Path.Combine(RepoFiles.PathToYamlPlugins, pluginName), "*.yaml").Select(functionYml => kernel.CreateFunctionFromPromptYaml(File.ReadAllText(functionYml))).ToList();
-            var plugin = KernelPluginFactory.CreateFromFunctions(pluginName, kFunctions);
-            return plugin;
-        }
-       
     }
 }

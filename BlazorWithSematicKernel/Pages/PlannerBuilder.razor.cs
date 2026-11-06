@@ -10,12 +10,12 @@ namespace BlazorWithSematicKernel.Pages
         [Inject] private ICoreKernelExecution CoreKernelService { get; set; } = default!;
         [Inject] private NotificationService NotificationService { get; set; } = default!;
         private int _currentStep;
-        private Dictionary<PluginType, List<KernelPlugin>> _allPluginTypes = [];
+        private Dictionary<PluginType, List<ToolPlugin>> _allPluginTypes = [];
         private List<PluginForm> _allPlugins = [];
-        private class PluginForm(PluginType pluginType, KernelPlugin kernelPlugin)
+        private class PluginForm(PluginType pluginType, ToolPlugin kernelPlugin)
         {
             public PluginType PluginType { get; set; } = pluginType;
-            public KernelPlugin KernelPlugin { get; set; } = kernelPlugin;
+            public ToolPlugin ToolPlugin { get; set; } = kernelPlugin;
             public bool IsSelected { get; set; }
         }
         private async Task AllPlugins()
@@ -42,7 +42,7 @@ namespace BlazorWithSematicKernel.Pages
             public ExecutionType ExecutionType { get; set; }
             public AIModel AIModel { get; set; } = AIModel.Gpt4OCurrent;
         }
-        private static Dictionary<AIModel, string> AIModelDescriptions => GetEnumsWithDescriptions<AIModel>().Where(x => x.Key is AIModel.Gpt4OCurrent or AIModel.Gemini10 or AIModel.None).ToDictionary(x => x.Key, y => y.Value);
+        private static Dictionary<AIModel, string> AIModelDescriptions => GetEnumsWithDescriptions<AIModel>().Where(x => x.Key is AIModel.Gpt4OCurrent or AIModel.None).ToDictionary(x => x.Key, y => y.Value);
 
         private void SetExecutionType(ExecutionTypeForm form)
         {
@@ -55,7 +55,7 @@ namespace BlazorWithSematicKernel.Pages
             StateHasChanged();
         }
         private ExecutionTypeForm _executionTypeForm = new();
-        private Dictionary<string, KernelFunction> _allFunctions = [];
+        private Dictionary<string, AIFunction> _allFunctions = [];
         private List<string> _excludedFunctions = [];
         private List<string> _requiredFunctions = [];
         private List<Function> _selectedFunctions = [];
@@ -67,8 +67,8 @@ namespace BlazorWithSematicKernel.Pages
         private void SelectPlugins()
         {
             var selectedPlugins = _allPlugins.Where(x => x.IsSelected).ToList();
-            _allFunctions = selectedPlugins.SelectMany(x => x.KernelPlugin).ToDictionary(x => x.Name, x => x);
-            _requestModel.SelectedPlugins = selectedPlugins.Select(x => x.KernelPlugin).ToList();
+            _allFunctions = selectedPlugins.SelectMany(x => x.ToolPlugin).ToDictionary(x => x.Name, x => x);
+            _requestModel.SelectedPlugins = selectedPlugins.Select(x => x.ToolPlugin).ToList();
             _currentStep = 2;
             StateHasChanged();
         }
@@ -79,7 +79,7 @@ namespace BlazorWithSematicKernel.Pages
             {
                 return "Chat with Plan";
             }
-            return _executionTypeForm.ExecutionType.ToString().Contains("Plan") ? "Execute Plan" : "Execute";
+            return _executionTypeForm.ExecutionType is ExecutionType.StepwiseAgent or ExecutionType.PlanAndExecuteWorkflow ? "Execute Plan" : "Execute";
         }
         private ChatRequestModel _requestModel = new();
         private bool _isReady;

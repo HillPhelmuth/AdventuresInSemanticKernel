@@ -1,12 +1,11 @@
 ﻿using Microsoft.AspNetCore.Components;
-using ParameterView = Microsoft.SemanticKernel.KernelParameterMetadata;
 
 namespace BlazorWithSematicKernel.Components
 {
     public partial class SkFunctionViewer : ComponentBase
     {
         [Parameter]
-        public Dictionary<string, KernelFunction> Functions { get; set; } = [];
+        public Dictionary<string, AIFunction> Functions { get; set; } = [];
 
         [Parameter]
         public ExecutionType ExecutionType { get; set; }
@@ -31,9 +30,9 @@ namespace BlazorWithSematicKernel.Components
         [Parameter]
         public EventCallback<List<Function>> PluginFunctionsChanged { get; set; }
         [Parameter]
-        public EventCallback<KeyValuePair<string, KernelFunction>> FunctionSelected { get; set; }
-        private bool IsHandlebars => ExecutionType is ExecutionType.HandlebarsPlanner or ExecutionType.HandlebarsPlannerChat;
-        private bool IsStepwise => ExecutionType is ExecutionType.StepwisePlanner or ExecutionType.StepwisePlannerChat;
+        public EventCallback<KeyValuePair<string, AIFunction>> FunctionSelected { get; set; }
+        private bool IsHandlebars => ExecutionType is ExecutionType.PlanAndExecuteWorkflow or ExecutionType.PlanAndExecuteWorkflowChat;
+        private bool IsStepwise => ExecutionType is ExecutionType.StepwiseAgent or ExecutionType.StepwiseAgentChat;
         private bool IsAutoFunctionCall => ExecutionType is ExecutionType.AutoFunctionCalling or ExecutionType.AutoFunctionCallingChat;
         private bool IsPlanner => IsHandlebars || IsStepwise || IsAutoFunctionCall;
         [Inject]
@@ -84,40 +83,40 @@ namespace BlazorWithSematicKernel.Components
             RequiredFunctionsChanged.InvokeAsync(RequiredFunctions);
         }
 
-        private void ShowPrompt(KernelFunction function)
+        private void ShowPrompt(AIFunction function)
         {
-            var pluginName = function.Metadata?.PluginName;
+            var pluginName = function.GetMetadata().PluginName;
             var functionName = function.Name;
             if (string.IsNullOrEmpty(pluginName) || string.IsNullOrEmpty(functionName)) return;
             var promptPath = Path.Combine(RepoFiles.PathToYamlPlugins, pluginName, $"{functionName}.yaml");
             if (!File.Exists(promptPath)) return;
             var yamlText = File.ReadAllText(promptPath);
-            var promptTemplateConfig = KernelFunctionYaml.ToPromptTemplateConfig(yamlText);
-            // return promptTemplateConfig.Template;
-            //var promptPath = Path.Combine(RepoFiles.PluginDirectoryPath, function.Metadata?.PluginName??"",
+            var promptTemplate = YamlPromptFunction.FromYaml(yamlText).Template;
+            // return promptTemplate;
+            //var promptPath = Path.Combine(RepoFiles.PluginDirectoryPath, function.GetMetadata().PluginName??"",
             //    function.Name, "skprompt.txt");
             if (File.Exists(promptPath))
             {
-                var prompt = promptTemplateConfig.Template;
+                var prompt = promptTemplate;
                 DialogService.Open<ShowSkPrompt>("",
                     new Dictionary<string, object>()
-                        {{"Title", $"{function.Metadata.PluginName} - {function.Name}"}, {"Prompt", prompt}});
+                        {{"Title", $"{function.GetMetadata().PluginName} - {function.Name}"}, {"Prompt", prompt}});
             }
         }
 
-        private bool HasPrompt(KernelFunction function)
+        private bool HasPrompt(AIFunction function)
         {
-            var pluginName = function.Metadata?.PluginName;
+            var pluginName = function.GetMetadata().PluginName;
             var functionName = function.Name;
             if (string.IsNullOrEmpty(pluginName) || string.IsNullOrEmpty(functionName)) return false;
             var promptPath = Path.Combine(RepoFiles.PathToYamlPlugins, pluginName, $"{functionName}.yaml");
             if (!File.Exists(promptPath)) return false;
             var yamlText = File.ReadAllText(promptPath);
-            var promptTemplateConfig = KernelFunctionYaml.ToPromptTemplateConfig(yamlText);
-            return !string.IsNullOrEmpty(promptTemplateConfig.Template);
+            var promptTemplate = YamlPromptFunction.FromYaml(yamlText).Template;
+            return !string.IsNullOrEmpty(promptTemplate);
         }
         private string _visiblePluginFunction = "";
-        private void ShowParameters(IEnumerable<ParameterView> parameterView, string skillName, string functionName)
+        private void ShowParameters(IEnumerable<ParameterMetadata> parameterView, string skillName, string functionName)
         {
             _visiblePluginFunction = $"{skillName}-{functionName}";
             _paramForm.PluginName = skillName;
@@ -130,7 +129,7 @@ namespace BlazorWithSematicKernel.Components
         private class FunctionForm
         {
             public int Order { get; set; } = 0;
-            public KeyValuePair<string, KernelFunction> Function { get; set; }
+            public KeyValuePair<string, AIFunction> Function { get; set; }
             public List<ParamViewField> Fields { get; set; } = [];
         }
 
@@ -161,7 +160,7 @@ namespace BlazorWithSematicKernel.Components
             _paramForm = new ParamViewForm();
         }
 
-        private void SelectFunction(KeyValuePair<string, KernelFunction> sKFunction)
+        private void SelectFunction(KeyValuePair<string, AIFunction> sKFunction)
         {
             FunctionSelected.InvokeAsync(sKFunction);
         }

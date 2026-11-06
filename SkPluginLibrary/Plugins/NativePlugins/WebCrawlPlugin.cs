@@ -1,7 +1,8 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Text.Json;
-using Microsoft.SemanticKernel.Text;
 using SkPluginLibrary.Services;
+using Microsoft.Extensions.AI;
+using SemanticKernelAgentOrchestration.Models;
 using static SkPluginLibrary.CoreKernelService;
 
 namespace SkPluginLibrary.Plugins.NativePlugins;
@@ -9,47 +10,43 @@ namespace SkPluginLibrary.Plugins.NativePlugins;
 public class WebCrawlPlugin
 {
 
-    private readonly KernelFunction _summarizeWebContent;
+    private readonly AIFunction _summarizeWebContent;
     private const int MaxTokens = 1024;
-    private readonly Kernel _kernel;
+    private readonly IChatClient _chatClient;
     private readonly IWebSearchService? _searchService;
 
 
     public WebCrawlPlugin(BingWebSearchService bingWebSearchService)
     {
-        var kernel = CreateKernel(AIModel.Gpt41Nano);
-        var summarizePlugin = kernel.ImportPluginFromPromptDirectoryYaml("SummarizePlugin");
-        _summarizeWebContent = summarizePlugin["CreateOutline"];
-        _kernel = kernel;
+        _chatClient = ChatClientFactory.Create(AIModel.Gpt41Nano);
+        var summarizePlugin = KernelPluginExtensions.CreatePluginFromPromptDirectoryYaml("SummarizePlugin", () => _chatClient);
+        _summarizeWebContent = summarizePlugin.GetFunction("CreateOutline")!;
         _searchService = bingWebSearchService;
-
     }
 
     public WebCrawlPlugin(GoogleSearchService googleSearchService)
     {
-        var kernel = CreateKernel();
-        var summarizePlugin = kernel.ImportPluginFromPromptDirectoryYaml("SummarizePlugin");
-        _summarizeWebContent = summarizePlugin["CreateOutline"];
-        _kernel = kernel;
+        _chatClient = ChatClientFactory.Create();
+        var summarizePlugin = KernelPluginExtensions.CreatePluginFromPromptDirectoryYaml("SummarizePlugin", () => _chatClient);
+        _summarizeWebContent = summarizePlugin.GetFunction("CreateOutline")!;
         _searchService = googleSearchService;
     }
 
 
-    [KernelFunction, Description("Extract a web search query from a question")]
+    [Description("Extract a web search query from a question")]
     public async Task<string> ExtractWebSearchQuery(string input)
     {
-        var extractPlugin = _kernel.CreateFunctionFromPrompt("Extract terms for a simple web search query from a question. Include no other content\nquestion:{{$input}}", executionSettings: new OpenAIPromptExecutionSettings { MaxTokens = 128, Temperature = 0.0, TopP = 0 });
-        var result = await _kernel.InvokeAsync(extractPlugin, new KernelArguments { { "input", input } });
-        return result.Result();
+        return await PromptRunner.RunAsync(_chatClient, "Extract terms for a simple web search query from a question. Include no other content\nquestion:{{$input}}",
+            new Dictionary<string, object?> { ["input"] = input }, new ChatOptions { MaxOutputTokens = 128, Temperature = 0.0f, TopP = 0 });
     }
-    [KernelFunction, Description("Retrive the content from a url in markdown format")]
+    [Description("Retrive the content from a url in markdown format")]
     public async Task<string> ConvertWebToMarkdown([Description("The url to retrieve as markdown")] string url)
     {
         var crawler = new CrawlService(ConsoleLogger.LoggerFactory);
         var markdown = await crawler.CrawlAsync(url);
         return markdown;
     }
-    [KernelFunction, Description("Search Web, summarize the content of each result and generate citations.")]
+    [Description("Search Web, summarize the content of each result and generate citations.")]
     [return: Description("A json collection of objects designed to facilitate web citations including url, title, and content")]
     public async Task<string> SearchAndCiteWeb([Description("Web search query")] string input, [Description("Number of web search results to use")] int resultCount = 3, [Description("Defines the freshness of the results. Options are 'Day', 'Week', or 'Month'")] string? freshness = null)
     {
@@ -82,7 +79,7 @@ public class WebCrawlPlugin
 
     
 
-    [KernelFunction, Description("Run a deep web search and extract content from the search result pages and all embedded links on those pages")]
+    [Description("Run a deep web search and extract content from the search result pages and all embedded links on those pages")]
     [return: Description("A json collection of objects designed to facilitate web citations including url, title, and content")]
     public async Task<string> DeepSearchAndCiteWeb([Description("Web search query")] string input, [Description("Number of web search results to use")] int resultCount = 3,[Description("search depth")] int maxDepth = 2, [Description("Defines the freshness of the results. Options are 'Day', 'Week', or 'Month'")] string? freshness = null)
     {
@@ -166,11 +163,11 @@ public class WebCrawlPlugin
         var count = tokens / maxPerSegment;
         var segments = ChunkIntoSegments(text, Math.Max(count, 1), maxPerSegment, title).ToList();
         Console.WriteLine($"Segment count: {segments.Count}");
-        var argList = segments.Select(segment => new KernelArguments { ["input"] = segment, ["query"] = input }).ToList();
+        var argList = segments.Select(segment => new Dictionary<string, object?> { ["input"] = segment, ["query"] = input }).ToList();
         var summaryResults = new List<SearchResultItem>();
         foreach (var arg in argList)
         {
-            var result = await _kernel.InvokeAsync<string>(_summarizeWebContent, arg);
+            var result = await _summarizeWebContent.InvokeToStringAsync(arg);
             summaryResults.Add(new SearchResultItem(url) { Title = title, Content = result });
         }
 
