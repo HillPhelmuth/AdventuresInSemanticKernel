@@ -73,7 +73,8 @@ public static class OpenApiToolFactory
             var required = new JsonArray();
             foreach (var p in (pathParams ?? []).Concat(op["parameters"]?.AsArray() ?? []))
             {
-                if (p is null) continue;
+                // Parameters given as a $ref (shared components) carry no name/location here and are skipped.
+                if (p?["name"] is null || p["in"] is null) continue;
                 var name = p["name"]!.GetValue<string>();
                 var location = p["in"]!.GetValue<string>();
                 var isRequired = p["required"]?.GetValue<bool>() ?? location == "path";

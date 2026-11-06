@@ -1,0 +1,18 @@
+/// <summary>Handoff: a triage agent routes the conversation to the right specialist.</summary>
+public static class Maf11_HandoffWorkflow
+{
+    public static async Task RunAsync()
+    {
+        var client = ChatClientFactory.Create(AIModel.Gpt41Mini);
+        AIAgent triage = new ChatClientAgent(client, instructions: "You decide whether a question is about math or history and hand off to the matching specialist.", name: "Triage");
+        AIAgent math = new ChatClientAgent(client, instructions: "You are a math tutor. Answer briefly.", name: "MathTutor", description: "Handles math questions");
+        AIAgent history = new ChatClientAgent(client, instructions: "You are a history tutor. Answer briefly.", name: "HistoryTutor", description: "Handles history questions");
+
+        Workflow workflow = AgentWorkflowBuilder.CreateHandoffBuilderWith(triage)
+            .WithHandoffs(triage, [math, history])
+            .WithHandoffs([math, history], triage)
+            .Build();
+
+        await Maf08_SequentialWorkflow.RunWorkflowAsync(workflow, "When did the Roman Empire fall?");
+    }
+}

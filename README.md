@@ -1,87 +1,49 @@
-# Adventures in Semantic Kernel
+# Adventures in Microsoft Agent Framework
 
-## [Extensive Interactive Demo of the Semantic Kernel SDK](https://adventuresinsemantickernel.azurewebsites.net/)
+An interactive Blazor demo of [Microsoft Agent Framework](https://learn.microsoft.com/en-us/agent-framework/) (MAF) for .NET. It started life as *Adventures in Semantic Kernel* and has been ported to MAF while keeping the same look and feel. Experiment with agents, tools, workflows, memory and tokenization, and see how the pieces fit together.
 
-Welcome to **Adventures in Semantic Kernel**, your interactive guide to exploring the functionalities of Microsoft's AI Orchestration library, Semantic Kernel. Dive into hands-on experiences ranging from dynamic plan generation and Agent building for a dynamic chat experience to memory management and tokenization. This isn't just a passive learning experience; you'll get to actively experiment with these features to understand their cohesive interactions. [Try it out here](https://adventuresinsemantickernel.azurewebsites.net/)
+> The project and solution names still say "Semantic Kernel". Renaming is the last step of the migration.
 
-## About Semantic Kernel
+## Model providers
 
-Originally developed by Microsoft, [Semantic Kernel](https://learn.microsoft.com/en-us/semantic-kernel/overview/) aims to democratize AI integration for developers. While the project benefits from open-source contributions, its core mission is to simplify the integration of AI services with app code. It comes equipped with a smart set of connectors that essentially act as your app's "virtual brain", capable of executing LLM prompts, native code or external REST Apis.
+Only **OpenAI** and **OpenRouter** are supported. Both are reached through the OpenAI client behind a Microsoft.Extensions.AI `IChatClient`.
+Set `CoreSettings:Service` to `OpenAI` or `OpenRouter` and fill in the matching section (see `BlazorWithSematicKernel/appsettings.example.json`).
 
-## Configurations
+## What replaced what
 
-Current configuration will work for all the main features of the demo, and for most (though not all) plugins. However, several [KernelSyntaxExamples](https://github.com/microsoft/semantic-kernel/tree/main/dotnet/samples/KernelSyntaxExamples) will require config values for specific resources (e.g. Pinecone, Chroma, Weaviate, etc.) not available by default. Any service config highlighted in red is missing values that will need to be added for the associated sample to work.
-
-![Config Image](/Images/ConfigImage.jpeg)
-
-You don't need to supply an OpenAI api key for most of the demo features, but if you want to use a gpt-4 model (or if you want to change the default service to Azure OAI), you will need to supply an api key in the `OpenAIConfig` or `AzureOpenAIConfig` section.
-_**Note:**_ All configurations added/changed are encrypted and saved to your browser's local storage so they can be loaded across sessions while remaining secure.
-
+| Semantic Kernel | Agent Framework version |
+| --- | --- |
+| Kernel + chat completion service | `IChatClient` (Microsoft.Extensions.AI) |
+| Plugins and `[KernelFunction]` | Tool collections of `AIFunction` (`ToolPlugin` groups them for the UI) |
+| Prompt (YAML) functions | The same YAML files, loaded as `AIFunction`s by `YamlPromptFunction` |
+| OpenAPI plugins | `OpenApiToolFactory` builds `AIFunction`s from an OpenAPI document |
+| `ChatCompletionAgent` / `AgentGroupChat` | `ChatClientAgent` and MAF group-chat workflows |
+| Function invocation filters | Agent function-calling middleware (`AIAgentBuilder.Use`) |
+| Stepwise / Handlebars planners | A step-by-step tool-calling agent and a plan-and-execute workflow |
+| Memory connectors | A small vector store that reads and writes the existing SQLite memory databases (MAF has no equivalent) |
 
 ## Application features
 
 ### Samples
-View, modify, and execute dotnet examples. Examples are from [KernelSyntaxExamples](https://github.com/microsoft/semantic-kernel/tree/main/dotnet/samples/KernelSyntaxExamples) with small modifications.
-
-![Samples Image](/Images/SkSamples.jpeg)
+View, edit and run the Agent Framework samples in `SkPluginLibrary/Examples`: chat clients, agents, tools, streaming, structured output, middleware, agents as tools, sequential, concurrent, group chat and handoff workflows, human-in-the-loop tool approval, and OpenRouter models.
 
 ### Execute Function
-Select a single plugin from a large variety of native, prompt and external plugins, then execute a function from that plugin.
-
-![Function Image](/Images/ExecuteFunction.jpeg)
+Pick a tool group (native, prompt or OpenAPI) and run one of its functions.
 
 ### Build Agent
-Build a simple agent by providing a persona and collection of plugins used together with OpenAI Function Calling.
-
-![Function Image](/Images/AgentBuilder.jpeg)
+Build an agent from a persona and a set of tools.
 
 ### Build Agent Group Chat
-Build a group chat comprised of `ChatCompletionAgent`s using `AgentGroupChat`
-
-![GroupChat Image](/Images/BuildSKGroupChat.png)
+Build a group chat from several agents (hub-and-spoke, sequential, or prompt-based speaker selection) running as an Agent Framework workflow.
 
 ### Build Planner
-Select plugins and functions to build and execute your own:
-  - **OpenAI Function Calling** Agent
-  - *Handlebars planner* (Still available, but usage is discouraged in favor of Function Calling. See [Planners vs Function Calling](https://learn.microsoft.com/en-us/semantic-kernel/concepts/planning?pivots=programming-language-csharp#what-about-the-function-calling-stepwise-and-handlebars-planners) for more information.)
-  - *Stepwise planner* (Still available, but usage is discouraged in favor of Function Calling. See [Planners vs Function Calling](https://learn.microsoft.com/en-us/semantic-kernel/concepts/planning?pivots=programming-language-csharp#what-about-the-function-calling-stepwise-and-handlebars-planners) for more information.)
-
-![Planner Image](/Images/BuildPlanner.jpeg)
+Select tools and run them with a step-by-step agent or a plan-and-execute workflow.
 
 ### Custom Examples
+Web chat agent (Bing search plus scrape-and-summarize), Wikipedia chat agent, C# REPL agent, D&D story agent (tools plus the `AskUserPlugin` for human-in-the-loop), and a novel writer.
 
-#### Web Chat Agent
-Chat with the web using _Bing_ search and a scrape-and-summarize plugin
-
-![WebChat Image](/Images/WebChat.png)
-
-#### Wikipedia Chat Agent
-Chat with the Wikipedia articles using _Wikipedia_ Rest API
-
-#### C# REPL Agent
-Use natural language prompts to generate and execute c# code
- - Generate and execute a c# console application using prompts.
- - Generate and execute c# line-by-line using [Roslyn c# scripting api](https://github.com/dotnet/roslyn/blob/main/docs/wiki/Scripting-API-Samples.md).
-
- ![Repl Image](/Images/Repl.jpeg)
-
-#### Dnd Story Agent
-Example of a Stepwise Planner at work. Planner has access to the [D&D5e Api](https://www.dnd5eapi.co/) plugin and multiple prompt plugins. It uses these to create and execute a plan to generate a short story.
- - Leverages a native plugin from a Razor Class Library `AskUserPlugin` to provide user interaction during plan execution
-
-### SK Memory
-
-#### Vector Playground
-Play around with embeddings and similarities using your own or generated text snippets
-
-#### SK + Custom Hdbscan Clustering
-See how embeddings can be used to cluster text items, and then generate a title and summmary for each cluster using prompt plugins
+### Memory
+Vector playground and HDBSCAN clustering over embeddings.
 
 ### Tokens
-
-#### Chunking and Tokenization
- - Generate or add text, set the text chunking parameters, and then see the Semantic Kernel `TextChunker` work
- - Search over chunked text to see how the `TextChunker` can be used to improve search results
-
-#### Tinker with Tokens
-See how input text translates into tokens. Select specific tokens to set the LogitBias for a chat completion request/response.
+Text chunking, tokenization and logit-bias experiments.

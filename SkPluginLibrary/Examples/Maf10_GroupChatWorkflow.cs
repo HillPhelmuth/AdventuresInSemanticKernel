@@ -1,0 +1,19 @@
+namespace SkPluginLibrary.Examples;
+
+/// <summary>A round-robin group chat: a copywriter and a reviewer iterate until the iteration limit is reached.</summary>
+public static class Maf10_GroupChatWorkflow
+{
+    public static async Task RunAsync()
+    {
+        var client = ChatClientFactory.Create(AIModel.Gpt41Mini);
+        AIAgent writer = new ChatClientAgent(client, instructions: "You write short slogans. Reply with one slogan only.", name: "Copywriter");
+        AIAgent reviewer = new ChatClientAgent(client, instructions: "You review the latest slogan in one sentence and ask for one specific improvement.", name: "Reviewer");
+
+        Workflow workflow = AgentWorkflowBuilder
+            .CreateGroupChatBuilderWith(agents => new RoundRobinGroupChatManager(agents) { MaximumIterationCount = 4 })
+            .AddParticipants(writer, reviewer)
+            .Build();
+
+        await Maf08_SequentialWorkflow.RunWorkflowAsync(workflow, "A slogan for an eco-friendly coffee shop");
+    }
+}

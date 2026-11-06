@@ -65,8 +65,6 @@ public class YouTubeResearchPlugin
     }
     private async Task<List<string>> SaveResearchItems(List<SearchResultItem> searchResultItems)
     {
- 
-        //var pineconeClient = new PineconeClient(config["Pinecone:ApiKey"]);
         var memory = await CreateMemory("text-embedding-3-small");
         var contextItems = searchResultItems.Select(x => new ResearchVectorStoreContextItem(x.Url, x.Title, x.Content, YoutubeSourceName)).ToList();
         var saveTasks = contextItems.Select(contextItem => memory.SaveInformationAsync($"{CollectionName}-{contextItem.Source}", contextItem.Content!, contextItem.id, contextItem.Title!, JsonSerializer.Serialize(contextItem.Metadata), cancellationToken: new CancellationToken())).ToList();
