@@ -34,11 +34,11 @@ public partial class GroupChatPage : ComponentBase
     private bool _isBusy;
     private bool _isUserInputRequested;
     private ChatView? _chatView;
-    private Kernel? _kernel;
+    private IChatClient? _chatClient;
     private GroupChat? _groupChat;
     private CreateAgentForm? _create;
     private ChatAgent? _requestingAgent;
-    private List<KernelPlugin> _allKernelPlugins = [];
+    private List<ToolPlugin> _allKernelPlugins = [];
     private string Css => _isUserInputRequested ? "blinking-input" : "";
     [Inject]
     private IJSRuntime JsRuntime { get; set; } = default!;
@@ -76,10 +76,7 @@ public partial class GroupChatPage : ComponentBase
         var adminProxy = selectAgentForm.AdminAgent!;
         var agents = InteractiveAgents(adminProxy, _agentProxies);
         InteractiveStreamingAgent adminAgent;
-        if (adminProxy.GptModel.StartsWith("gemini"))
-            adminAgent = new InteractiveStreamingAgent(adminProxy, CoreKernelService.CreateKernelGoogle(adminProxy.GptModel));
-        else
-            adminAgent = new InteractiveStreamingAgent(adminProxy, _kernel!);
+        adminAgent = new InteractiveStreamingAgent(adminProxy, _chatClient!);
         adminAgent.AgentResponse += HandleInteractiveStreamingResponse;
         var transitions = new List<Transition>();
         foreach (var agent in agents)
@@ -115,17 +112,9 @@ public partial class GroupChatPage : ComponentBase
 		    {
 			    "Gpt4" => AIModel.Gpt4OCurrent,
 			    "Gpt35" => AIModel.Gpt41Mini,
-			    "gemini-1.0-pro" => AIModel.Gemini10,
-			    "gemini-1.5-pro-latest" => AIModel.Gemini15,
 			    _ => AIModel.Gpt4Turbo
 		    };
-		    Kernel kernel;
-            if (model is not (AIModel.Gpt41Mini or AIModel.Gpt4Turbo or AIModel.Gpt4OCurrent))
-            {
-                kernel = CoreKernelService.CreateKernelGoogle();
-            }
-            else
-                kernel = CoreKernelService.CreateKernel(model);
+		    var kernel = CoreKernelService.CreateChatClient(model);
 
             if (agent.IsUserProxy)
 		    {
@@ -146,7 +135,7 @@ public partial class GroupChatPage : ComponentBase
     protected override Task OnInitializedAsync()
     {
         var aiModel = AIModel.Gpt4OCurrent;
-        _kernel = CoreKernelService.CreateKernel(aiModel);
+        _chatClient = CoreKernelService.CreateChatClient(aiModel);
         _agentsAsPlugins = FileHelper.ExtractFromAssembly<List<AgentProxy>>("agentsExample.json");
         return base.OnInitializedAsync();
     }
@@ -232,11 +221,11 @@ public partial class GroupChatPage : ComponentBase
     {
         if (args.IsStartToken)
         {
-            _chatView.ChatState.AddAssistantMessage($"{args.AgentChatMessageUpdate.AuthorName}:<br/> {args.AgentChatMessageUpdate.Content}");
+            _chatView.ChatState.AddAssistantMessage($"{args.AgentChatMessageUpdate.AuthorName}:<br/> {args.AgentChatMessageUpdate.Text}");
         }
         else
         {
-            _chatView.ChatState.UpdateAssistantMessage(args.AgentChatMessageUpdate.Content ?? "");
+            _chatView.ChatState.UpdateAssistantMessage(args.AgentChatMessageUpdate.Text ?? "");
         }
     }
     private class FileUploadData

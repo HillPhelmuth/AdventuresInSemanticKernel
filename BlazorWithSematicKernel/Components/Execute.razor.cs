@@ -69,17 +69,17 @@ namespace BlazorWithSematicKernel.Components
         private string? _output;
         protected override Task OnParametersSetAsync()
         {
-            var funcView = Function.SkFunction.Metadata;
+            var funcView = Function.SkFunction.GetMetadata();
             var fields = funcView.Parameters.Select(x => new FunctionParameterField(x.Name, x.Description ?? "", x.DefaultValue ?? "", x.ParameterType ?? typeof(string))).ToList();
             if (!fields.Any(x => x.Name.Equals("input", StringComparison.InvariantCultureIgnoreCase)))
             {
                 fields.Add(new FunctionParameterField("Input", "Basic input for the function", "", typeof(string)));
             }
             _functionInputsForm.FunctionParameterFields = fields;
-            _promptText = PromptText(Function.SkFunction.PluginName, Function.SkFunction.Name);
+            _promptText = PromptText(funcView.PluginName, Function.SkFunction.Name);
             return base.OnParametersSetAsync();
         }
-        //private static string? PromptText(KernelFunction function)
+        //private static string? PromptText(AIFunction function)
         //{
         //    var promptPath = Path.Combine(RepoFiles.PluginDirectoryPath, function.Metadata?.PluginName ?? "", function.Name, "skprompt.txt");
         //    if (!File.Exists(promptPath)) return null;
@@ -92,8 +92,7 @@ namespace BlazorWithSematicKernel.Components
             var promptPath = Path.Combine(RepoFiles.PathToYamlPlugins, pluginName, $"{functionName}.yaml");
             if (!File.Exists(promptPath)) return null;
             var prompt = File.ReadAllText(promptPath);
-            var promptTemplateConfig = KernelFunctionYaml.ToPromptTemplateConfig(prompt);
-            return promptTemplateConfig.Template;
+            return YamlPromptFunction.FromYaml(prompt).Template;
         }
         private class InputArray
         {
@@ -140,20 +139,8 @@ namespace BlazorWithSematicKernel.Components
                 {
                     newVariables.TryAdd(variable.Key, variable.Value);
                 }
-                var kernelResult = await CoreKernelService.ExecuteKernelFunction(Function.SkFunction, newVariables);
-                if (kernelResult.IsStreamingResult())
-                {
-                    await foreach (var item in kernelResult.ResultStream<string>())
-                    {
-                        _output += item;
-                        StateHasChanged();
-                    }
-                }
-                else
-                {
-                    _output = kernelResult.Result();
-                    StateHasChanged();
-                }
+                _output = await CoreKernelService.ExecuteFunction(Function.SkFunction, newVariables);
+                StateHasChanged();
                 //if (Function.Name is "TryStreamFunction" or "ExecuteChatStreamResponse" or "WikiSearchAndChat")
                 //{
                 //    var result = CoreKernelService.ExecuteFunctionStream(Function.SkFunction, variables);

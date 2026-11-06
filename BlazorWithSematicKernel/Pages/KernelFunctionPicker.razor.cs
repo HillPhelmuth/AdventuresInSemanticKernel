@@ -17,7 +17,7 @@ namespace BlazorWithSematicKernel.Pages
         private int _stepIndex;
         private class PluginDisplay
         {
-            public KernelPlugin Plugin { get; set; } = default!;
+            public ToolPlugin Plugin { get; set; } = default!;
             public PluginType PluginType { get; set; }
         }
         private List<PluginDisplay> _pluginDisplays = [];
@@ -33,7 +33,7 @@ namespace BlazorWithSematicKernel.Pages
             await base.OnInitializedAsync();
         }
 
-        private Dictionary<string, KernelFunction> _selectedFunctions = [];
+        private Dictionary<string, AIFunction> _selectedFunctions = [];
         private bool _isBusy;
 
         private void SelectPlugin(PluginDisplay pluginFunctions)
@@ -59,7 +59,7 @@ namespace BlazorWithSematicKernel.Pages
             StateHasChanged();
         }
         private Function _selectedFunction;
-        private void HandleSelectFunction(KeyValuePair<string, KernelFunction> function)
+        private void HandleSelectFunction(KeyValuePair<string, AIFunction> function)
         {
             _selectedFunction = new Function(function.Key, function.Value);
             _stepIndex = 3;

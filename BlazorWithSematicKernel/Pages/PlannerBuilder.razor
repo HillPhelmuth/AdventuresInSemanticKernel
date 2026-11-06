@@ -41,10 +41,10 @@
                 <RadzenColumn Size="10">
                     <RadzenDataGrid Data="_allPlugins" TItem="PluginForm" Density="Density.Compact" AllowSorting="true" AllowFiltering="true" AllowPaging="true" PageSize="15" ShowPagingSummary=true FilterMode="FilterMode.Advanced" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                         <Template Context="plugin">
-                            <RadzenDataGrid Data="@(plugin.KernelPlugin.GetFunctionsMetadata())" TItem="KernelFunctionMetadata" Density="Density.Compact" AllowSorting="true" AllowFiltering="true" AllowPaging="true" PageSize="5" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+                            <RadzenDataGrid Data="@(plugin.ToolPlugin.GetFunctionsMetadata())" TItem="FunctionMetadata" Density="Density.Compact" AllowSorting="true" AllowFiltering="true" AllowPaging="true" PageSize="5" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                                 <Columns>
-                                    <RadzenDataGridColumn TItem="KernelFunctionMetadata" Property="@nameof(KernelFunctionMetadata.Name)" Title="Name" Width="25%"></RadzenDataGridColumn>
-                                    <RadzenDataGridColumn TItem="KernelFunctionMetadata" Property="@nameof(KernelFunctionMetadata.Description)" Title="Description" Width="75%"></RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="FunctionMetadata" Property="@nameof(FunctionMetadata.Name)" Title="Name" Width="25%"></RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="FunctionMetadata" Property="@nameof(FunctionMetadata.Description)" Title="Description" Width="75%"></RadzenDataGridColumn>
                                 </Columns>
                             </RadzenDataGrid>
                         </Template>
@@ -57,7 +57,7 @@
                                     <RadzenSwitch @bind-Value=pluginFunc.IsSelected Style=""></RadzenSwitch>
                                 </Template>
                             </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="PluginForm" Property="KernelPlugin.Name" Title="Name" Width="45%"></RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="PluginForm" Property="ToolPlugin.Name" Title="Name" Width="45%"></RadzenDataGridColumn>
                             <RadzenDataGridColumn TItem="PluginForm" Property="@(nameof(PluginForm.PluginType))" Title="Type" Width="45%"></RadzenDataGridColumn>
                         </Columns>
                     </RadzenDataGrid>

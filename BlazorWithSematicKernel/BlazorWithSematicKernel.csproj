@@ -80,7 +80,7 @@
 	  <Folder Include="Data\CodeFiles\" />
 	</ItemGroup>
 	<Target Name="PreBuild" BeforeTargets="PreBuildEvent" Condition="'$(Configuration)' == 'Debug'">
-	  <Exec Command="&quot;$(SolutionDir)PostBuildCopyCode.exe&quot; $(SolutionDir)SkPluginLibrary\Examples $(SolutionDir)BlazorWithSematicKernel\Data\CodeFiles" />
+	  <Exec Condition="$([MSBuild]::IsOSPlatform('Windows'))" Command="&quot;$(SolutionDir)PostBuildCopyCode.exe&quot; $(SolutionDir)SkPluginLibrary\Examples $(SolutionDir)BlazorWithSematicKernel\Data\CodeFiles" />
 	</Target>
 
 </Project>

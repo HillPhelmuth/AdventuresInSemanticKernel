@@ -32,11 +32,11 @@
                 <RadzenDropDownDataGrid Data="@_allPlugins.AsEnumerable()" Chips="true" AllowFilteringByAllStringColumns=true AllowSorting=true PageSize=10 MaxSelectedLabels=5 AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowClear="true" @bind-Value=@_agentForm.Plugins TextProperty="Name" Multiple="true" Density="Density.Compact">
 
                     <Columns>
-                        <RadzenDropDownDataGridColumn Property="KernelPlugin.Name" Title="Name" Width="50%"></RadzenDropDownDataGridColumn>
+                        <RadzenDropDownDataGridColumn Property="ToolPlugin.Name" Title="Name" Width="50%"></RadzenDropDownDataGridColumn>
                         <RadzenDropDownDataGridColumn Property="@(nameof(PluginData.PluginType))" Title="Type" Width="30%"></RadzenDropDownDataGridColumn>
                         <RadzenDropDownDataGridColumn Width="30%" >
                             <Template Context="plugin">
-                                @{var kernelPlugin = (plugin as PluginData).KernelPlugin;}
+                                @{var kernelPlugin = (plugin as PluginData).ToolPlugin;}
                                 <RadzenButton Size=ButtonSize.ExtraSmall Text="Functions" Icon="functions" @onclick:stopPropagation Click="@(() => ShowFunctions(kernelPlugin))"></RadzenButton>
                             </Template>
                         </RadzenDropDownDataGridColumn>

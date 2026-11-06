@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Components;
-using Microsoft.SemanticKernel.Agents;
 using SemanticKernelAgentOrchestration.Models;
 using SkPluginLibrary.Abstractions;
 
@@ -96,11 +95,11 @@ namespace BlazorWithSematicKernel.Components.AgentComponents
 			StateHasChanged();
 		}
 
-		private class PluginData(PluginType pluginType, KernelPlugin kernelPlugin)
+		private class PluginData(PluginType pluginType, ToolPlugin kernelPlugin)
 		{
 			public PluginType PluginType { get; set; } = pluginType;
-			public KernelPlugin KernelPlugin { get; set; } = kernelPlugin;
-			public string Name => KernelPlugin.Name;
+			public ToolPlugin ToolPlugin { get; set; } = kernelPlugin;
+			public string Name => ToolPlugin.Name;
 
 		}
 		private async Task AllPlugins()
@@ -119,7 +118,7 @@ namespace BlazorWithSematicKernel.Components.AgentComponents
 				Description = agentForm.Description,
 				Instructions = agentForm.Instructions,
 				Name = agentForm.Name,
-				Plugins = agentForm.Plugins.Select(x => x.KernelPlugin).ToList()
+				Plugins = agentForm.Plugins.Select(x => x.ToolPlugin).ToList()
 			};
 			Agent = proxy;
 			await AgentChanged.InvokeAsync(Agent);
@@ -127,7 +126,7 @@ namespace BlazorWithSematicKernel.Components.AgentComponents
 
 			StateHasChanged();
 		}
-		private void ShowFunctions(KernelPlugin kernelFunctions)
+		private void ShowFunctions(ToolPlugin kernelFunctions)
 		{
 			var paramters = new Dictionary<string, object> { { "Plugin", kernelFunctions } };
 			var dialogOptions = new DialogOptions { Draggable = true, ShowClose = true, Style = "width:40vw; height:max-content" };

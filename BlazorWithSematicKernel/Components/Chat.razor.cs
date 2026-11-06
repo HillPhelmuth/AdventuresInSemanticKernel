@@ -12,9 +12,10 @@ namespace BlazorWithSematicKernel.Components
 		[Inject] private NotificationService NotificationService { get; set; } = default!;
 
 		private string HelpText => ChatRequestModel.ExecutionType.ToString().Contains("Chat") ? "Plan Ask + Chat" :
-			ChatRequestModel.ExecutionType.ToString().Contains("Plan") ? "Plan Ask" : "Initial Input";
+			IsPlanType(ChatRequestModel.ExecutionType) ? "Plan Ask" : "Initial Input";
 		private bool AskPlusChatInput => ChatRequestModel.ExecutionType.ToString().Contains("Chat");
-		private bool AskOnlyInput => ChatRequestModel.ExecutionType.ToString().Contains("Plan") && !AskPlusChatInput;
+		private bool AskOnlyInput => IsPlanType(ChatRequestModel.ExecutionType) && !AskPlusChatInput;
+		private static bool IsPlanType(ExecutionType type) => type is ExecutionType.StepwiseAgent or ExecutionType.StepwiseAgentChat or ExecutionType.PlanAndExecuteWorkflow or ExecutionType.PlanAndExecuteWorkflowChat;
 		private UserInputType _userInputType;
 		private CancellationTokenSource _cancellationTokenSource = new();
 		protected override Task OnAfterRenderAsync(bool firstRender)
@@ -75,22 +76,22 @@ namespace BlazorWithSematicKernel.Components
 							await ExecuteActionChatSequence(input, true);
 							break;
 						}
-					case ExecutionType.StepwisePlanner:
+					case ExecutionType.StepwiseAgent:
 						{
 							await ExecuteStepwiseChatSequence(input, false);
 							break;
 						}
-					case ExecutionType.StepwisePlannerChat:
+					case ExecutionType.StepwiseAgentChat:
 						{
 							await ExecuteStepwiseChatSequence(input, true);
 							break;
 						}
-					case ExecutionType.HandlebarsPlanner:
+					case ExecutionType.PlanAndExecuteWorkflow:
 						{
 							await ExecuteHandlebarsChatSequence(input, false);
 							break;
 						}
-					case ExecutionType.HandlebarsPlannerChat:
+					case ExecutionType.PlanAndExecuteWorkflowChat:
 						{
 							await ExecuteHandlebarsChatSequence(input, true);
 							break;
@@ -126,7 +127,7 @@ namespace BlazorWithSematicKernel.Components
 			var token = _cancellationTokenSource.Token;
 			_chatView!.ChatState.AddUserMessage(input);
 			var reset = _chatView!.ChatState.MessageCount > 1;
-			var chatWithPlanner = CoreKernelService.ChatWithStepwisePlanner(input, ChatRequestModel, runAsChat, _askInput, token, reset);
+			var chatWithPlanner = CoreKernelService.ChatWithStepwiseAgent(input, ChatRequestModel, runAsChat, _askInput, token, reset);
 			return ExecuteChatSequence(chatWithPlanner);
 		}
 		private Task ExecuteHandlebarsChatSequence(string input, bool runAsChat)
@@ -134,7 +135,7 @@ namespace BlazorWithSematicKernel.Components
 			var token = _cancellationTokenSource.Token;
 			_chatView!.ChatState.AddUserMessage(input);
 			var reset = _chatView!.ChatState.MessageCount > 1;
-			var chatWithPlanner = CoreKernelService.ChatWithHandlebarsPlanner(input,
+			var chatWithPlanner = CoreKernelService.ChatWithPlanAndExecuteWorkflow(input,
 							   ChatRequestModel, runAsChat, _askInput, token, reset);
 			return ExecuteChatSequence(chatWithPlanner);
 		}

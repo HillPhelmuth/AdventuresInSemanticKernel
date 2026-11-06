@@ -4,7 +4,6 @@ using SkPluginLibrary.Abstractions;
 using SkPluginLibrary.Models.Helpers;
 using SkPluginLibrary.Services;
 using System.Text.Json;
-using Microsoft.SemanticKernel.Memory;
 
 namespace BlazorWithSematicKernel.Pages
 {
@@ -96,7 +95,7 @@ namespace BlazorWithSematicKernel.Pages
             else
             {
                 var records = await ExtractResultsFromJson(form.FileUpload);
-                _memoryResults = await CoreMemoryKernelService.ItemClustersFromCollection(form.MinPoints, form.MinCluster, form.DistanceFunction, records, CoreKernelService.CreateKernel());
+                _memoryResults = await CoreMemoryKernelService.ItemClustersFromCollection(form.MinPoints, form.MinCluster, form.DistanceFunction, records);
                 var memoryGroups = _memoryResults.GroupBy(x => x.Cluster).Select(g =>
                     new ClusterDisplay(g.Key, g.FirstOrDefault()?.ClusterTitle ?? "no title", g.ToList())
                     { Tags = g.FirstOrDefault()?.ClusterSummary });

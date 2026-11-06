@@ -29,12 +29,12 @@ public partial class AutoSequentialChatPage
     private bool _isBusy;
     private bool _isUserInputRequested;
     private ChatView? _chatView;
-    private Kernel? _kernel;
+    private IChatClient? _chatClient;
     private DynamicAgentChatService? _groupChat;
     private ChatContext _chatContext = new();
     private CreateAgentForm? _create;
     private ChatAgent? _requestingAgent;
-    private List<KernelPlugin> _allKernelPlugins = [];
+    private List<ToolPlugin> _allKernelPlugins = [];
     private string Css => _isUserInputRequested ? "blinking-input" : "";
     [Inject]
     private IJSRuntime JsRuntime { get; set; } = default!;
@@ -71,7 +71,7 @@ public partial class AutoSequentialChatPage
 #endif
         Console.WriteLine("AutoSequentialChat Started");
 
-        _groupChat = new DynamicAgentChatService(selectAgentForm.Agents, _chatContext, CoreKernelService.CreateKernel(AIModel.Gpt4OCurrent));
+        _groupChat = new DynamicAgentChatService(selectAgentForm.Agents, _chatContext, CoreKernelService.CreateChatClient(AIModel.Gpt4OCurrent));
 
         _step = 1;
         StateHasChanged();
@@ -89,18 +89,9 @@ public partial class AutoSequentialChatPage
             {
                 "Gpt4" => AIModel.Gpt4OCurrent,
                 "Gpt35" => AIModel.Gpt41Mini,
-               
-                "gemini-1.0-pro" => AIModel.Gemini10,
-                "gemini-1.5-pro-latest" => AIModel.Gemini15,
                 _ => AIModel.Gpt4Turbo
             };
-            Kernel kernel;
-            if (model is not (AIModel.Gpt41Mini or AIModel.Gpt4Turbo or AIModel.Gpt4OCurrent))
-            {
-                kernel = CoreKernelService.CreateKernelGoogle();
-            }
-            else
-                kernel = CoreKernelService.CreateKernel(model);
+            var kernel = CoreKernelService.CreateChatClient(model);
 
             if (agent.IsUserProxy)
             {
@@ -121,7 +112,7 @@ public partial class AutoSequentialChatPage
     protected override Task OnInitializedAsync()
     {
         var aiModel = AIModel.Gpt41;
-        _kernel = CoreKernelService.CreateKernel(aiModel);
+        _chatClient = CoreKernelService.CreateChatClient(aiModel);
         _agentsAsPlugins = FileHelper.ExtractFromAssembly<List<AgentProxy>>("agentsExample.json");
         return base.OnInitializedAsync();
     }
@@ -204,11 +195,11 @@ public partial class AutoSequentialChatPage
     {
         if (args.IsStartToken)
         {
-            _chatView.ChatState.AddAssistantMessage($"{args.AgentChatMessageUpdate.AuthorName}:<br/> {args.AgentChatMessageUpdate.Content}");
+            _chatView.ChatState.AddAssistantMessage($"{args.AgentChatMessageUpdate.AuthorName}:<br/> {args.AgentChatMessageUpdate.Text}");
         }
         else
         {
-            _chatView.ChatState.UpdateAssistantMessage(args.AgentChatMessageUpdate.Content ?? "");
+            _chatView.ChatState.UpdateAssistantMessage(args.AgentChatMessageUpdate.Text ?? "");
         }
     }
     private class FileUploadData

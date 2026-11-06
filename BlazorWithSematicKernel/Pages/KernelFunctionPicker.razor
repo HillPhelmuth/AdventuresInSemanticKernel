@@ -36,10 +36,10 @@
                     <RadzenTabsItem Text="Standard Plugins">
                         <RadzenDataGrid Data="_allPlugins" TItem="PluginDisplay" Density="Density.Compact" AllowSorting="true" AllowFiltering="true" AllowPaging="true" PageSize="15" ShowPagingSummary=true FilterMode="FilterMode.Advanced" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                             <Template Context="plugin">
-                                <RadzenDataGrid Data="@(plugin.Plugin.GetFunctionsMetadata())" TItem="KernelFunctionMetadata" Density="Density.Compact" AllowSorting="true" AllowFiltering="true" AllowPaging="true" PageSize="5" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+                                <RadzenDataGrid Data="@(plugin.Plugin.GetFunctionsMetadata())" TItem="FunctionMetadata" Density="Density.Compact" AllowSorting="true" AllowFiltering="true" AllowPaging="true" PageSize="5" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                                     <Columns>
-                                        <RadzenDataGridColumn TItem="KernelFunctionMetadata" Property="@nameof(KernelFunctionMetadata.Name)" Title="Name" Width="25%"></RadzenDataGridColumn>
-                                        <RadzenDataGridColumn TItem="KernelFunctionMetadata" Property="@nameof(KernelFunctionMetadata.Description)" Title="Description" Width="75%"></RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="FunctionMetadata" Property="@nameof(FunctionMetadata.Name)" Title="Name" Width="25%"></RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="FunctionMetadata" Property="@nameof(FunctionMetadata.Description)" Title="Description" Width="75%"></RadzenDataGridColumn>
                                     </Columns>
                                 </RadzenDataGrid>
                             </Template>

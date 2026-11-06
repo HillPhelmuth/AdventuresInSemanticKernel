@@ -10,7 +10,7 @@
         <RadzenRow>
             @foreach (var function in Functions)
             {
-                var functionview = function.Value.Metadata;
+                var functionview = function.Value.GetMetadata();
                 <RadzenColumn Size="4">
                     <RadzenCard>
                         <RadzenText TextStyle="TextStyle.Caption">Plugin: @functionview.PluginName</RadzenText>
