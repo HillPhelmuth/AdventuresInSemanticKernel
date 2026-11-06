@@ -1,78 +1,74 @@
-﻿.modal-overlay {
-    display: block;
+.modal-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 101;
-    background-color: rgba(0,0,0,0.5);
+    inset: 0;
+    z-index: 1200;
+    background: rgba(0, 0, 0, 0.5);
 }
 
-    .modal-overlay .window, .bottom {
-        position: absolute;
-        height: auto;
-        width: auto;
-        max-height: 90vh;
-        max-width: 90vw;
-        overflow: auto;
-        background-color: white;
-        padding: .5rem 1rem;
-        border-radius: 15px;
-        z-index: 1000;
-    }
+.window {
+    position: absolute;
+    box-sizing: border-box;
+    max-height: calc(100dvh - 2rem);
+    max-width: calc(100vw - 2rem);
+    padding: 1rem;
+    overflow: auto;
+    background: var(--rz-base-background-color, #fff);
+    color: var(--rz-text-color, #343a40);
+    border-radius: var(--rz-border-radius, 4px);
+    box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.2);
+}
 
-    .modal-overlay .center {
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-    }
+.center, .left, .right {
+    top: 50%;
+    transform: translateY(-50%);
+}
 
-    .modal-overlay .left {
-        top: 50%;
-        left: 10%;
-        transform: translate(-50%, -50%);
-    }
+.center {
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
 
-    .modal-overlay .topleft {
-        top: 10%;
-        left: 10%;
-        transform: translate(-10%, -10%);
-    }
+.left, .topleft {
+    left: 1rem;
+}
 
-    .modal-overlay .topright {
-        top: 10%;
-        right: 10%;
-        transform: translate(-10%, -10%);
-    }
+.right, .topright {
+    right: 1rem;
+}
 
-    .modal-overlay .right {
-        top: 50%;
-        right: 10%;
-    }
+.topleft, .topright {
+    top: 1rem;
+}
 
-    .modal-overlay .bottom {
-        bottom: 0;
-        left: 50%;
-        transform: translateX(-50%);
-    }
-
-.close {
-    margin: -1rem 0rem -1rem auto;
-    color: #590080;
-    font-size: 1.5rem;
-    font-weight: bold;
+.bottom {
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
 }
 
 .modal-header {
-    display: grid;
-    grid-template-columns: 95% 5%;
+    display: flex;
     align-items: center;
-    justify-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0 0 0.75rem;
+    margin-bottom: 1rem;
+    border-bottom: var(--rz-border-normal, 1px solid #dfe3e8);
 }
 
 .title {
-    /*width:80%;*/
-    font-size: 14px;
-    line-height:18px;
+    font-weight: 600;
+}
+
+.close {
+    padding: 0.25rem 0.5rem;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.close:focus-visible {
+    outline: 2px solid var(--rz-primary, #1151f3);
 }

@@ -27,11 +27,17 @@ namespace ChatComponents
             MessagePropertyChanged();
         }
 
-        public void AddAssistantMessage(string message, int? order = null)
+        public void AddAssistantMessage(string message, int? order = null, bool isStreaming = false)
         {
             order ??= MessageCount + 1;
-            ChatMessages.Add(Message.AssistantMessage(message, order.Value));
+            ChatMessages.Add(new Message(Role.Assistant, message, order.Value) { IsActiveStreaming = isStreaming });
             ChatHistory.Add(new ChatMessage(ChatRole.Assistant, message));
+            MessagePropertyChanged();
+        }
+        public void CompleteAssistantMessage()
+        {
+            if (ChatMessages.LastOrDefault(x => x.Role == Role.Assistant) is not { } message) return;
+            message.IsActiveStreaming = false;
             MessagePropertyChanged();
         }
         /// <summary>

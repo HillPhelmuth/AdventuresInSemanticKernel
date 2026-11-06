@@ -1,6 +1,6 @@
-﻿<div style="min-width:300px; min-height:200px">
+﻿<div class="simple-output">
     <div class="card">
         @((MarkupString)AsHtml(OutputText))
-        <button class="info-button">Done</button>
+        <button type="button" class="info-button" @onclick="() => ModalService.Close(true)">Done</button>
     </div>
 </div>

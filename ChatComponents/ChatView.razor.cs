@@ -8,15 +8,13 @@ using System.ComponentModel;
 
 namespace ChatComponents
 {
-    public partial class ChatView : ComponentBase, IDisposable
+    public partial class ChatView : ComponentBase, IAsyncDisposable
     {
-        private RadzenColumn? _column;
         private ElementReference _chatColumn;
         public ChatState ChatState { get; set; } = new();
         [Inject]
         private ChatStateCollection ChatStateCollection {get; set; } = default!;
-        //[Inject]
-        private AppJsInterop AppJsInterop { get; set; } = default!;
+        private AppJsInterop? _interop;
         [Parameter] public string Height { get; set; } = "60vh";
         [Parameter] public bool ResetOnClose { get; set; } = true;
 
@@ -27,19 +25,22 @@ namespace ChatComponents
         [Parameter]
         public string ViewId { get; set; } = "";
 
-        private bool _generatedViewId;
+        private string? _generatedViewId;
+        private ChatState? _subscribedState;
+        private bool _disposed;
 
         [Inject] private IJSRuntime JsRuntime { get; set; } = default!;
 
         protected override Task OnParametersSetAsync()
         {
+            if (_subscribedState is not null) _subscribedState.PropertyChanged -= ChatState_OnChatStateChanged;
             if (string.IsNullOrEmpty(ViewId))
             {
                 ViewId = Guid.NewGuid().ToString();
                 ChatState = ChatStateCollection.CreateChatState(ViewId);
-                _generatedViewId = true;
+                _generatedViewId = ViewId;
             }
-            else if (ChatStateCollection.TryGetChatState(ViewId, out var chatState))
+            else if (ChatStateCollection.TryGetChatState(ViewId, out var chatState) && chatState is not null)
             {
                 ChatState = chatState;
             }
@@ -49,7 +50,8 @@ namespace ChatComponents
                 
             }
             ChatState!.PropertyChanged += ChatState_OnChatStateChanged;
-            StateHasChanged();
+            _subscribedState = ChatState;
+            _interop ??= new AppJsInterop(JsRuntime);
             
             return base.OnParametersSetAsync();
         }
@@ -62,22 +64,27 @@ namespace ChatComponents
         {
             return ChatState!.ChatHistory;
         }
-        private async void ChatState_OnChatStateChanged(object? sender, PropertyChangedEventArgs args)
+        private void ChatState_OnChatStateChanged(object? sender, PropertyChangedEventArgs args)
         {
-            if (args.PropertyName == nameof(ChatState.ChatMessages))
+            if (!_disposed && args.PropertyName == nameof(ChatState.ChatMessages))
             {
-                ChatStateCollection.ChatStates[ViewId] = ChatState!;
-                await InvokeAsync(StateHasChanged);
-                AppJsInterop = new AppJsInterop(JsRuntime);
-                await AppJsInterop.ScrollDown(_chatColumn);
+                _ = InvokeAsync(async () =>
+                {
+                    if (_disposed) return;
+                    ChatStateCollection.ChatStates[ViewId] = ChatState;
+                    StateHasChanged();
+                    await _interop!.ScrollDown(_chatColumn);
+                });
             }
         }
 
-        public void Dispose()
+        public async ValueTask DisposeAsync()
         {
+            _disposed = true;
+            if (_subscribedState is not null) _subscribedState.PropertyChanged -= ChatState_OnChatStateChanged;
             if (ResetOnClose) ChatState!.Reset();
-            if (_generatedViewId) ChatStateCollection.ChatStates.Remove(ViewId);
-            ChatState!.PropertyChanged -= ChatState_OnChatStateChanged;
+            if (_generatedViewId is not null) ChatStateCollection.ChatStates.Remove(_generatedViewId);
+            if (_interop is not null) await _interop.DisposeAsync();
         }
     }
 }

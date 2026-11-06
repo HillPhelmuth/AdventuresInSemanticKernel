@@ -5,6 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <Platforms>AnyCPU;ARM64</Platforms>
+    <UserSecretsId>ad3ef5ee-b319-4099-85a4-568668603689</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Agents.AI.OpenAI" Version="1.27.0" />

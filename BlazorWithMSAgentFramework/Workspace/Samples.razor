@@ -4,12 +4,12 @@
 @inject ILogger<Samples> Logger
 <h1>Agent Framework samples</h1>
 <p>Original, editable examples using the installed SDK. Run can make billed provider requests using your circuit configuration. Approval examples stop at the request instead of auto-approving actions.</p>
-<select @bind="_selected" @bind:after="Select">
+<label>Sample <select @bind="_selected" @bind:after="Select" disabled="@_busy">
     <option value="">Select a sample</option>
     @foreach (var path in _paths) { <option value="@path">@Path.GetFileNameWithoutExtension(path)</option> }
-</select>
+</select></label>
 <BlazorAceEditor.AceEditor OnEditorInit="EditorReady" Style="height:32rem;width:100%" />
-<button @onclick="Run" disabled="@_busy">Compile and run</button>
+<button @onclick="Run" disabled="@(_busy || _editor is null)">Compile and run</button>
 @if (_error is not null) { <div role="alert" class="alert alert-danger">@_error</div> }
 <pre role="status">@_output</pre>
 @code {
@@ -19,13 +19,23 @@
     private string? _error;
     private BlazorAceEditor.AceEditor? _editor;
     private async Task EditorReady(BlazorAceEditor.AceEditor editor) { _editor = editor; await editor.ChangeLanguage("csharp"); await editor.SetValue(_code); }
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         var directory = Path.Combine(AppContext.BaseDirectory, "Data", "CodeFiles");
         _paths = Directory.Exists(directory) ? Directory.GetFiles(directory, "*.cs").Order().ToArray() : [];
         if (_paths.Length == 0) _error = "Sample sources are missing from the build output.";
+        else { _selected = _paths[0]; await Select(); }
     }
-    private async Task Select() { if (!string.IsNullOrEmpty(_selected)) { _code = await File.ReadAllTextAsync(_selected); if (_editor is not null) await _editor.SetValue(_code); } }
+    private async Task Select()
+    {
+        try
+        {
+            _error = null;
+            _code = string.IsNullOrEmpty(_selected) ? "" : await File.ReadAllTextAsync(_selected);
+            if (_editor is not null) await _editor.SetValue(_code);
+        }
+        catch (Exception ex) { Logger.LogError(ex, "Sample loading failed"); _error = ex.Message; }
+    }
     private async Task Run()
     {
         _busy = true; _error = null;

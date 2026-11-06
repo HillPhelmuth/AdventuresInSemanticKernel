@@ -10,7 +10,7 @@ export function addCodeStyle(element) {
         console.log("No element in addCodeStyle");
         return;
     }
-    if (!Prism) {
+    if (typeof Prism === "undefined") {
         console.log("No Prism in addCodeStyle");
         return;
     }

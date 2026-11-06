@@ -31,9 +31,8 @@ namespace AgentToolComponents.Components
             if (!string.IsNullOrEmpty(Options))
             {
                 _options = Options.Split("\n").ToList();
-                Console.WriteLine($"{Options} splist into {_options.Count} items");
                 SimpleInputType = SimpleInputType.Select;
-                StateHasChanged();
+                _formFieldValue.TextInput ??= _options[0];
             }
             if (SimpleInputType == SimpleInputType.Number)
             {

@@ -7,7 +7,7 @@
                         
                         @if (_requestForm.UserInputRequest.UserInputType is UserInputType.Ask or UserInputType.Both)
                         {
-                            <RadzenFormField Text="Ask for Planner (optional)" Style="width: 100%">
+                            <RadzenFormField Text="Optional instructions" Style="width: 100%">
                                 <ChildContent>
                                     <RadzenTextBox ReadOnly="_isDisabled" Style="width: 100%" @bind-Value="@_requestForm.UserInputRequest.AskInput"></RadzenTextBox>
                                 </ChildContent>

@@ -82,8 +82,8 @@
     private CancellationTokenSource _cancellation = new();
     protected override void OnInitialized() => Catalog.ToolProgress += Progress;
     private void Progress(string message) => _ = InvokeAsync(() => { _progress.Add(message); StateHasChanged(); });
-    private string Mode => new Uri(Navigation.Uri).AbsolutePath.Trim('/');
-    private string Title => Mode switch { "web" => "Web agent", "wikiChat" => "Wikipedia agent", "docs" => "Agent Framework documentation", "repl" => "C# / Blazor REPL", "novel" => "Novel writer", "dnd" => "D&D story agent", _ => "Build an agent" };
+    private string Mode => new Uri(Navigation.Uri).AbsolutePath.Trim('/').ToLowerInvariant();
+    private string Title => Mode switch { "web" => "Web agent", "wikichat" => "Wikipedia agent", "docs" => "Agent Framework documentation", "repl" => "C# / Blazor REPL", "novel" => "Novel writer", "dnd" => "D&D story agent", _ => "Build an agent" };
     protected override async Task OnParametersSetAsync()
     {
         if (_lastMode == Mode) return;
@@ -93,7 +93,7 @@
         _definition = new AgentDefinition { Name = Title, Instructions = "Assist the user using the selected tools. Cite source links when using external information." };
         _definition.PluginNames = Mode switch
         {
-            "web" => ["WebCrawlPlugin"], "wikiChat" => ["WikiChatPlugin"], "repl" => ["CodeExecutorPlugin", "BlazorReplPlugin"],
+            "web" => ["WebCrawlPlugin"], "wikichat" => ["WikiChatPlugin"], "repl" => ["CodeExecutorPlugin", "BlazorReplPlugin"],
             "dnd" => ["DndPlugin", "AskUserPlugin"], _ => []
         };
         _chat?.ChatState.Reset();
@@ -110,7 +110,7 @@
     {
         await EnsureConversation();
         _chat!.ChatState.AddUserMessage(_input);
-        _chat.ChatState.AddAssistantMessage("");
+        _chat.ChatState.AddAssistantMessage("", isStreaming: true);
         var input = Mode == "docs" ? await Agents.RetrieveContextAsync(_input, token) : _input;
         await Stream(_conversation!.RunAsync(input, token));
     });
@@ -127,16 +127,20 @@
     }
     private Task Respond(string id, bool approved) => Run(async token =>
     {
-        _chat!.ChatState.AddAssistantMessage("");
+        _chat!.ChatState.AddAssistantMessage("", isStreaming: true);
         await Stream(_conversation!.RespondAsync(id, approved, token));
     });
     private async Task Stream(IAsyncEnumerable<Microsoft.Agents.AI.AgentResponseUpdate> stream)
     {
-        await foreach (var update in stream)
+        try
         {
-            if (!string.IsNullOrEmpty(update.Text)) _chat!.ChatState.UpdateAssistantMessage(update.Text);
-            await InvokeAsync(StateHasChanged);
+            await foreach (var update in stream)
+            {
+                if (!string.IsNullOrEmpty(update.Text)) _chat!.ChatState.UpdateAssistantMessage(update.Text);
+                await InvokeAsync(StateHasChanged);
+            }
         }
+        finally { _chat!.ChatState.CompleteAssistantMessage(); }
         if (Mode == "repl") _code = ToolCatalog.StripFence(_chat!.ChatState.ChatMessages.Last().Content ?? "");
     }
     private async Task Run(Func<CancellationToken, Task> action)
@@ -163,7 +167,7 @@
         _novel = ""; var outline = _input;
         for (var chapter = 1; chapter <= _chapters; chapter++)
         {
-            _chat!.ChatState.AddAssistantMessage("");
+            _chat!.ChatState.AddAssistantMessage("", isStreaming: true);
             await Stream(_conversation!.RunAsync($"Write chapter {chapter} of {_chapters}, maintaining continuity. Outline:\n{outline}", token));
             _novel += $"\n\n## Chapter {chapter}\n\n{_chat.ChatState.ChatMessages.Last().Content}";
         }
@@ -172,7 +176,12 @@
     private Task DownloadNovel() => JS.InvokeVoidAsync("downloadFile", "novel.md", _novel).AsTask();
     private Task GenerateCover() => Run(async token => _image = "data:image/png;base64," + Convert.ToBase64String(await Media.ImageAsync("Create a novel cover for:\n" + _input, token)));
     private Task Narrate() => Run(async token => _audio = "data:audio/mpeg;base64," + Convert.ToBase64String(await Media.SpeechAsync(_input, token)));
-    private Task DownloadDefinition() => JS.InvokeVoidAsync("downloadFile", "agent.json", JsonSerializer.Serialize(_definition, new JsonSerializerOptions { WriteIndented = true })).AsTask();
+    private Task DownloadDefinition() => Run(async _ =>
+    {
+        _definition.ExcludedFunctionNames = _exclusions.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+        _definition.Validate();
+        await JS.InvokeVoidAsync("downloadFile", "agent.json", JsonSerializer.Serialize(_definition, new JsonSerializerOptions { WriteIndented = true }));
+    });
     private Task ImportDefinition(InputFileChangeEventArgs e) => Run(async token =>
     {
         await using var stream = e.File.OpenReadStream(1_000_000, token);

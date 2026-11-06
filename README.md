@@ -16,6 +16,11 @@ dotnet run --project .\BlazorWithMSAgentFramework\BlazorWithMSAgentFramework.csp
 
 Hard-refresh existing browser tabs after upgrading so cached JavaScript matches the migrated component assemblies.
 
+The UI uses the Radzen Standard theme and responsive sidebar. Application styles load after the theme and also style the migrated native HTML controls; Radzen CSS alone does not style those controls.
+Chat transcripts and user-interaction dialogs have their own themed component styles, including Markdown tables/code and narrow-screen layouts. Raw HTML in displayed Markdown is escaped rather than applied to the host page.
+The sidebar exposes one entry per workspace: dynamic teams are part of **Agent workflows and dynamic teams**, clustering is part of **Memory and clustering**, and log probabilities are part of **Tokens and probabilities**. Older URLs remain compatibility aliases, not separate menu features.
+Navigating between agent routes starts the selected page and a fresh conversation rather than retaining the previous route's agent. Restart a running app/debug session before rebuilding on Windows so its loaded component assemblies can be replaced.
+
 The existing Auth0 host integration requires `Auth0:Domain` and `Auth0:ClientId`.
 Keep real configuration in user secrets, environment variables, or your deployment's configuration, not committed files.
 For example:
@@ -88,7 +93,7 @@ The legacy Stepwise/Handlebars planners, arbitrary marketplace-manifest imports,
 Legacy agent JSON keeps logical tool-group/exclusion fields and numeric history values; removed tools produce actionable errors.
 `Gpt35`/`Gpt4` legacy aliases use the configured modern default model.
 
-[Runtime tests](./AgentFramework.Tests) cover sessions, approvals, cancellation, provider requests/options, tools/prompts, workflows/human input, saved configuration, memory persistence/isolation, chunk budgets, gallery compilation, and the multi-file Blazor REPL, without paid model calls.
+[Runtime and component tests](./AgentFramework.Tests) cover sessions, approvals, cancellation, provider requests/options, tools/prompts, workflows/human input, saved configuration, memory persistence/isolation, chunk budgets, gallery compilation, and the multi-file Blazor REPL, without paid model calls. bUnit regressions also exercise route-to-route navigation, route casing, consolidated menus, dialog completion, current-definition downloads, chat subscriptions, streaming display state, and editor prerender/disposal.
 Both deployment workflows build/test the renamed solution before publishing.
 Live provider and external-service checks require separately configured credentials and authorization; deterministic tests do not claim to validate model quality or tenant authentication.
 

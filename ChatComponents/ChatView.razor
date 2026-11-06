@@ -1,6 +1,6 @@
-﻿<div @ref=_chatColumn style="@($"height:{Height}; overflow:auto; width:100%")">
+﻿<div class="chat-transcript" role="log" aria-label="Conversation" aria-live="polite" @ref=_chatColumn style="@($"height:{Height}")">
     @foreach (var message in ChatState?.ChatMessages ?? [])
     {
-        <MessageView Message="message"></MessageView>
+        <MessageView @key="message" Message="message"></MessageView>
     }
 </div>

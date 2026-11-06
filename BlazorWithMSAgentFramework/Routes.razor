@@ -1,6 +1,7 @@
+@inject NavigationManager Navigation
 <Router AppAssembly="@typeof(App).Assembly">
     <Found Context="routeData">
-        <Microsoft.AspNetCore.Components.Authorization.AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+        <Microsoft.AspNetCore.Components.Authorization.AuthorizeRouteView @key="new Uri(Navigation.Uri).AbsolutePath" RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
         <FocusOnNavigate RouteData="@routeData" Selector="h1" />
     </Found>
     <NotFound><LayoutView Layout="@typeof(MainLayout)"><h1>Page not found</h1><a href="/">Return home</a></LayoutView></NotFound>

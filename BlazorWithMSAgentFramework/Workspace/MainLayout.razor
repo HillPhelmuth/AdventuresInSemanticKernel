@@ -1,26 +1,34 @@
 @inherits LayoutComponentBase
 <PageTitle>Adventures in Microsoft Agent Framework</PageTitle>
-<div class="container-fluid">
-    <header class="p-3 border-bottom"><a href="/" class="h4">Adventures in Microsoft Agent Framework</a></header>
-    <div class="row">
-        <nav class="col-md-2 p-3 border-end" aria-label="Main navigation">
-            @foreach (var link in Links)
-            {
-                <NavLink class="d-block py-1" href="@link.Path" Match="NavLinkMatch.All">@link.Text</NavLink>
-            }
-            <hr /><a href="https://github.com/HillPhelmuth/AdventuresInSemanticKernel" target="_blank" rel="noopener">Source repository</a>
+<RadzenLayout class="workspace-layout">
+    <RadzenHeader class="workspace-header">
+        <RadzenSidebarToggle Click="@(() => _sidebarExpanded = !_sidebarExpanded)" aria-label="Toggle navigation" />
+        <a href="/" class="workspace-brand">Adventures in Microsoft Agent Framework</a>
+    </RadzenHeader>
+    <RadzenSidebar @bind-Expanded="_sidebarExpanded" class="workspace-sidebar">
+        <nav aria-label="Main navigation">
+            <RadzenPanelMenu>
+                @foreach (var link in Links)
+                {
+                    <RadzenPanelMenuItem Text="@link.Text" Path="@link.Path" Icon="@link.Icon" Match="NavLinkMatch.All" />
+                }
+            </RadzenPanelMenu>
+            <a class="workspace-source" href="https://github.com/HillPhelmuth/AdventuresInSemanticKernel" target="_blank" rel="noopener">Source repository</a>
         </nav>
-        <main class="col-md-10 p-4">@Body</main>
-    </div>
-</div>
+    </RadzenSidebar>
+    <RadzenBody class="workspace-body">
+        <main class="workspace-content">@Body</main>
+    </RadzenBody>
+</RadzenLayout>
 @code {
-    private static readonly (string Path, string Text)[] Links =
+    private bool _sidebarExpanded = true;
+    private static readonly (string Path, string Text, string Icon)[] Links =
     [
-        ("", "Home"), ("configuration", "Configure services"), ("samples", "Agent Framework samples"),
-        ("executeFunction", "Execute a tool"), ("simpleAgent", "Build an agent"),
-        ("agentGroupChat", "Build a group workflow"), ("autoSequentialChatPage", "Dynamic agent team"),
-        ("web", "Web agent"), ("wikiChat", "Wikipedia agent"), ("docs", "Agent Framework docs"),
-        ("repl", "C# / Blazor REPL"), ("novel", "Novel writer"), ("dnd", "D&D story agent"), ("testEmbed", "Vector playground"),
-        ("cluster", "HDBSCAN clustering"), ("textchunking", "Chunking and tokens"), ("logProbs", "Log probabilities")
+        ("/", "Home", "home"), ("/configuration", "Configure services", "settings"), ("/samples", "Agent Framework samples", "code"),
+        ("/executeFunction", "Execute a tool", "playlist_add_check"), ("/simpleAgent", "Build an agent", "build"),
+        ("/agentGroupChat", "Agent workflows and dynamic teams", "groups"),
+        ("/web", "Web agent", "public"), ("/wikiChat", "Wikipedia agent", "article"), ("/docs", "Agent Framework docs", "menu_book"),
+        ("/repl", "C# / Blazor REPL", "terminal"), ("/novel", "Novel writer", "edit_note"), ("/dnd", "D&D story agent", "casino"),
+        ("/testEmbed", "Memory and clustering", "polyline"), ("/tokens", "Tokens and probabilities", "short_text")
     ];
 }

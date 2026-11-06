@@ -15,7 +15,7 @@ namespace ChatComponents
                 var module = await _moduleTask.Value;
                 await module.InvokeVoidAsync("scrollDown", elementReference);
             }
-            catch (Exception ex)
+            catch (JSDisconnectedException ex)
             {
                 Console.WriteLine($"Error on ScrollDown: {ex.Message}");
             }
@@ -28,7 +28,7 @@ namespace ChatComponents
                 var module = await _moduleTask.Value;
                 await module.InvokeVoidAsync("addCodeStyle", element);
             }
-            catch (Exception ex)
+            catch (JSDisconnectedException ex)
             {
                 Console.WriteLine($"Error on AddCodeStyle: {ex.Message}");
             }

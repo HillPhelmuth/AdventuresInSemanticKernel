@@ -4,8 +4,10 @@ using Microsoft.JSInterop;
 
 namespace ChatComponents
 {
-    public partial class MessageView : ComponentBase
+    public partial class MessageView : ComponentBase, IAsyncDisposable
     {
+        private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().DisableHtml().Build();
+        private AppJsInterop? _interop;
         [Parameter]
         [EditorRequired]
         public Message Message { get; set; } = default!;
@@ -38,18 +40,21 @@ namespace ChatComponents
             if (!Message.IsActiveStreaming)
             {
                 _shouldRender = false;
-                var appJsInterop = new AppJsInterop(JsRuntime);
-                await appJsInterop.AddCodeStyle(_ref);
+                _interop ??= new AppJsInterop(JsRuntime);
+                await _interop.AddCodeStyle(_ref);
             }
             await base.OnAfterRenderAsync(firstRender);
         }
         private string AsHtml(string? text)
         {
             if (text == null) return "";
-            var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
-            var result = Markdown.ToHtml(text, pipeline);
+            var result = Markdown.ToHtml(text, Pipeline);
             return result;
 
+        }
+        public async ValueTask DisposeAsync()
+        {
+            if (_interop is not null) await _interop.DisposeAsync();
         }
     }
 }

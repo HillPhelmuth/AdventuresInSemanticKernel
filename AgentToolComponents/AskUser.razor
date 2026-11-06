@@ -1,7 +1,8 @@
+@implements IDisposable
 @if (IsOpen)
 {
     <div class="modal-overlay" @onclick=OutClick>
-        <div class="window @($"{Enum.GetName(AskUserOptions.Location)?.ToLower()} {AskUserOptions.CssClasses}")" style="@AskUserOptions.Style" @onclick:stopPropagation>
+        <div class="window @($"{Enum.GetName(AskUserOptions.Location)?.ToLower()} {AskUserOptions.CssClasses}")" role="dialog" aria-modal="true" aria-label="@(AskUserOptions.Title ?? "User interaction")" style="@AskUserOptions.Style" @onclick:stopPropagation>
 
             @if (AskUserOptions.ShowCloseButton || !string.IsNullOrEmpty(AskUserOptions.Title))
             {
@@ -12,7 +13,7 @@
                     <div>
                         @if (AskUserOptions.ShowCloseButton)
                         {
-                            <button class="close" @onclick="Close"><i class="fas fa-times"></i></button>
+                            <button type="button" class="close" aria-label="Close dialog" @onclick="CloseSelf">&times;</button>
                         }
                     </div>
                 </div>

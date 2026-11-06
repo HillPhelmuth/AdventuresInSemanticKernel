@@ -76,7 +76,7 @@ namespace AgentToolComponents
         private string AsHtml(string? text)
         {
             if (text == null) return "";
-            var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
+            var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().DisableHtml().Build();
             var result = Markdown.ToHtml(text, pipeline);
             return result;
 
@@ -90,10 +90,12 @@ namespace AgentToolComponents
             }
         }
 
-        private void Close()
+        public void Dispose()
         {
-            IsOpen = false;
-            IsOpenChanged.InvokeAsync(IsOpen);
+            AskUserService.OnOpenComponent -= Open;
+            AskUserService.OnOpenFragment -= OpenFragment;
+            AskUserService.OnModalClose -= Close;
+            AskUserService.Close(false);
         }
     }
 }

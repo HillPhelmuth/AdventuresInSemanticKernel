@@ -6,6 +6,7 @@ namespace BlazorAceEditor
 {
     public partial class AceEditor : IAsyncDisposable
     {
+        private bool _initialized;
         [Parameter]
         public string Id { get; set; } = default!;
         [Parameter]
@@ -35,8 +36,9 @@ namespace BlazorAceEditor
                 var didInit = await AceEditorInterop.Init(Id, Options);
                 if (didInit)
                 {
-                    await OnEditorInit.InvokeAsync(this);
+                    _initialized = true;
                     AceEditorInterop.AceEditorChange += HandleEditorChange;
+                    await OnEditorInit.InvokeAsync(this);
                 }
             }
             await base.OnAfterRenderAsync(firstRender);
@@ -58,8 +60,12 @@ namespace BlazorAceEditor
         public async ValueTask DisposeAsync()
         {
             AceEditorInterop.AceEditorChange -= HandleEditorChange;
-            try { await AceEditorInterop.DisposeEditor(Id); }
-            catch (Microsoft.JSInterop.JSDisconnectedException) { }
+            if (_initialized)
+            {
+                _initialized = false;
+                try { await AceEditorInterop.DisposeEditor(Id); }
+                catch (Microsoft.JSInterop.JSDisconnectedException) { }
+            }
             GC.SuppressFinalize(this);
         }
     }
